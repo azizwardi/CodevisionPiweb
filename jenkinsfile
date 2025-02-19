@@ -1,11 +1,12 @@
 pipeline {
     agent any
     stages {
-        stage('Install dependencies') {
+        stage('Install Dependencies') {
             steps {
-                script {
-                    sh 'npm install'
-                }
+                sh '''
+                    cd Backend
+                    npm install
+                '''
             }
         }
         stage('Unit Test') {
@@ -15,7 +16,7 @@ pipeline {
                 }
             }
         }
-        stage('Build application') {
+        stage('Build Application') {
             steps {
                 script {
                     sh 'npm run build-dev'
