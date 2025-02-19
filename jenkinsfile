@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                dir('Backend') {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('Unit Test') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh 'echo "No tests specified"'
+                    }
+                }
+            }
+        }
+        stage('Build Application') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh 'npm run build-dev'
+                    }
+                }
+            }
+        }
+    }
+}
