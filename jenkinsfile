@@ -21,7 +21,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'npm run build'
+                        // sh 'npm run build-dev'
                     }
                 }
             }
