@@ -18,15 +18,16 @@ pipeline {
             }
         }
         stage('SonarQube Analysis') {
-            steps {
+            steps{
                 script {
-                    def scannerHome = tool 'scanner'  // Assurez-vous que 'scanner' est configuré dans Jenkins
-                    withSonarQubeEnv('scanner') {  // Remplace 'SonarQube' par le nom de ton serveur SonarQube
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
+                            def scannerHome = tool 'scanner'
+                            withSonarQubeEnv {
+                            sh "${scannerHome}/bin/sonar-scanner"
+                            }
+                        }
                 }
-            }
         }
+
         stage('Build Application') {
             steps {
                 dir('Backend') {
