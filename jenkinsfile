@@ -21,7 +21,7 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool 'scanner'  // Assurez-vous que 'scanner' est configuré dans Jenkins
-                    withSonarQubeEnv('SonarQube') {  // Remplace 'SonarQube' par le nom de ton serveur SonarQube
+                    withSonarQubeEnv('scanner') {  // Remplace 'SonarQube' par le nom de ton serveur SonarQube
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
