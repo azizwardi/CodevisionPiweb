@@ -8,6 +8,7 @@ pipeline {
                 }
             }
         }
+
         stage('Unit Test') {
             steps {
                 dir('Backend') {
@@ -17,10 +18,23 @@ pipeline {
                 }
             }
         }
+
+        stage('SonarQube Analysis') { 
+            steps {
+                script {  
+                    def scannerHome = tool 'scanner'
+                    withSonarQubeEnv {
+                    sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                } 
+            }  
+        }
+
         stage('Build Application') {
             steps {
                 dir('Backend') {
                     script {
+                        sh 'chmod +x node_modules/.bin/webpack'
                         sh 'npm run build-dev'
                     }
                 }
