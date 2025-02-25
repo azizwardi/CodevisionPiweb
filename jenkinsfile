@@ -32,7 +32,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'npm run build-dev'
+                        sh 'npm run build'
                     }
                 }
             }
