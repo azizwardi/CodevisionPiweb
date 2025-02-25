@@ -3,17 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-<<<<<<< HEAD
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    
-    "start": "node server.js",
+    "start": "node dist/bundle.js",
     "dev": "nodemon server.js"
-=======
-   "test": "echo \"Error: no test specified\" && exit 1",
-   "build": "webpack",
-    "start": "node dist/bundle.js"
->>>>>>> 6fa5e0518430518c771320f5284fb821329bdedf
   },
   "keywords": [],
   "author": "",
