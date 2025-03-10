@@ -54,15 +54,34 @@ exports.login = [
 ];
 
 exports.logout = (req, res) => {
+    console.log("Session before destruction:", req.session); // Log session data
+  
     req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).json({ message: "Server error" });
+      }
+  
+      console.log("Session destroyed successfully"); // Log success
+  
+      // Verify session deletion in the store
+      const sessionId = req.sessionID;
+      console.log("Session ID:", sessionId);
+  
+      // Check the session store to ensure the session is deleted
+      req.sessionStore.get(sessionId, (err, session) => {
         if (err) {
-            return res.status(500).json({ message: 'Server error' });
+          console.error("Error fetching session from store:", err);
+        } else {
+          console.log("Session in store after destruction:", session); // Should be null
         }
-        res.clearCookie('connect.sid');
-        res.clearCookie('token');
-        res.json({ message: 'Logout successful' });
+      });
+  
+      res.clearCookie("connect.sid");
+      res.clearCookie("token");
+      res.json({ message: "Logout successful" });
     });
-};
+  };
 
 exports.deleteAccount = async (req, res) => {
     try {

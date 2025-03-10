@@ -25,9 +25,10 @@ export default function SignInForm() {
         email,
         password,
       });
+      localStorage.setItem('authToken', response.data.token);
       console.log(response.data);
       // Handle successful login
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       setErrorMessage("Invalid credentials");
       console.error(error);
