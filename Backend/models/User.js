@@ -11,11 +11,19 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
+    username: { 
+        type: String, 
+        required: true 
+    },
     firstName: {
         type: String
     },
     lastName: {
         type: String
+    },
+    role: { 
+        type: String, enum: ["admin", "TeamLeader", "member"],
+        default: "user" 
     },
     phoneNumber: {
         type: String
@@ -37,3 +45,4 @@ const userSchema = new Schema({
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
+
