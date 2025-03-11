@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import axios from "axios";
 
 export default function UserDropdown() {
@@ -43,14 +43,13 @@ export default function UserDropdown() {
       console.log("Logout successful. Response:", response.data);
   
     } catch (error) {
-      console.error("Error during logout request:", error.response?.data || error.message);
-    } finally {
-      console.log("Removing token from localStorage...");
-      localStorage.removeItem("token");
-  
-      console.log("Navigating to /signin...");
-      navigate("/signin");
+      if (error instanceof Error) {
+        console.error("Error during logout request:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
     }
+    
   };
   
   return (

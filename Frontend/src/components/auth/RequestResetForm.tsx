@@ -19,7 +19,7 @@ const RequestResetForm: React.FC = () => {
       setMessage('Password reset email sent successfully. Please check your email.');
       setAlertType('success');
       setTimeout(() => navigate('/signin'), 5000); // Redirect to sign-in after 5 seconds
-    } catch (error) {
+    } catch {
       setMessage('Failed to send password reset email');
       setAlertType('error');
     } finally {

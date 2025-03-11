@@ -10,6 +10,9 @@ exports.register = [
     body('password').isLength({ min: 6 }).trim().escape(),
     body('firstName').isLength({ min: 2 }).trim().escape(),
     body('lastName').isLength({ min: 2 }).trim().escape(),
+    body('username').isLength({ min: 2 }).trim().escape(),
+    body('phoneNumber').optional().isMobilePhone().trim().escape(),
+    body('role').optional().isIn(['admin', 'TeamLeader', 'member', 'user']).trim().escape(),
 
     async (req, res) => {
         const errors = validationResult(req);
@@ -17,7 +20,7 @@ exports.register = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, firstName, lastName } = req.body;
+        const { email, password, firstName, lastName, username, phoneNumber, role } = req.body;
 
         try {
             let user = await User.findOne({ email });
@@ -31,10 +34,13 @@ exports.register = [
             const { verificationToken, verificationTokenExpires } = generateVerificationToken();
 
             user = new User({
+                username,
                 firstName,
                 lastName,
                 email,
                 password: hashedPassword,
+                phoneNumber,
+                role,
                 verificationToken,
                 verificationTokenExpires
             });

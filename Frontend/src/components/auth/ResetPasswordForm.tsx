@@ -21,7 +21,7 @@ const ResetPasswordForm: React.FC = () => {
       setMessage('Password reset successfully. Redirecting to sign-in...');
       setAlertType('success');
       setTimeout(() => navigate('/signin'), 5000); // Redirect to sign-in after 5 seconds
-    } catch (error) {
+    } catch {
       setMessage('Failed to reset password');
       setAlertType('error');
     } finally {
