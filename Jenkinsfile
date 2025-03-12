@@ -10,16 +10,16 @@ pipeline {
 
         stage('Build Backend') {
             steps {
-                dir('backend') {
+                dir('Backend') {
                     sh 'npm install'
-                    sh 'npm start' 
+                    sh 'npm run start-ci' 
                 }
             }
         }
 
         stage('Build Frontend') {
             steps {
-                dir('frontend') {
+                dir('Frontend') {
                     sh 'npm install'
                     sh 'npm run build' 
                 }

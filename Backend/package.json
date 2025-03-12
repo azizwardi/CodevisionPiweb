@@ -1,9 +1,10 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "server.js", 
+  "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js" 
+    "start": "nodemon server.js",
+    "start-ci": "node server.js" 
   },
   "keywords": [],
   "author": "",
@@ -19,5 +20,8 @@
     "mongoose": "^8.10.1",
     "passport": "^0.7.0",
     "passport-google-oauth2": "^0.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7" 
   }
 }
