@@ -2,28 +2,37 @@ pipeline {
     agent any
 
     stages {
-        stage('Install dependencies') {
+        stage('Checkout') {
             steps {
-                script {
-                    sh('npm install')
+                checkout scm
+            }
+        }
+
+        stage('Build Backend') {
+            steps {
+                dir('backend') {
+                    sh 'npm install'
+                    sh 'npm start' 
                 }
             }
         }
 
-        stage('Unit Test') {
+        stage('Build Frontend') {
             steps {
-                script {
-                    sh('npm test')
+                dir('frontend') {
+                    sh 'npm install'
+                    sh 'npm run build' 
                 }
             }
         }
+    }
 
-        stage('Build application') {
-            steps {
-                script {
-                    sh('npm run build-dev')
-                }
-            }
+    post {
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed. Check the logs for details.'
         }
     }
 }
