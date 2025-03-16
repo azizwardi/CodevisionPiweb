@@ -18,18 +18,16 @@ export default function UserDropdown() {
 
   const handleLogout = async () => {
     try {
-      console.log("Starting logout process...");
-  
-      const token = localStorage.getItem("token");
-  
+      const token = localStorage.getItem("authToken");
+    
       if (!token) {
         console.warn("No token found in localStorage. Redirecting to signin...");
         navigate("/signin");
         return;
       }
-  
+    
       console.log("Token found, sending logout request...");
-  
+    
       const response = await axios.post(
         "http://localhost:5000/api/auth/logout",
         {},
@@ -39,18 +37,20 @@ export default function UserDropdown() {
           },
         }
       );
-  
-      console.log("Logout successful. Response:", response.data);
-  
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error during logout request:", error.message);
-      } else {
-        console.error("Unexpected error:", error);
-      }
-    }
     
+      console.log("Logout successful. Response:", response.data);
+    
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userRole");
+  
+      navigate("/signin");
+    
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
+  
+  
   
   return (
     <div className="relative">

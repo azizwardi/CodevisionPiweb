@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invalid or Expired Token</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container h1 {
+            color: #f44336;
+            margin-bottom: 24px;
+            font-size: 24px;
+        }
+        .container p {
+            margin-top: 10px;
+            color: #555;
+            font-size: 16px;
+        }
+        .container button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgb(70 95 255 / var(--tw-bg-opacity, 1));
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .container button:hover {
+            background-color: rgba(70, 95, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Invalid or Expired Token</h1>
+        <p>The token you provided is invalid or has expired. Please request a new verification email.</p>
+        <button onclick="window.close()">Close</button>
+    </div>
+</body>
+</html>

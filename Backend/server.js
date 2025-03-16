@@ -9,6 +9,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const authRoutes = require('./routes/authRoutes');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 
 
@@ -23,6 +24,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(helmet());
 app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Rate limiting

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const generateVerificationToken = require('../utils/generateVerificationToken');
 const { body, validationResult } = require('express-validator');
+const path = require('path');
 
 exports.register = [
     body('email').isEmail().normalizeEmail(),
@@ -56,6 +57,8 @@ exports.register = [
     }
 ];
 
+
+
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
     try {
@@ -65,7 +68,7 @@ exports.verifyEmail = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            return res.sendFile(path.join(__dirname, '../public', 'token_invalid.html'));
         }
 
         user.isVerified = true;
@@ -73,11 +76,11 @@ exports.verifyEmail = async (req, res) => {
         user.verificationTokenExpires = undefined;
 
         await user.save();
-
-        res.json({ message: 'Email verified successfully' });
+        // Send the verification.html file upon successful verification
+        return res.sendFile(path.join(__dirname, '../public', 'verification.html'));
     } catch (error) {
         console.error('Error verifying email:', error);
-        res.status(500).json({ message: 'Server error' });
+        return res.status(500).json({ message: 'Server error' });
     }
 };
 

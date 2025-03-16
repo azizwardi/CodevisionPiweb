@@ -17,20 +17,85 @@ export default function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [role, setRole] = useState("user");
+  const [role] = useState("user");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
+
+  const validateUsername = (username: string) => {
+    return username.length >= 3;
+  };
+
+  const validateFirstName = (firstName: string) => {
+    return firstName.length >= 1;
+  };
+
+  const validateLastName = (lastName: string) => {
+    return lastName.length >= 1;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isChecked) {
-      setErrorMessage("You must accept the terms and conditions to sign up.");
-      return;
-    }
     setLoading(true);
     setErrorMessage("");
+    setEmailError("");
+    setPasswordError("");
+    setUsernameError("");
+    setFirstNameError("");
+    setLastNameError("");
+
+    let valid = true;
+
+    if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      valid = false;
+    }
+
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 6 characters long.");
+      valid = false;
+    }
+
+    if (!validateUsername(username)) {
+      setUsernameError("Username must be at least 3 characters long.");
+      valid = false;
+    }
+
+    if (!validateFirstName(firstName)) {
+      setFirstNameError("First name is required.");
+      valid = false;
+    }
+
+    if (!validateLastName(lastName)) {
+      setLastNameError("Last name is required.");
+      valid = false;
+    }
+
+    if (!isChecked) {
+      setErrorMessage("You must accept the terms and conditions to sign up.");
+      valid = false;
+    }
+
+    if (!valid) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.post("http://localhost:5000/api/auth/register", {
         email,
@@ -134,6 +199,11 @@ export default function SignUpForm() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
+                    {usernameError && (
+                      <p className="text-red-500 text-xs italic mt-2">
+                        {usernameError}
+                      </p>
+                    )}
                   </div>
                   {/* First Name */}
                   <div className="sm:col-span-1">
@@ -148,6 +218,11 @@ export default function SignUpForm() {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                     />
+                    {firstNameError && (
+                      <p className="text-red-500 text-xs italic mt-2">
+                        {firstNameError}
+                      </p>
+                    )}
                   </div>
                   {/* Last Name */}
                   <div className="sm:col-span-1">
@@ -162,6 +237,11 @@ export default function SignUpForm() {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                     />
+                    {lastNameError && (
+                      <p className="text-red-500 text-xs italic mt-2">
+                        {lastNameError}
+                      </p>
+                    )}
                   </div>
                   {/* Phone Number */}
                   <div className="sm:col-span-1">
@@ -191,6 +271,11 @@ export default function SignUpForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
+                  {emailError && (
+                    <p className="text-red-500 text-xs italic mt-2">
+                      {emailError}
+                    </p>
+                  )}
                 </div>
                 {/* Password */}
                 <div>
@@ -215,6 +300,11 @@ export default function SignUpForm() {
                       )}
                     </span>
                   </div>
+                  {passwordError && (
+                    <p className="text-red-500 text-xs italic mt-2">
+                      {passwordError}
+                    </p>
+                  )}
                 </div>
                 {/* Checkbox */}
                 <div className="flex items-center gap-3">

@@ -6,8 +6,8 @@ const generateResetToken = require('../utils/generateResetToken');
 const sendResetEmail = require('../utils/sendResetEmail');
 
 exports.login = [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }).trim().escape(),
+    body("email").isEmail().normalizeEmail(),
+    body("password").isLength({ min: 6 }).trim().escape(),
 
     async (req, res) => {
         const errors = validationResult(req);
@@ -20,38 +20,58 @@ exports.login = [
         try {
             let user = await User.findOne({ email });
             if (!user) {
-                return res.status(400).json({ message: 'Invalid credentials' });
+                return res.status(400).json({ message: "Invalid credentials" });
             }
 
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
-                return res.status(400).json({ message: 'Invalid credentials' });
+                return res.status(400).json({ message: "Invalid credentials" });
             }
+
+            
+            if (!user.role) {
+                return res.status(500).json({ message: "User role not found" });
+            }
+            
+            if (!user.isVerified) {
+                return res.status(401).json({
+                    message: "Account not verified. Please verify your email.",
+                    requiresVerification: true
+                });
+            }
+
 
             const payload = {
                 user: {
                     id: user.id,
-                    email: user.email
-                }
+                    email: user.email,
+                    role: user.role, 
+                },
             };
 
             jwt.sign(
                 payload,
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' },
+                { expiresIn: "1h" },
                 (err, token) => {
                     if (err) throw err;
+
                     req.session.token = token;
-                    res.json({ message: 'Login successful', token });
+
+                    res.json({
+                        message: "Login successful",
+                        token,
+                        role: user.role,
+                    });
                 }
             );
-
         } catch (error) {
-            console.error('Error during login:', error);
-            res.status(500).json({ message: 'Server error' });
+            console.error("Error during login:", error);
+            res.status(500).json({ message: "Server error" });
         }
-    }
+    },
 ];
+
 
 exports.logout = (req, res) => {
     console.log("Session before destruction:", req.session); // Log session data

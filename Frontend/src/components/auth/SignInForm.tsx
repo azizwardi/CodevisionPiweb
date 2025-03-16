@@ -12,28 +12,95 @@ export default function SignInForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [showVerificationPopup, setShowVerificationPopup] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage("");
+    setEmailError("");
+    setPasswordError("");
+
+    let valid = true;
+
+    if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      valid = false;
+    }
+
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 6 characters long.");
+      valid = false;
+    }
+
+    if (!valid) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-      });
-      localStorage.setItem('authToken', response.data.token);
-      console.log(response.data);
-      // Handle successful login
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
+
+      const { token, role } = response.data;
+      setShowVerificationPopup(true);
+
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("userRole", role);
+
+      console.log("Login successful:", response.data);
+
       navigate("/");
     } catch (error) {
-      setErrorMessage("Invalid credentials");
+      if (axios.isAxiosError(error) && error.response && error.response.data.requiresVerification) {
+        setErrorMessage("Account not verified. Please verify your email.");
+        setShowVerificationPopup(true);
+      } else {
+        setErrorMessage("Invalid credentials");
+      }
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendMessage("");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/resendVerificationEmail",
+        { email }
+      );
+
+      setResendMessage(response.data.message);
+    } catch (error) {
+      setResendMessage("Error resending verification email. Please try again.");
+      console.error(error);
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -109,6 +176,11 @@ export default function SignInForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
+                  {emailError && (
+                    <p className="text-red-500 text-xs italic mt-2">
+                      {emailError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>
@@ -132,6 +204,11 @@ export default function SignInForm() {
                       )}
                     </span>
                   </div>
+                  {passwordError && (
+                    <p className="text-red-500 text-xs italic mt-2">
+                      {passwordError}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -149,9 +226,13 @@ export default function SignInForm() {
                 </div>
                 <div>
                   <Button className="w-full" size="sm" disabled={loading}>
-                    {loading ? 'Signing in...' : 'Sign in'}
+                    {loading ? "Signing in..." : "Sign in"}
                   </Button>
-                  {errorMessage && <p className="text-red-500 text-xs italic mt-2">{errorMessage}</p>}
+                  {errorMessage && (
+                    <p className="text-red-500 text-xs italic mt-2">
+                      {errorMessage}
+                    </p>
+                  )}
                 </div>
               </div>
             </form>
@@ -167,6 +248,33 @@ export default function SignInForm() {
                 </Link>
               </p>
             </div>
+            {showVerificationPopup && (
+              <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+                <div className="bg-white p-6 rounded shadow-lg w-80">
+                  <p className="mb-4 text-center text-gray-800 dark:text-white">
+                    Verification required! Please check your email.
+                  </p>
+                  <button
+                    onClick={() => setShowVerificationPopup(false)}
+                    className="bg-blue-500 text-white w-full py-2 rounded mb-2"
+                  >
+                    OK
+                  </button>
+                  <Link
+                    to="#"
+                    onClick={handleResendVerification}
+                    className="block text-center text-blue-500 hover:text-blue-700"
+                  >
+                    {resendLoading ? "Resending..." : "Resend Verification Email"}
+                  </Link>
+                  {resendMessage && (
+                    <p className="text-green-500 text-xs italic mt-2 text-center">
+                      {resendMessage}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
