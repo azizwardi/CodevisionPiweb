@@ -1,38 +1,107 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+    environment {
+        registryCredentials = "nexus"
+        registry = "192.168.33.10:8083"
+    }
 
-        stage('Build Backend') {
+    stages {
+        stage('Install Dependencies') {
             steps {
                 dir('Backend') {
                     sh 'npm install'
-                    sh 'npm run start-ci' 
                 }
             }
         }
 
-        stage('Build Frontend') {
+        stage('Unit Test') {
             steps {
-                dir('Frontend') {
-                    sh 'npm install'
-                    sh 'npm run build' 
+                dir('Backend') {
+                    script {
+                        sh 'echo "No tests specified"'
+                    }
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Build completed successfully!'
+        stage('SonarQube Analysis') { 
+            steps {
+                script {  
+                    def scannerHome = tool 'scanner'
+                    withSonarQubeEnv {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=piweb \
+                        -Dsonar.projectName=Piweb
+                        """
+                    }
+                } 
+            }  
         }
-        failure {
-            echo 'Build failed. Check the logs for details.'
+
+        stage('Build Application') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh 'chmod +x node_modules/.bin/webpack'
+                        sh 'npm run build-dev'
+                    }
+                }
+            }
+        }
+
+        stage('Building images') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh 'docker-compose build'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Nexus') {  
+            steps {  
+                script {  
+                    docker.withRegistry("http://" + registry, registryCredentials) {  
+                        sh('docker push $registry/piwebapp:6.0')  
+                    }  
+                }  
+            }  
+        }
+
+        stage('Run application') {
+            steps {
+                dir('Backend') {
+                    script {
+                        docker.withRegistry("http://${registry}", registryCredentials) {
+                            sh('docker pull $registry/piwebapp:6.0')
+                            sh('docker-compose up -d')
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run Prometheus') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh('docker start prometheus')
+                    }
+                }
+            }
+        }
+
+        stage('Run Grafana') {
+            steps {
+                dir('Backend') {
+                    script {
+                        sh('docker start grafana')
+                    }
+                }
+            }
         }
     }
 }
