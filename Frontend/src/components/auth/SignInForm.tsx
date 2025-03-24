@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
@@ -6,6 +6,16 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  exp: number;
+  iat: number;
+}
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +30,52 @@ export default function SignInForm() {
   const [showVerificationPopup, setShowVerificationPopup] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
+
+  // Cookie handling utility functions
+  const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+  };
+
+  const deleteCookie = (name: string): void => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  };
+
+  // Handle OAuth redirect with token
+  useEffect(() => {
+    const handleOAuthRedirect = () => {
+      const token = getCookie('authToken');
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get('error');
+
+      if (error) {
+        setErrorMessage(error === 'unauthorized' ? 'Google authentication failed' : 'Authentication error');
+        return;
+      }
+
+      if (token) {
+        try {
+          const decoded = jwtDecode<JwtPayload>(token);
+          localStorage.setItem("authToken", token);
+          
+          if (decoded.role) {
+            localStorage.setItem("userRole", decoded.role);
+          }
+          
+          deleteCookie('authToken');
+          navigate("/dashboard");
+        } catch (error) {
+          console.error("Token validation failed:", error);
+          deleteCookie('authToken');
+          setErrorMessage("Invalid authentication token");
+        }
+      }
+    };
+
+    handleOAuthRedirect();
+  }, [navigate]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,7 +127,7 @@ export default function SignInForm() {
 
       console.log("Login successful:", response.data);
 
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.data.requiresVerification) {
         setErrorMessage("Account not verified. Please verify your email.");
@@ -127,7 +183,7 @@ export default function SignInForm() {
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-1 sm:gap-5">
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <a href="http://localhost:5000/auth/google" className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
                   width="20"
                   height="20"
@@ -153,7 +209,7 @@ export default function SignInForm() {
                   />
                 </svg>
                 Sign in with Google
-              </button>
+              </a>
             </div>
             <div className="relative py-3 sm:py-5">
               <div className="absolute inset-0 flex items-center">

@@ -21,6 +21,7 @@ import Home from "./pages/Dashboard/Home";
 import RequestReset from './pages/AuthPages/RequestReset';
 import ResetPassword from './pages/AuthPages/ResetPassword';
 import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
+import AuthSuccess from "./AuthSuccess";
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/request-reset" element={<RequestReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/success" element={<AuthSuccess />} />
 
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<UserProfiles />} />
@@ -40,7 +42,7 @@ export default function App() {
           {/* Protected Routes */}
           <Route element={<ProtectedRoute requiredRole="admin" />}>
             <Route element={<AppLayout />}>
-              <Route index path="/" element={ <Home />} />
+              <Route index path="/dashboard" element={ <Home />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
               <Route path="/form-elements" element={<FormElements />} />
