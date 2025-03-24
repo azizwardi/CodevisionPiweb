@@ -29,17 +29,6 @@ pipeline {
 
         // Étape 3 : Analyse SonarQube
         stage('SonarQube Analysis') {
-            steps{
-                script {
-                    def scannerHome = tool 'scanner'
-                    withSonarQubeEnv {
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
-                }
-            }
-        }
-
-        stage('SonarQubee Analysis') {
             steps {
                 script {
                     // Utiliser l'outil SonarQube Scanner configuré dans Jenkins
