@@ -50,7 +50,7 @@ pipeline {
                         sh 'chmod +x node_modules/.bin/webpack'     // Donne les permissions d'exécution à webpack
 
                         // Exécuter la commande de build
-                        sh 'npm run build'
+                        sh 'npm run dev'
                     }
                 }
             }
