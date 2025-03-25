@@ -16,7 +16,16 @@ pipeline {
             }
         }
 
-        // Étape 2 : Tests unitaires (simulés ici)
+        // Étape 2 : Vérification et correction des permissions de nodemon
+        stage('Fix Nodemon Permissions') {
+            steps {
+                dir('Backend') {
+                    sh 'chmod +x node_modules/.bin/nodemon' // Donne les permissions d'exécution à nodemon
+                }
+            }
+        }
+
+        // Étape 3 : Tests unitaires (simulés ici)
         stage('Unit Test') {
             steps {
                 dir('Backend') {
@@ -27,7 +36,7 @@ pipeline {
             }
         }
 
-        // Étape 3 : Analyse SonarQube
+        // Étape 4 : Analyse SonarQube
         stage('SonarQube Analysis') {
             steps {
                 script {
@@ -40,17 +49,12 @@ pipeline {
             }
         }
 
-        // Étape 4 : Construction de l'application
-        stage('Build Application') {
+        // Étape 5 : Démarrer le serveur avec Nodemon (mode dev)
+        stage('Start Dev Server') {
             steps {
                 dir('Backend') {
                     script {
-                        // Vérifier les permissions de webpack
-                        sh 'ls -l node_modules/.bin/webpack || true' // Affiche les permissions (optionnel)
-                        sh 'chmod +x node_modules/.bin/webpack'     // Donne les permissions d'exécution à webpack
-
-                        // Exécuter la commande de build
-                        sh 'npm run build'
+                        sh 'npm run build' // Démarrer le serveur en mode développement
                     }
                 }
             }
