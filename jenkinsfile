@@ -41,20 +41,16 @@ pipeline {
         }
 
         // Étape 4 : Construction de l'application
-        stage('Build Application') {
+               stage('Build Application') {
             steps {
                 dir('Backend') {
-                   
                     script {
                         sh 'chmod +x node_modules/.bin/webpack'
-                        sh 'chmod +x node_modules/.bin/nodemon' 
-                        sh 'npm run dev'
+                        sh 'npm run build-dev'
                     }
-                    
                 }
             }
         }
-    }
 
     // Gestion des erreurs
     post {
