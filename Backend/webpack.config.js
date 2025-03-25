@@ -1,28 +1,24 @@
 const path = require("path");
+const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
-  // Point d'entrée de l'application
-  entry: "./src/index.js", // Si tu n'as pas de fichier `index.js`, remplace-le par ton fichier principal comme `server.js`
-
-  // Où Webpack va placer le fichier compilé
+  target: "node", // Indique que Webpack build pour un environnement Node.js
+  entry: "./server.js", // Change "index.js" par "server.js" si c'est le fichier principal
   output: {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
   },
-
-  // Résolution des extensions de fichier
   resolve: {
-    extensions: [".js", ".json"], // Ajoute d'autres extensions si nécessaire
+    extensions: [".js", ".json"],
   },
-
-  // Configuration pour les modules (par exemple, Babel pour la transpilation)
+  externals: [nodeExternals()], // Exclut `node_modules` du bundle
   module: {
     rules: [
       {
-        test: /\.js$/, // Toutes les extensions .js
+        test: /\.js$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader", // Utilise Babel pour transpiler ton code JS
+          loader: "babel-loader",
         },
       },
     ],
