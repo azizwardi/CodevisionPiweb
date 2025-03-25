@@ -40,17 +40,12 @@ pipeline {
             }
         }
 
-        // Étape 4 : Construction de l'application
-        stage('Build Application') {
+        // Étape 4 : Démarrer le serveur avec Nodemon (mode dev)
+        stage('Start Dev Server') {
             steps {
                 dir('Backend') {
                     script {
-                        // Vérifier les permissions de webpack
-                        sh 'ls -l node_modules/.bin/webpack || true' // Affiche les permissions (optionnel)
-                        sh 'chmod +x node_modules/.bin/webpack'     // Donne les permissions d'exécution à webpack
-
-                        // Exécuter la commande de build
-                        sh 'npm run dev'
+                        sh 'npm run dev' // Démarrer le serveur en mode développement
                     }
                 }
             }
