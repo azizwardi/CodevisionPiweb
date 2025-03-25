@@ -45,13 +45,17 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'chmod +x node_modules/.bin/webpack'
-                        sh 'npm run build-dev'
+                        // Vérifier les permissions de webpack
+                        sh 'ls -l node_modules/.bin/webpack || true' // Affiche les permissions (optionnel)
+                        sh 'chmod +x node_modules/.bin/webpack'     // Donne les permissions d'exécution à webpack
+
+                        // Exécuter la commande de build
+                        sh 'npm run build'
                     }
                 }
             }
         }
-    } // <-- Fermeture correcte du bloc `stages`
+    }
 
     // Gestion des erreurs
     post {
@@ -62,4 +66,4 @@ pipeline {
             echo 'Pipeline succeeded!'
         }
     }
-} // <-- Fermeture correcte du bloc `pipeline`
+}
