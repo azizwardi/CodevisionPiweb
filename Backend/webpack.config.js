@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const path = require("path");
 const nodeExternals = require("webpack-node-externals");
 
@@ -25,38 +24,3 @@ module.exports = {
     ],
   },
 };
-=======
-const path =require ('path');
-
-
-module.exports={
-
-    entry: {
-        main:'./server.js'
-    },
-
-    output:{
-
-        path : path.join(__dirname,'dev_build'),
-
-        publicPath:'/',
-        filename: '[name].js',
-        clean:true
-    },
-
-    mode:'development',
-    target:'node',
-
-    module: {
-
-        rules: [
-            {
-                test:/\.js$/,
-                exclude:/node_modules/,
-                loader:"babel-loader"
-            }
-        ]
-    }
-
-}
->>>>>>> c3feb64b86299234fb5d2fdcc672ed2263b95fbd
