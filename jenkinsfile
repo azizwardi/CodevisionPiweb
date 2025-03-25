@@ -41,7 +41,7 @@ pipeline {
         }
 
         // Étape 4 : Construction de l'application
-               stage('Build Application') {
+        stage('Build Application') {
             steps {
                 dir('Backend') {
                     script {
@@ -51,6 +51,7 @@ pipeline {
                 }
             }
         }
+    } // <-- Fermeture correcte du bloc `stages`
 
     // Gestion des erreurs
     post {
@@ -61,4 +62,4 @@ pipeline {
             echo 'Pipeline succeeded!'
         }
     }
-}
+} // <-- Fermeture correcte du bloc `pipeline`
