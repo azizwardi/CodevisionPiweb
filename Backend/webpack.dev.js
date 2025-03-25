@@ -1,9 +1,8 @@
 const path = require("path");
-const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
-  target: "node", // Indique que Webpack build pour un environnement Node.js
-  entry: "./server.js", // Change "index.js" par "server.js" si c'est le fichier principal
+  mode: "development",
+  entry: "./src/index.js", // Assure-toi que ce chemin est correct
   output: {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
@@ -11,7 +10,6 @@ module.exports = {
   resolve: {
     extensions: [".js", ".json"],
   },
-  externals: [nodeExternals()], // Exclut `node_modules` du bundle
   module: {
     rules: [
       {
@@ -23,4 +21,5 @@ module.exports = {
       },
     ],
   },
+  devtool: "inline-source-map", // Aide pour le debug en mode dev
 };

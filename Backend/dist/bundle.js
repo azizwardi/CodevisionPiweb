@@ -1,1 +1,8 @@
-(()=>{var e={37:e=>{"use strict";e.exports=require("mongoose")},252:e=>{"use strict";e.exports=require("express")},577:e=>{"use strict";e.exports=require("cors")},818:e=>{"use strict";e.exports=require("dotenv")}},o={};function r(s){var t=o[s];if(void 0!==t)return t.exports;var n=o[s]={exports:{}};return e[s](n,n.exports,r),n.exports}r(818).config();const s=r(252),t=r(577),n=r(37),c=s(),i=process.env.PORT;c.use(s.json()),c.use(t()),c.get("/",((e,o)=>{o.send("Hello, Express!")})),c.listen(i,(()=>{console.log(`🚀 Server is running on http://localhost:${i}`)})),n.connect(process.env.MONGO_URI).then((()=>console.log("✅ MongoDB Connected Successfully"))).catch((e=>console.error("❌ MongoDB Connection Error:",e)))})();
+/******/ (() => { // webpackBootstrap
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+console.log("Hello from Webpack!");
+/******/ })()
+;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYnVuZGxlLmpzIiwibWFwcGluZ3MiOiI7Ozs7QUFDQUEsT0FBTyxDQUFDQyxHQUFHLENBQUMscUJBQXFCLENBQUMsQyIsInNvdXJjZXMiOlsid2VicGFjazovL2JhY2tlbmQvLi9zcmMvaW5kZXguanMiXSwic291cmNlc0NvbnRlbnQiOlsiXHJcbmNvbnNvbGUubG9nKFwiSGVsbG8gZnJvbSBXZWJwYWNrIVwiKTsiXSwibmFtZXMiOlsiY29uc29sZSIsImxvZyJdLCJzb3VyY2VSb290IjoiIn0=
