@@ -54,7 +54,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'npm run build' // Démarrer le serveur en mode développement
+                        sh 'npm run build-dev' // Démarrer le serveur en mode développement
                     }
                 }
             }
