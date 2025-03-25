@@ -47,7 +47,6 @@ pipeline {
                    
                     script {
                         sh 'chmod +x node_modules/.bin/webpack'
-
                         sh 'chmod +x node_modules/.bin/nodemon' 
                         sh 'npm run dev'
                     }
