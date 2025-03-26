@@ -17,8 +17,8 @@ pipeline {
         stage('Fix Permissions') {
             steps {
                 dir('Backend') {
-                    sh 'test -f node_modules/.bin/nodemon && chmod +x node_modules/.bin/nodemon'
-                    sh 'test -f node_modules/.bin/webpack && chmod +x node_modules/.bin/webpack'
+                    sh 'chmod +x node_modules/.bin/nodemon'
+                    sh 'chmod +x node_modules/.bin/webpack' // 🔥 
                 }
             }
         }
@@ -58,7 +58,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'test -f docker-compose.yml && docker-compose build || echo "⚠️ Aucun fichier docker-compose.yml trouvé"'
+                        sh 'docker-compose build'
                     }
                 }
             }
