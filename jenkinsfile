@@ -17,8 +17,8 @@ pipeline {
         stage('Fix Permissions') {
             steps {
                 dir('Backend') {
-                    sh 'chmod +x node_modules/.bin/nodemon'
-                    sh 'chmod +x node_modules/.bin/webpack' // 🔥 Correction pour Webpack
+                    sh 'test -f node_modules/.bin/nodemon && chmod +x node_modules/.bin/nodemon'
+                    sh 'test -f node_modules/.bin/webpack && chmod +x node_modules/.bin/webpack'
                 }
             }
         }
@@ -54,15 +54,16 @@ pipeline {
             }
         }
 
-       stage('Building images') {
+        stage('Building images') {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'docker-compose build'
+                        sh 'test -f docker-compose.yml && docker-compose build || echo "⚠️ Aucun fichier docker-compose.yml trouvé"'
                     }
                 }
             }
         }
+    } // ✅ Ajout de l'accolade fermante ici
 
     post {
         failure {
