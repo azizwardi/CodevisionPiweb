@@ -40,7 +40,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    // Utiliser l'outil SonarQube Scanner configuré dans Jenkins
                     def scannerHome = tool 'scanner'
                     withSonarQubeEnv('scanner') { // Remplacez 'scanner' par le nom de votre configuration SonarQube dans Jenkins
                         sh "${scannerHome}/bin/sonar-scanner"
@@ -60,7 +59,15 @@ pipeline {
             }
         }
 
-
+        // 🚀 **Étape 6 : Build des images Docker**
+        stage('Building images (node and mongo)') {
+            steps {
+                script {
+                    sh 'docker-compose build'
+                }
+            }
+        }
+    } // ✅ Fin du bloc `stages {}`
 
     // Gestion des erreurs
     post {
@@ -71,5 +78,4 @@ pipeline {
             echo 'Pipeline succeeded!'
         }
     }
-
-
+}
