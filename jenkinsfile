@@ -54,16 +54,7 @@ pipeline {
             }
         }
 
-        stage('Building images') {
-            steps {
-                dir('Backend') {
-                    script {
-                        sh 'docker-compose build'
-                    }
-                }
-            }
-        }
-    } // ✅ Ajout de l'accolade fermante ici
+
 
     post {
         failure {
