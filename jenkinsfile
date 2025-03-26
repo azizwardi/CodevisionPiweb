@@ -54,16 +54,15 @@ pipeline {
             }
         }
 
-        stage('Docker Setup & Build') {
+       stage('Building images') {
             steps {
-                script {
-                    sh 'docker info' // 🔍 Vérifie si Docker est bien installé et accessible
-                    sh 'ls -l docker-compose.yml || echo "⚠️  docker-compose.yml introuvable!"' // 🔥 Vérifie l'existence du fichier
-                    sh 'docker-compose build'
+                dir('Backend') {
+                    script {
+                        sh 'docker-compose build'
+                    }
                 }
             }
         }
-    }
 
     post {
         failure {
