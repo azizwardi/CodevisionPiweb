@@ -60,15 +60,7 @@ pipeline {
             }
         }
 
-        // Étape 6 : Build des images Docker
-        stage('Building images (node and mongo)') {
-            steps {
-                script {
-                    sh 'docker-compose build'
-                }
-            }
-        }
-    }
+
 
     // Gestion des erreurs
     post {
