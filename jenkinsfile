@@ -20,8 +20,7 @@ pipeline {
         stage('Fix Nodemon Permissions') {
             steps {
                 dir('Backend') {
-                   sh 'chmod +x node_modules/.bin/nodemon'  // Nodemon
-                   sh 'chmod +x node_modules/.bin/webpack' // Webpack
+                    sh 'chmod +x node_modules/.bin/nodemon' // Donne les permissions d'exécution à nodemon
                 }
             }
         }
@@ -63,8 +62,8 @@ pipeline {
         // 🚀 **Étape 6 : Build des images Docker**
         stage('Building images (node and mongo)') {
             steps {
-                dir('Backend') {
-                sh 'docker-compose build'
+                script {
+                    sh 'docker-compose build'
                 }
             }
         }
