@@ -53,6 +53,16 @@ pipeline {
                 }
             }
         }
+
+        stage('Building images') { // Ajout de la stage Building images
+            steps {
+                dir('Backend') {
+                    script {
+                        sh 'docker-compose build'
+                    }
+                }
+            }
+        }
     } // Fermer le bloc stages
 
     post {
