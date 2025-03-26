@@ -53,8 +53,7 @@ pipeline {
                 }
             }
         }
-
-
+    } // Fermer le bloc stages
 
     post {
         failure {
