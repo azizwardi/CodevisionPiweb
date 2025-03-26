@@ -20,7 +20,8 @@ pipeline {
         stage('Fix Nodemon Permissions') {
             steps {
                 dir('Backend') {
-                    sh 'chmod +x node_modules/.bin/nodemon' // Donne les permissions d'exécution à nodemon
+                   sh 'chmod +x node_modules/.bin/nodemon'  // Nodemon
+                   sh 'chmod +x node_modules/.bin/webpack' // Webpack
                 }
             }
         }
