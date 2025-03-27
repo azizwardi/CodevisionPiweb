@@ -3,8 +3,6 @@ pipeline {
 
     environment {
         PATH = "${WORKSPACE}/Backend/node_modules/.bin:${env.PATH}"
-        registryCredentials = "nexus"
-        registry = "192.168.33.10:8083"
     }
 
     stages {
@@ -20,7 +18,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     sh 'chmod +x node_modules/.bin/nodemon'
-                    sh 'chmod +x node_modules/.bin/webpack'
+                    sh 'chmod +x node_modules/.bin/webpack' // 🔥 
                 }
             }
         }
@@ -56,7 +54,7 @@ pipeline {
             }
         }
 
-        stage('Building images') { 
+        stage('Building images') { // Ajout de la stage Building images
             steps {
                 dir('Backend') {
                     script {
@@ -65,17 +63,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to Nexus') { 
-            steps {
-                script {
-                    docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh 'docker push $registry/nodemongoapp:5.0'
-                    }
-                }
-            }
-        }
-    }
+    } // Fermer le bloc stages
 
     post {
         failure {
