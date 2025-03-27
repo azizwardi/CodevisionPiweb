@@ -3,9 +3,55 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+
+
+
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
+  const [user, setUser] = useState<User | null>(null);
+
+  interface User {
+    name: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    avatarUrl?: string;
+    phoneNumber?: string;
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        // Decode the token to extract user information
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const decodedToken: any = jwtDecode(token); // Decode the JWT token
+        
+        // Handle the decoded token's structure
+        const userData = decodedToken.user || decodedToken; // Fallback to top-level properties
+        
+        // Set the user state
+        setUser({
+          name: userData.name,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          role: userData.role,
+          avatarUrl: userData.avatarUrl || "/images/user/owner.jpg", // Provide default image if not present
+          phoneNumber: userData.phoneNumber || "Not provided", // Fallback to a default value
+        });
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    } else {
+      console.warn("No token found in local storage.");
+    }
+  }, []);
+
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
@@ -25,7 +71,7 @@ export default function UserInfoCard() {
                 First Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Musharof
+              {user ? user.firstName : "Loading..."}
               </p>
             </div>
 
@@ -34,7 +80,7 @@ export default function UserInfoCard() {
                 Last Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Chowdhury
+              {user ? user.lastName : "Loading..."}
               </p>
             </div>
 
@@ -43,7 +89,7 @@ export default function UserInfoCard() {
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                randomuser@pimjo.com
+              {user ? user.email : "Loading..."}
               </p>
             </div>
 
@@ -52,7 +98,7 @@ export default function UserInfoCard() {
                 Phone
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                +09 363 398 46
+              {user ? user.phoneNumber : "Loading..."}
               </p>
             </div>
 
@@ -61,7 +107,7 @@ export default function UserInfoCard() {
                 Bio
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Team Manager
+              {user ? user.role : "Loading..."}
               </p>
             </div>
           </div>

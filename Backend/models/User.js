@@ -21,6 +21,9 @@ const userSchema = new Schema({
     lastName: {
         type: String
     },
+    address: {
+        type: String
+    },
     role: { 
         type: String, enum: ["admin", "TeamLeader", "member", "user"],
         default: "user" 
@@ -45,4 +48,3 @@ const userSchema = new Schema({
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
-

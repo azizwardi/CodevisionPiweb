@@ -46,6 +46,10 @@ exports.login = [
                     id: user.id,
                     email: user.email,
                     role: user.role, 
+                    name: user.username,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    phoneNumber: user.phoneNumber,
                 },
             };
 

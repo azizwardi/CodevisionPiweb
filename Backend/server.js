@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const authRoutes = require('./routes/authRoutes');
+const user = require('./routes/user');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const User = require('./models/User');
@@ -69,7 +70,7 @@ app.get('/auth/google/callback',
       return res.redirect("http://localhost:5173/signin?error=unauthorized");
     }
 
-    console.log("Authenticated User: ", req.user);
+    
 
     try {
       let user = await User.findOne({ 
@@ -99,12 +100,17 @@ app.get('/auth/google/callback',
           });
         }
       }
+      console.log("User object before signing JWT:", user);
+
 
       const token = jwt.sign(
-        { id: user.id, name: user.displayName, email: user.email, role: user.role },
+        { id: user.id, name: user.username, email: user.email,firstName: user.firstName,lastName: user.lastName, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
       );
+      const decodedToken = jwt.decode(token);
+      console.log("Decoded Token:", decodedToken);
+
 
       res.redirect(`http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`);
     } catch (error) {
@@ -142,6 +148,7 @@ app.get('/logout', (req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/user', user);
 
 // Start the Server
 app.listen(PORT, () => {
