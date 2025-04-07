@@ -1,27 +1,28 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
-import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
-import AppLayout from "./layout/AppLayout";
-import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
-import RequestReset from './pages/AuthPages/RequestReset';
-import ResetPassword from './pages/AuthPages/ResetPassword';
-import ProtectedRoute from "./ProtectedRoute"; // Import ProtectedRoute
-import AuthSuccess from "./AuthSuccess";
+import SignIn from "./dashboard/pages/AuthPages/SignIn";
+import SignUp from "./dashboard/pages/AuthPages/SignUp";
+import NotFound from "./dashboard/pages/OtherPage/NotFound";
+import UserProfiles from "./dashboard/pages/UserProfiles";
+import Videos from "./dashboard/pages/UiElements/Videos";
+import Images from "./dashboard/pages/UiElements/Images";
+import Alerts from "./dashboard/pages/UiElements/Alerts";
+import Badges from "./dashboard/pages/UiElements/Badges";
+import Avatars from "./dashboard/pages/UiElements/Avatars";
+import Buttons from "./dashboard/pages/UiElements/Buttons";
+import LineChart from "./dashboard/pages/Charts/LineChart";
+import BarChart from "./dashboard/pages/Charts/BarChart";
+import Calendar from "./dashboard/pages/Calendar";
+import BasicTables from "./dashboard/pages/Tables/BasicTables";
+import FormElements from "./dashboard/pages/Forms/FormElements";
+import Blank from "./dashboard/pages/Blank";
+import AppLayout from "./dashboard/layout/AppLayout";
+import { ScrollToTop } from "./dashboard/components/common/ScrollToTop";
+import Home from "./dashboard/pages/Dashboard/Home";
+import RequestReset from './dashboard/pages/AuthPages/RequestReset';
+import ResetPassword from './dashboard/pages/AuthPages/ResetPassword';
+import ProtectedRoute from "./ProtectedRoute";
+import AuthSuccess from "./dashboard/AuthSuccess";
+import Frontpage from "./home/Acceuil";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/request-reset" element={<RequestReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/*" element={<Frontpage />} />
 
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<UserProfiles />} />
