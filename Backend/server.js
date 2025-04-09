@@ -13,6 +13,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const fs = require("fs");
 const User = require("./models/User");
+const projectRouter = require("./routes/projectRoutes");
 
 const passport = require("passport");
 require("./auth"); // Importe la configuration de Passport depuis auth.js
@@ -69,10 +70,11 @@ app.use(limiter);
 // Session configuration
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "fallback_secret",
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    // Utiliser une session en mémoire temporairement pour le débogage
+    // store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { maxAge: 180 * 60 * 1000 }, // 3 hours
   })
 );
@@ -185,6 +187,7 @@ app.get("/logout", (req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", user);
+app.use("/projects", projectRouter);
 
 // Start the Server
 app.listen(PORT, () => {
@@ -192,7 +195,9 @@ app.listen(PORT, () => {
 });
 
 // Connect to MongoDB
+const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/piweb";
+console.log("Connecting to MongoDB with URI:", mongoUri);
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(mongoUri)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
