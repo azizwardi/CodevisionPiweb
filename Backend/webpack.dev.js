@@ -1,25 +1,33 @@
-const path = require("path");
+const path =require ('path');
 
-module.exports = {
-  mode: "development",
-  entry: "./src/index.js", // Assure-toi que ce chemin est correct
-  output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "dist"),
-  },
-  resolve: {
-    extensions: [".js", ".json"],
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader",
-        },
-      },
-    ],
-  },
-  devtool: "inline-source-map", // Aide pour le debug en mode dev
-};
+
+module.exports={
+
+    entry: {
+        main:'./server.js'
+    },
+
+    output:{
+
+        path : path.join(__dirname,'dev_build'),
+
+        publicPath:'/',
+        filename: '[name].js',
+        clean:true
+    },
+
+    mode:'development',
+    target:'node',
+
+    module: {
+
+        rules: [
+            {
+                test:/\.js$/,
+                exclude:/node_modules/,
+                loader:"babel-loader"
+            }
+        ]
+    }
+
+}
