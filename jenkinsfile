@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Ajouter le chemin de node_modules/.bin au PATH
         PATH = "${WORKSPACE}/Backend/node_modules/.bin:${env.PATH}"
+        registryCredentials = "nexus"
+        registry = "192.168.33.10:8083"
     }
 
     stages {
-        // Étape 1 : Installation des dépendances
         stage('Install Dependencies') {
             steps {
                 dir('Backend') {
@@ -16,16 +16,15 @@ pipeline {
             }
         }
 
-        // Étape 2 : Vérification et correction des permissions de nodemon
-        stage('Fix Nodemon Permissions') {
+        stage('Fix Permissions') {
             steps {
                 dir('Backend') {
-                    sh 'chmod +x node_modules/.bin/nodemon' // Donne les permissions d'exécution à nodemon
+                    sh 'chmod +x node_modules/.bin/nodemon'
+                    sh 'chmod +x node_modules/.bin/webpack'
                 }
             }
         }
 
-        // Étape 3 : Tests unitaires (simulés ici)
         stage('Unit Test') {
             steps {
                 dir('Backend') {
@@ -36,46 +35,54 @@ pipeline {
             }
         }
 
-        // Étape 4 : Analyse SonarQube
         stage('SonarQube Analysis') {
             steps {
                 script {
                     def scannerHome = tool 'scanner'
-                    withSonarQubeEnv('scanner') { // Remplacez 'scanner' par le nom de votre configuration SonarQube dans Jenkins
+                    withSonarQubeEnv('scanner') {
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
         }
 
-        // Étape 5 : Démarrer le serveur avec Nodemon (mode dev)
         stage('Start Dev Server') {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'npm run build-dev' // Démarrer le serveur en mode développement
+                        sh 'npm run build-dev'
                     }
                 }
             }
         }
 
-        // 🚀 **Étape 6 : Build des images Docker**
-        stage('Building images (node and mongo)') {
+        stage('Building images') { 
             steps {
-                script {
-                    sh 'docker-compose build'
+                dir('Backend') {
+                    script {
+                        sh 'docker-compose build'
+                    }
                 }
             }
         }
-    } // ✅ Fin du bloc `stages {}`
 
-    // Gestion des erreurs
+        stage('Deploy to Nexus') { 
+            steps {
+                script {
+                    docker.withRegistry("http://${registry}", registryCredentials) {
+                        sh 'docker push $registry/nodemongoapp:5.0'
+                    }
+                }
+            }
+        }
+    }
+
     post {
         failure {
-            echo 'Pipeline has failed. Check the logs for more details.'
+            echo '❌ Pipeline failed. Check logs.'
         }
         success {
-            echo 'Pipeline succeeded!'
+            echo '✅ Pipeline succeeded!'
         }
     }
 }
