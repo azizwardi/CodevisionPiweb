@@ -81,7 +81,13 @@ exports.updateProject = async (req, res) => {
 
     // Vérification des champs requis
     if (!name || !description || !category || !startDate || !deadline) {
-      console.log("Validation échouée - champs manquants:", { name, description, category, startDate, deadline });
+      console.log("Validation échouée - champs manquants:", {
+        name,
+        description,
+        category,
+        startDate,
+        deadline,
+      });
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
@@ -112,7 +118,10 @@ exports.updateProject = async (req, res) => {
         console.log("Événement WebSocket émis");
       }
     } catch (wsError) {
-      console.log("Erreur lors de l'émission de l'événement WebSocket (non critique):", wsError.message);
+      console.log(
+        "Erreur lors de l'émission de l'événement WebSocket (non critique):",
+        wsError.message
+      );
     }
 
     res.status(200).json({ message: "Projet mis à jour avec succès", project });

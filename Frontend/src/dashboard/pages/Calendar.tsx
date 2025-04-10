@@ -7,6 +7,8 @@ import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import { Modal } from "../components/ui/modal";
 import { useModal } from "../hooks/useModal";
 import PageMeta from "../components/common/PageMeta";
+import axios from "axios";
+import { toastManager } from "../components/ui/toast/ToastContainer";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -33,29 +35,31 @@ const Calendar: React.FC = () => {
     Warning: "warning",
   };
 
+  // Fonction pour charger les événements depuis l'API
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get("http://localhost:8000/events");
+      console.log("Événements récupérés:", response.data);
+
+      // Transformer les données pour FullCalendar
+      const formattedEvents = response.data.map((event: any) => ({
+        id: event._id,
+        title: event.title,
+        start: event.start,
+        end: event.end,
+        allDay: event.allDay,
+        extendedProps: { calendar: event.calendar },
+      }));
+
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des événements:", error);
+      toastManager.addToast("Erreur lors du chargement des événements", "error", 5000);
+    }
+  };
+
   useEffect(() => {
-    // Initialize with some events
-    setEvents([
-      {
-        id: "1",
-        title: "Event Conf.",
-        start: new Date().toISOString().split("T")[0],
-        extendedProps: { calendar: "Danger" },
-      },
-      {
-        id: "2",
-        title: "Meeting",
-        start: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-        extendedProps: { calendar: "Success" },
-      },
-      {
-        id: "3",
-        title: "Workshop",
-        start: new Date(Date.now() + 172800000).toISOString().split("T")[0],
-        end: new Date(Date.now() + 259200000).toISOString().split("T")[0],
-        extendedProps: { calendar: "Primary" },
-      },
-    ]);
+    fetchEvents();
   }, []);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
@@ -75,36 +79,69 @@ const Calendar: React.FC = () => {
     openModal();
   };
 
-  const handleAddOrUpdateEvent = () => {
-    if (selectedEvent) {
-      // Update existing event
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === selectedEvent.id
-            ? {
-                ...event,
-                title: eventTitle,
-                start: eventStartDate,
-                end: eventEndDate,
-                extendedProps: { calendar: eventLevel },
-              }
-            : event
-        )
-      );
-    } else {
-      // Add new event
-      const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
-        title: eventTitle,
-        start: eventStartDate,
-        end: eventEndDate,
-        allDay: true,
-        extendedProps: { calendar: eventLevel },
-      };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
+  // Fonction pour supprimer un événement
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'événement "${eventTitle}" ?`)) {
+      return;
     }
-    closeModal();
-    resetModalFields();
+
+    try {
+      await axios.delete(`http://localhost:8000/events/${selectedEvent.id}`);
+      toastManager.addToast("Événement supprimé avec succès", "success", 5000);
+      fetchEvents();
+      closeModal();
+      resetModalFields();
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'événement:", error);
+      toastManager.addToast("Erreur lors de la suppression de l'événement", "error", 5000);
+    }
+  };
+
+  const handleAddOrUpdateEvent = async () => {
+    try {
+      if (!eventTitle || !eventStartDate) {
+        toastManager.addToast("Le titre et la date de début sont requis", "error", 5000);
+        return;
+      }
+
+      if (selectedEvent) {
+        // Mettre à jour un événement existant
+        console.log("Mise à jour de l'événement:", selectedEvent.id);
+
+        await axios.put(`http://localhost:8000/events/${selectedEvent.id}`, {
+          title: eventTitle,
+          start: eventStartDate,
+          end: eventEndDate || eventStartDate,
+          allDay: true,
+          calendar: eventLevel,
+        });
+
+        toastManager.addToast("Événement mis à jour avec succès", "success", 5000);
+      } else {
+        // Ajouter un nouvel événement
+        console.log("Création d'un nouvel événement");
+
+        await axios.post("http://localhost:8000/events", {
+          title: eventTitle,
+          start: eventStartDate,
+          end: eventEndDate || eventStartDate,
+          allDay: true,
+          calendar: eventLevel,
+        });
+
+        toastManager.addToast("Événement créé avec succès", "success", 5000);
+      }
+
+      // Recharger les événements
+      fetchEvents();
+      closeModal();
+      resetModalFields();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout/modification de l'événement:", error);
+      toastManager.addToast("Erreur lors de l'enregistrement de l'événement", "error", 5000);
+    }
   };
 
   const resetModalFields = () => {
@@ -118,8 +155,8 @@ const Calendar: React.FC = () => {
   return (
     <>
       <PageMeta
-        title="React.js Calendar Dashboard | TailAdmin - Next.js Admin Dashboard Template"
-        description="This is React.js Calendar Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="Calendrier | CodevisionPiweb"
+        description="Calendrier des événements pour CodevisionPiweb"
       />
       <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
@@ -247,14 +284,23 @@ const Calendar: React.FC = () => {
                 type="button"
                 className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] sm:w-auto"
               >
-                Close
+                Fermer
               </button>
+              {selectedEvent && (
+                <button
+                  onClick={handleDeleteEvent}
+                  type="button"
+                  className="flex w-full justify-center rounded-lg border border-error-300 bg-white px-4 py-2.5 text-sm font-medium text-error-700 hover:bg-error-50 dark:border-error-700 dark:bg-gray-800 dark:text-error-400 dark:hover:bg-white/[0.03] sm:w-auto"
+                >
+                  Supprimer
+                </button>
+              )}
               <button
                 onClick={handleAddOrUpdateEvent}
                 type="button"
                 className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
               >
-                {selectedEvent ? "Update Changes" : "Add Event"}
+                {selectedEvent ? "Mettre à jour" : "Ajouter"}
               </button>
             </div>
           </div>

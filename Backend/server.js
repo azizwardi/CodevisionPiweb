@@ -14,6 +14,7 @@ const path = require("path");
 const fs = require("fs");
 const User = require("./models/User");
 const projectRouter = require("./routes/projectRoutes");
+const eventRouter = require("./routes/eventRoutes");
 
 const passport = require("passport");
 require("./auth"); // Importe la configuration de Passport depuis auth.js
@@ -188,6 +189,7 @@ app.get("/logout", (req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", user);
 app.use("/projects", projectRouter);
+app.use("/events", eventRouter);
 
 // Start the Server
 app.listen(PORT, () => {
