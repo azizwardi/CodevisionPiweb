@@ -120,6 +120,7 @@ export default function SignInForm() {
       );
 
       const { token, role } = response.data;
+      setShowVerificationPopup(true);
 
       localStorage.setItem("authToken", token);
       localStorage.setItem("userRole", role);

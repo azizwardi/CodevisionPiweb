@@ -12,7 +12,6 @@ const isAuthenticated = (requiredRole?: string): boolean => {
   }
 
   console.log("Token found in localStorage:", token);
-
   // If no role is required, just check authentication
   if (!requiredRole) return true;
 

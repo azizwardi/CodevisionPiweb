@@ -87,5 +87,12 @@ export default function AuthSuccess() {
     }
   }, [location, navigate]);
 
-  return null; // or a loading spinner
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold">Processing authentication...</h2>
+        <p>You'll be redirected shortly</p>
+      </div>
+    </div>
+  );
 }

@@ -6,12 +6,15 @@ const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const authRoutes = require("./routes/authRoutes");
 const user = require("./routes/user");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 const fs = require("fs");
 const User = require("./models/user");
+const projectRouter = require("./routes/projectRoutes");
+const eventRouter = require("./routes/eventRoutes");
 
 const passport = require("passport");
 require("./auth"); // Importe la configuration de Passport depuis auth.js
@@ -53,6 +56,11 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const jwt = require("jsonwebtoken");
+
+//Routes
+app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -98,6 +106,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/auth/google/failure" }),
   async (req, res) => {
     if (!req.user) {
+      console.log("User not authenticated");
       return res.redirect("http://localhost:5173/signin?error=unauthorized");
     }
 
@@ -190,7 +199,10 @@ app.get("/logout", (req, res, next) => {
   });
 });
 
-// API routes already set up above
+app.use("/api/auth", authRoutes);
+app.use("/api/user", user);
+app.use("/projects", projectRouter);
+app.use("/events", eventRouter);
 
 // Start the Server
 app.listen(PORT, () => {

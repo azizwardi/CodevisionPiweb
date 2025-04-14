@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ToastContainer from "./dashboard/components/ui/toast/ToastContainer";
 import SignIn from "./dashboard/pages/AuthPages/SignIn";
 import SignUp from "./dashboard/pages/AuthPages/SignUp";
 import NotFound from "./dashboard/pages/OtherPage/NotFound";
@@ -36,6 +37,7 @@ export default function App() {
   return (
       <Router>
         <ScrollToTop />
+        <ToastContainer />
         <Routes>
           {/* Auth Layout (No Protection) */}
           <Route path="/signin" element={<SignIn />} />

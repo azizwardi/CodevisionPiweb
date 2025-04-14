@@ -50,6 +50,18 @@ const navItems: NavItem[] = [
     name: "Tables",
     icon: <TableIcon />,
     subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    name: "User",
+    path: "/profile",
+  },
+  {
+    name: "Project Management",
+    icon: <ListIcon />,
+     path: "/form-elements",
+  },
+  {
+    name: "User Management",
+    icon: <UserCircleIcon />,
+    path: "/basic-tables",
   },
   {
     name: "Pages",
@@ -303,6 +315,7 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
+        <h1 className="text-xl font-bold text-brand-500">Codevision</h1>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
@@ -339,6 +352,7 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(othersItems, "others")}
             </div>
+            {/* Section "Others" supprimée */}
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
