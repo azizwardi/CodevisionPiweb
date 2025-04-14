@@ -20,9 +20,17 @@ import { ScrollToTop } from "./dashboard/components/common/ScrollToTop";
 import Home from "./dashboard/pages/Dashboard/Home";
 import RequestReset from './dashboard/pages/AuthPages/RequestReset';
 import ResetPassword from './dashboard/pages/AuthPages/ResetPassword';
+// import VerifyEmail from './dashboard/pages/AuthPages/VerifyEmail';
 import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
+
+// Team Leader imports
+import TeamLeaderHomeLayout from "./teamleader/layout/TeamLeaderHomeLayout";
+
+// Member imports
+import MemberHomeLayout from "./member/layout/MemberHomeLayout";
+
 
 export default function App() {
   return (
@@ -57,6 +65,30 @@ export default function App() {
               <Route path="/videos" element={<Videos />} />
               <Route path="/line-chart" element={<LineChart />} />
               <Route path="/bar-chart" element={<BarChart />} />
+            </Route>
+          </Route>
+
+          {/* Team Leader Routes */}
+          <Route element={<ProtectedRoute requiredRole="TeamLeader" />}>
+            <Route element={<TeamLeaderHomeLayout />}>
+              <Route path="/team-leader-dashboard" element={<div />} />
+              <Route path="/team-leader/profile" element={<div />} />
+              <Route path="/team-leader/team" element={<div />} />
+              <Route path="/team-leader/projects" element={<div />} />
+              <Route path="/team-leader/tasks" element={<div />} />
+              <Route path="/team-leader/reports" element={<div />} />
+            </Route>
+          </Route>
+
+          {/* Member Routes */}
+          <Route element={<ProtectedRoute requiredRole="member" />}>
+            <Route element={<MemberHomeLayout />}>
+              <Route path="/member-dashboard" element={<div />} />
+              <Route path="/member/profile" element={<div />} />
+              <Route path="/member/tasks" element={<div />} />
+              <Route path="/member/projects" element={<div />} />
+              <Route path="/member/time-tracking" element={<div />} />
+              <Route path="/member/team-chat" element={<div />} />
             </Route>
           </Route>
 

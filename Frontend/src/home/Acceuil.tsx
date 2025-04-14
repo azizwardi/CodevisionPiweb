@@ -1,24 +1,28 @@
 import CssBaseline from '@mui/material/CssBaseline';
-import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
 import AppTheme from './shared-theme/AppTheme';
 import AppAppBar from './components/AppAppBar';
-
 import Footer from './components/Footer';
+import HeroSection from './components/HeroSection';
+import FeaturesSection from './components/FeaturesSection';
+import HowItWorksSection from './components/HowItWorksSection';
+import TestimonialsSection from './components/TestimonialsSection';
+import CtaSection from './components/CtaSection';
+import '../styles/smoothScroll.css';
 
-export default function Blog(props: { disableCustomTheme?: boolean }) {
+export default function Frontpage(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
 
       <AppAppBar />
-      <Container
-        maxWidth="lg"
-        component="main"
-        sx={{ display: 'flex', flexDirection: 'column', my: 16, gap: 4 }}
-      >
-        
-
-      </Container>
+      <Box component="main">
+        <HeroSection />
+        <FeaturesSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <CtaSection />
+      </Box>
       <Footer />
     </AppTheme>
   );

@@ -17,7 +17,6 @@ export default function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [role] = useState("user");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -103,12 +102,15 @@ export default function SignUpForm() {
         firstName,
         lastName,
         username,
-        phoneNumber,
-        role
+        phoneNumber
       });
-      console.log(response.data);
-      // Show success popup
-      setShowPopup(true);
+
+      // Store the token received from registration
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        // Show success popup and redirect to role selection
+        setShowPopup(true);
+      }
     } catch (error) {
       setErrorMessage("Failed to register");
       console.error(error);
@@ -119,7 +121,7 @@ export default function SignUpForm() {
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    navigate("/signin");
+    navigate("/role-select"); // Redirect to role selection page
   };
 
   return (
@@ -349,8 +351,8 @@ export default function SignUpForm() {
         </div>
       </div>
       {showPopup && (
-        <Popup 
-          message="Account created successfully. Please check your email to verify your account before signing in."
+        <Popup
+          message="Account created successfully! Next, you'll need to select a role. After that, please check your email to verify your account before signing in."
           onClose={handleClosePopup}
         />
       )}

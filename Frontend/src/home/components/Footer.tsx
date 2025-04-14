@@ -29,7 +29,7 @@ function Copyright() {
 
 export default function Footer() {
   return (
-    <React.Fragment>
+    <Box component="footer" sx={{ width: '100%' }}>
       <Divider />
       <Container
         sx={{
@@ -37,7 +37,7 @@ export default function Footer() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: { xs: 4, sm: 8 },
-          py: { xs: 8, sm: 10 },
+          py: { xs: 2, sm: 3 },
           textAlign: { sm: 'center', md: 'left' },
         }}
       >
@@ -223,6 +223,6 @@ export default function Footer() {
           </Stack>
         </Box>
       </Container>
-    </React.Fragment>
+    </Box>
   );
 }

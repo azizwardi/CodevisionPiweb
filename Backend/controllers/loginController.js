@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const generateResetToken = require('../utils/generateResetToken');
 const sendResetEmail = require('../utils/sendResetEmail');

@@ -2,6 +2,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
+  googleId: {
+    type: String,
+    sparse: true,
+  },
+  displayName: {
+    type: String,
+  },
   email: {
     type: String,
     required: true,
@@ -24,10 +31,10 @@ const userSchema = new Schema({
   address: {
     type: String,
   },
-  role: {
-    type: String,
-    enum: ["admin", "TeamLeader", "member"],
-    default: "admin",
+  role: { 
+    type: String, 
+    enum: ["admin", "TeamLeader", "member", "", "user"],
+    default: "" 
   },
   phoneNumber: {
     type: String,
@@ -47,7 +54,6 @@ const userSchema = new Schema({
   },
   avatarUrl: {
     type: String,
-    
   },
   facebook: {
     type: String,

@@ -1,0 +1,15 @@
+html {
+  scroll-behavior: smooth;
+}
+
+/* Offset for fixed headers */
+#features, #how-it-works, #testimonials {
+  scroll-margin-top: 80px;
+}
+
+/* For Safari compatibility */
+@media screen and (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

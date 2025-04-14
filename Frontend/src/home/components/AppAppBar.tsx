@@ -14,6 +14,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ColorModeIconDropdown from "../shared-theme/ColorModeIconDropdown";
 import Sitemark from "./SitemarkIcon";
 import { Link } from 'react-router-dom';
+import UserDropdown from "./UserDropdown";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
@@ -32,6 +33,35 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('authToken');
+    setIsLoggedIn(!!token);
+
+    // Add event listener for storage changes to detect login/logout
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'authToken') {
+        setIsLoggedIn(!!e.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Custom event for logout from other components
+    const handleAuthChange = () => {
+      const currentToken = localStorage.getItem('authToken');
+      setIsLoggedIn(!!currentToken);
+    };
+
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
+  }, []);
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -54,34 +84,42 @@ export default function AppAppBar() {
             sx={{ flexGrow: 1, display: "flex", alignItems: "center", px: 0 }}
           >
             <Sitemark />
-            <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2, ml: 4 }}> {/* Added gap and margin */}
-              <Button variant="text" color="info" size="medium"> {/* Increased size */}
-                One
-              </Button>
-              <Button variant="text" color="info" size="medium">
-                Two
-              </Button>
-              <Button variant="text" color="info" size="medium">
-                Three
-              </Button>
-              <Button variant="text" color="info" size="medium">
-                Four
+            <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2, ml: 4 }}>
+              <Button
+                variant="text"
+                color="info"
+                size="medium"
+                component="a"
+                href="#features"
+              >
+                Features
               </Button>
               <Button
                 variant="text"
                 color="info"
                 size="medium"
-                sx={{ minWidth: 0 }}
+                component="a"
+                href="#how-it-works"
               >
-                Five
+                How It Works
               </Button>
               <Button
                 variant="text"
                 color="info"
                 size="medium"
-                sx={{ minWidth: 0 }}
+                component="a"
+                href="#testimonials"
               >
-                Six
+                Testimonials
+              </Button>
+              <Button
+                variant="text"
+                color="info"
+                size="medium"
+                component="a"
+                href="/contact"
+              >
+                Contact
               </Button>
             </Box>
           </Box>
@@ -92,18 +130,27 @@ export default function AppAppBar() {
               alignItems: "center",
             }}
           >
-            <Link to="/signin" style={{ textDecoration: "none" }}>
-              <Button color="primary" variant="text" size="medium"> {/* Increased size */}
-                Sign in
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <UserDropdown />
+                <ColorModeIconDropdown />
+              </>
+            ) : (
+              <>
+                <Link to="/signin" style={{ textDecoration: "none" }}>
+                  <Button color="primary" variant="text" size="medium">
+                    Sign in
+                  </Button>
+                </Link>
 
-            <Link to="/signup" style={{ textDecoration: "none" }}>
-              <Button color="secondary" variant="contained" size="medium"> {/* Increased size */}
-                Sign up
-              </Button>
-            </Link>
-            <ColorModeIconDropdown />
+                <Link to="/signup" style={{ textDecoration: "none" }}>
+                  <Button color="secondary" variant="contained" size="medium">
+                    Sign up
+                  </Button>
+                </Link>
+                <ColorModeIconDropdown />
+              </>
+            )}
           </Box>
           <Box sx={{ display: { xs: "flex", md: "none" }, gap: 2 }}> {/* Increased gap */}
             <ColorModeIconDropdown size="medium" />
@@ -132,23 +179,81 @@ export default function AppAppBar() {
                     <CloseRoundedIcon fontSize="medium" /> {/* Increased icon size */}
                   </IconButton>
                 </Box>
-                <MenuItem sx={{ py: 1.5 }}>One</MenuItem> {/* Increased padding */}
-                <MenuItem sx={{ py: 1.5 }}>Two</MenuItem>
-                <MenuItem sx={{ py: 1.5 }}>Three</MenuItem>
-                <MenuItem sx={{ py: 1.5 }}>Four</MenuItem>
-                <MenuItem sx={{ py: 1.5 }}>Five</MenuItem>
-                <MenuItem sx={{ py: 1.5 }}>Six</MenuItem>
+                <MenuItem
+                  sx={{ py: 1.5 }}
+                  component="a"
+                  href="#features"
+                  onClick={toggleDrawer(false)}
+                >
+                  Features
+                </MenuItem>
+                <MenuItem
+                  sx={{ py: 1.5 }}
+                  component="a"
+                  href="#how-it-works"
+                  onClick={toggleDrawer(false)}
+                >
+                  How It Works
+                </MenuItem>
+                <MenuItem
+                  sx={{ py: 1.5 }}
+                  component="a"
+                  href="#testimonials"
+                  onClick={toggleDrawer(false)}
+                >
+                  Testimonials
+                </MenuItem>
+                <MenuItem
+                  sx={{ py: 1.5 }}
+                  component="a"
+                  href="/contact"
+                  onClick={toggleDrawer(false)}
+                >
+                  Contact
+                </MenuItem>
                 <Divider sx={{ my: 3 }} />
-                <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth size="medium"> {/* Increased size */}
-                    Sign up
-                  </Button>
-                </MenuItem>
-                <MenuItem>
-                  <Button color="primary" variant="outlined" fullWidth size="medium"> {/* Increased size */}
-                    Sign in
-                  </Button>
-                </MenuItem>
+
+                {isLoggedIn ? (
+                  <>
+                    <MenuItem component={Link} to="/profile">
+                      <Button color="primary" variant="outlined" fullWidth size="medium">
+                        Profile
+                      </Button>
+                    </MenuItem>
+                    <MenuItem component={Link} to="/dashboard">
+                      <Button color="primary" variant="contained" fullWidth size="medium">
+                        Dashboard
+                      </Button>
+                    </MenuItem>
+                  </>
+                ) : (
+                  <>
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        size="medium"
+                        component={Link}
+                        to="/signup"
+                      >
+                        Sign up
+                      </Button>
+                    </MenuItem>
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        fullWidth
+                        size="medium"
+                        component={Link}
+                        to="/signin"
+                      >
+                        Sign in
+                      </Button>
+                    </MenuItem>
+                  </>
+                )}
               </Box>
             </Drawer>
           </Box>
