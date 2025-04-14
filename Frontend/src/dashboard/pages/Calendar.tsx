@@ -42,6 +42,7 @@ const Calendar: React.FC = () => {
       console.log("Événements récupérés:", response.data);
 
       // Transformer les données pour FullCalendar
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedEvents = response.data.map((event: any) => ({
         id: event._id,
         title: event.title,

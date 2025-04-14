@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
@@ -177,6 +177,8 @@ export default function UserDropdown() {
         type="button"
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
+        aria-label="User menu"
+        title="User menu"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
           <img

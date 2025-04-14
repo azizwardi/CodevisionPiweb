@@ -1,5 +1,5 @@
 import type React from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 interface DropdownItemProps {
   tag?: "a" | "button";
@@ -39,7 +39,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
   }
 
   return (
-    <button onClick={handleClick} className={combinedClasses}>
+    <button type="button" onClick={handleClick} className={combinedClasses}>
       {children}
     </button>
   );

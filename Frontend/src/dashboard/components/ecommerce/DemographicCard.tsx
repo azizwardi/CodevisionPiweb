@@ -26,7 +26,7 @@ export default function DemographicCard() {
           </p>
         </div>
         <div className="relative inline-block">
-          <button className="dropdown-toggle" onClick={toggleDropdown}>
+          <button type="button" className="dropdown-toggle" onClick={toggleDropdown} aria-label="Demographic Options" title="Options">
             <MoreDotIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 size-6" />
           </button>
           <Dropdown

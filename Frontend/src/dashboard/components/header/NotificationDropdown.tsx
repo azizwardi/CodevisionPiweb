@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,8 +22,11 @@ export default function NotificationDropdown() {
   return (
     <div className="relative">
       <button
+        type="button"
         className="relative flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full dropdown-toggle hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
         onClick={handleClick}
+        aria-label="Notifications"
+        title="Notifications"
       >
         <span
           className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
@@ -57,8 +60,11 @@ export default function NotificationDropdown() {
             Notification
           </h5>
           <button
+            type="button"
             onClick={toggleDropdown}
             className="text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            aria-label="Close notifications"
+            title="Close"
           >
             <svg
               className="fill-current"
