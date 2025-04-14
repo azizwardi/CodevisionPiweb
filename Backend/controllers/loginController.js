@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const generateResetToken = require('../utils/generateResetToken');
 const sendResetEmail = require('../utils/sendResetEmail');
@@ -28,11 +28,11 @@ exports.login = [
                 return res.status(400).json({ message: "Invalid credentials" });
             }
 
-            
+
             if (!user.role) {
                 return res.status(500).json({ message: "User role not found" });
             }
-            
+
             if (!user.isVerified) {
                 return res.status(401).json({
                     message: "Account not verified. Please verify your email.",
@@ -45,7 +45,7 @@ exports.login = [
                 user: {
                     id: user.id,
                     email: user.email,
-                    role: user.role, 
+                    role: user.role,
                     name: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
@@ -79,19 +79,19 @@ exports.login = [
 
 exports.logout = (req, res) => {
     console.log("Session before destruction:", req.session); // Log session data
-  
+
     req.session.destroy((err) => {
       if (err) {
         console.error("Error destroying session:", err);
         return res.status(500).json({ message: "Server error" });
       }
-  
+
       console.log("Session destroyed successfully"); // Log success
-  
+
       // Verify session deletion in the store
       const sessionId = req.sessionID;
       console.log("Session ID:", sessionId);
-  
+
       // Check the session store to ensure the session is deleted
       req.sessionStore.get(sessionId, (err, session) => {
         if (err) {
@@ -100,7 +100,7 @@ exports.logout = (req, res) => {
           console.log("Session in store after destruction:", session); // Should be null
         }
       });
-  
+
       res.clearCookie("connect.sid");
       res.clearCookie("token");
       res.json({ message: "Logout successful" });
@@ -137,7 +137,7 @@ exports.requestPasswordReset = async (req, res) => {
         }
 
         const resetToken = generateResetToken();
-        
+
         user.resetPasswordToken = resetToken;
 
         await user.save();
@@ -156,7 +156,7 @@ exports.resetPassword = async (req, res) => {
     const { password } = req.body;
 
     try {
-        const user = await User.findOne({ 
+        const user = await User.findOne({
             resetPasswordToken: token
         });
 

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/user');
 const sendEmail = require('../utils/sendEmail');
 const generateVerificationToken = require('../utils/generateVerificationToken');
 const { body, validationResult } = require('express-validator');
@@ -62,9 +62,9 @@ exports.register = [
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
     try {
-        const user = await User.findOne({ 
+        const user = await User.findOne({
             verificationToken: token,
-            verificationTokenExpires: { $gt: Date.now() } 
+            verificationTokenExpires: { $gt: Date.now() }
         });
 
         if (!user) {

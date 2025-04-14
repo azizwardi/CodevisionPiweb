@@ -1,15 +1,43 @@
-const express = require('express');
+const express = require("express");
+const {
+  updateProject,
+  createProject,
+  getAllProjects,
+  getProjectById,
+  deleteProject,
+  getAllUsers,
+  addMemberToProject,
+  removeMemberFromProject,
+  getProjectMembers
+} = require("../controllers/projectController");
+
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const projectController = require('../controllers/projectController');
 
+// Récupérer tous les utilisateurs pour l'assignation
+router.get("/users/all", getAllUsers);
 
-router.post('/create-project', authMiddleware,  projectController.createProject);
+// Récupérer tous les projets
+router.get("/", getAllProjects);
 
-router.post('/add-user-project/:project_id/:user_id', authMiddleware, projectController.addUserToProject);
+// Créer un nouveau projet
+router.post("/", createProject);
 
-router.get('/my-projects', authMiddleware, projectController.getUserProjects);
+// Récupérer un projet par son ID
+router.get("/:projectId", getProjectById);
 
-router.delete('/delete/:project_id', authMiddleware, projectController.deleteProject);
+// Mettre à jour un projet
+router.put("/:projectId", updateProject);
+
+// Supprimer un projet
+router.delete("/:projectId", deleteProject);
+
+// Récupérer les membres d'un projet
+router.get("/:projectId/members", getProjectMembers);
+
+// Ajouter un membre à un projet
+router.post("/:projectId/members", addMemberToProject);
+
+// Supprimer un membre d'un projet
+router.delete("/:projectId/members/:userId", removeMemberFromProject);
 
 module.exports = router;

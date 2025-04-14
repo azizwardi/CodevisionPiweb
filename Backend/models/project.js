@@ -1,40 +1,27 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const projectSchema = new Schema({
-    projectName: {
-        type: String,
-        required: true
-    },
-    projectDesc: {
-        type: String,
-        required: true
-    },
-    projectCategory: {
-        type: String,
-        required: true
-    },
-    projectStartDate: {
-        type: Date,
-        required: true
-    },
-    projectEndDate: {
-        type: Date,
-        required: true
-    },
-    project_admins_ids : {
-        type : [Schema.Types.ObjectId],
-        default : []
-    },
-    project_owners_ids : {
-        type : [Schema.Types.ObjectId],
-        default : []
-    },
-    project_users_ids : {
-        type : [Schema.Types.ObjectId],
-        default : []
-    }
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  startDate: { type: Date, required: true },
+  deadline: { type: Date, required: true },
+  projectId: { type: String, unique: true },
+  createdAt: { type: Date, default: Date.now },
+  members: [{
+    user: { type: Schema.Types.ObjectId, ref: 'User' },
+    role: { type: String, enum: ['admin', 'member'], default: 'member' },
+    addedAt: { type: Date, default: Date.now }
+  }],
+  lastUpdated: { type: Date, default: Date.now }
 });
 
-const Project = mongoose.model('Project', projectSchema);
+// Update lastUpdated timestamp before saving
+projectSchema.pre("save", function(next) {
+  this.lastUpdated = new Date();
+  next();
+});
+
+const Project = mongoose.model("Project", projectSchema);
 module.exports = Project;
