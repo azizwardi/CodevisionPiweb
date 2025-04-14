@@ -33,7 +33,7 @@ exports.getProjectById = async (req, res) => {
 exports.createProject = async (req, res) => {
   try {
     console.log("Requête de création de projet reçue:", req.body);
-    const { name, description, category, startDate, deadline } = req.body;
+    const { name, description, category, startDate, deadline, userId } = req.body;
 
     if (!name || !description || !category || !startDate || !deadline) {
       console.log("Validation échouée - champs manquants:", {
@@ -46,12 +46,21 @@ exports.createProject = async (req, res) => {
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
+    // Vérifier si l'utilisateur existe
+    if (userId) {
+      const userExists = await User.findById(userId);
+      if (!userExists) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+    }
+
     console.log("Création d'un nouveau projet avec les données:", {
       name,
       description,
       category,
       startDate,
       deadline,
+      creator: userId
     });
     const project = new Project({
       name,
@@ -60,6 +69,7 @@ exports.createProject = async (req, res) => {
       startDate,
       deadline,
       projectId: uuidv4(),
+      creator: userId
     });
 
     console.log("Sauvegarde du projet dans la base de données...");
@@ -78,7 +88,7 @@ exports.updateProject = async (req, res) => {
     console.log("Requête de modification de projet reçue:", req.body);
     console.log("ID du projet à modifier:", req.params.projectId);
 
-    const { name, description, category, startDate, deadline } = req.body;
+    const { name, description, category, startDate, deadline, userId } = req.body;
 
     // Vérification des champs requis
     if (!name || !description || !category || !startDate || !deadline) {
@@ -100,6 +110,14 @@ exports.updateProject = async (req, res) => {
     }
 
     console.log("Projet trouvé:", project);
+
+    // Vérifier si l'utilisateur est le créateur du projet
+    if (project.creator && userId && project.creator.toString() !== userId.toString()) {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à modifier ce projet",
+        isCreator: false
+      });
+    }
 
     // Mise à jour des champs
     project.name = name;
@@ -135,9 +153,18 @@ exports.updateProject = async (req, res) => {
 // Supprimer un projet
 exports.deleteProject = async (req, res) => {
   try {
+    const { userId } = req.body;
     const project = await Project.findById(req.params.projectId);
     if (!project) {
       return res.status(404).json({ message: "Projet non trouvé" });
+    }
+
+    // Vérifier si l'utilisateur est le créateur du projet
+    if (project.creator && userId && project.creator.toString() !== userId.toString()) {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à supprimer ce projet",
+        isCreator: false
+      });
     }
 
     await Project.findByIdAndDelete(req.params.projectId);

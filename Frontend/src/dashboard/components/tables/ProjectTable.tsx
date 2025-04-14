@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import CommentSection from "../comments/CommentSection";
 import axios from "axios";
 import {
@@ -80,6 +81,36 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
   }, [refreshTrigger]);
 
   const handleDelete = async (projectId: string) => {
+    // Récupérer l'ID de l'utilisateur connecté
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toastManager.addToast("Vous devez être connecté pour supprimer un projet", "error", 5000);
+      return;
+    }
+
+    // Décoder le token pour obtenir l'ID utilisateur
+    interface DecodedToken {
+      user?: {
+        id: string;
+      };
+      id?: string;
+    }
+
+    let userId;
+    try {
+      const decodedToken = jwtDecode<DecodedToken>(token);
+      userId = decodedToken.user?.id || decodedToken.id;
+
+      if (!userId) {
+        toastManager.addToast("Impossible d'identifier l'utilisateur", "error", 5000);
+        return;
+      }
+    } catch (error) {
+      console.error("Erreur lors du décodage du token:", error);
+      toastManager.addToast("Erreur d'authentification", "error", 5000);
+      return;
+    }
+
     // Confirmation plus détaillée pour la suppression
     if (!window.confirm(
       "Attention : Cette action est irréversible.\n\n" +
@@ -89,17 +120,9 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
       return;
     }
 
-    // Pour le débogage, nous n'utilisons pas le token d'authentification
-    // const token = localStorage.getItem("authToken");
-    // if (!token) {
-    //   throw new Error("Aucun token d'authentification trouvé");
-    // }
-
     try {
       await axios.delete(`http://localhost:8000/projects/${projectId}`, {
-        // headers: {
-        //   Authorization: `Bearer ${token}`
-        // }
+        data: { userId }
       });
 
       // Mettre à jour la liste des projets après la suppression
@@ -111,8 +134,15 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
       toastManager.addToast(message, "success", 5000);
     } catch (err: any) {
       console.error("Erreur lors de la suppression du projet:", err);
-      const errorMessage = `Erreur lors de la suppression: ${err.response?.data?.message || "Une erreur est survenue"}`;
-      toastManager.addToast(errorMessage, "error", 5000);
+
+      // Vérifier si l'erreur est due à un problème d'autorisation
+      if (err.response?.status === 403) {
+        // Afficher une popup d'erreur d'autorisation
+        window.alert("Vous n'êtes pas autorisé à supprimer ce projet car vous n'en êtes pas le créateur.");
+      } else {
+        const errorMessage = `Erreur lors de la suppression: ${err.response?.data?.message || "Une erreur est survenue"}`;
+        toastManager.addToast(errorMessage, "error", 5000);
+      }
     }
   };
 

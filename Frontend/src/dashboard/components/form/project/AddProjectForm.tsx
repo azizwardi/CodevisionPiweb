@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import Label from "../Label";
 import Input from "../input/InputField";
@@ -26,7 +27,32 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     category: "",
     startDate: new Date().toISOString().split('T')[0], // Date du jour par défaut
     deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Date du jour + 7 jours par défaut
+    userId: ""
   });
+
+  // Récupérer l'ID de l'utilisateur connecté
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        interface DecodedToken {
+          user?: {
+            id: string;
+          };
+          id?: string;
+        }
+
+        const decodedToken = jwtDecode<DecodedToken>(token);
+        const userId = decodedToken.user?.id || decodedToken.id;
+
+        if (userId) {
+          setFormData(prev => ({ ...prev, userId }));
+        }
+      } catch (error) {
+        console.error("Erreur lors du décodage du token:", error);
+      }
+    }
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

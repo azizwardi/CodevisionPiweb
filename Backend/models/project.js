@@ -8,6 +8,7 @@ const projectSchema = new Schema({
   startDate: { type: Date, required: true },
   deadline: { type: Date, required: true },
   projectId: { type: String, unique: true },
+  creator: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   members: [{
     user: { type: Schema.Types.ObjectId, ref: 'User' },
