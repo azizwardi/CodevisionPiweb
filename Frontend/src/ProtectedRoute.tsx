@@ -15,8 +15,9 @@ const isAuthenticated = (requiredRole?: string): boolean => {
   // If no role is required, just check authentication
   if (!requiredRole) return true;
 
-  // Check if the user has the required role
-  if (userRole === requiredRole) {
+  // Check if the user has the required role (case-insensitive)
+  console.log('ProtectedRoute checking role:', userRole, 'required:', requiredRole);
+  if (userRole?.toLowerCase() === requiredRole?.toLowerCase() || userRole === requiredRole) {
     console.log(`User has required role: ${requiredRole}`);
     return true;
   } else {

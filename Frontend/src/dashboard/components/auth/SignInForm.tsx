@@ -131,17 +131,20 @@ export default function SignInForm() {
       window.dispatchEvent(new Event('authChange'));
 
       // Navigate to the appropriate dashboard based on user role
-      if (role === 'admin') {
+      console.log('SignInForm: User role from login response:', role);
+
+      if (role === 'admin' || role.toLowerCase() === 'admin') {
         // Admin goes to the admin dashboard
         navigate("/dashboard");
-      } else if (role === 'TeamLeader') {
+      } else if (role === 'TeamLeader' || role.toLowerCase() === 'teamleader') {
         // Team Leader goes to the team leader dashboard
         navigate("/team-leader-dashboard");
-      } else if (role === 'member') {
+      } else if (role === 'member' || role.toLowerCase() === 'member') {
         // Member goes to the member dashboard
         navigate("/member-dashboard");
       } else {
         // Default fallback
+        console.log('No matching role found, defaulting to dashboard');
         navigate("/dashboard");
       }
     } catch (error) {

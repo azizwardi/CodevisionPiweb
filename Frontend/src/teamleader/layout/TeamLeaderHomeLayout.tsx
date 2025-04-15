@@ -28,7 +28,17 @@ const TeamLeaderHomeLayout: React.FC = () => {
 
     try {
       const decoded = jwtDecode<DecodedToken>(token);
-      if (decoded.role !== 'TeamLeader') {
+      console.log('Full decoded token:', decoded);
+
+      // Get role from token or localStorage
+      const userRole = decoded.role?.toLowerCase();
+      const storedRole = localStorage.getItem('userRole')?.toLowerCase();
+
+      console.log('Checking team leader role - Token role:', userRole, 'Stored role:', storedRole);
+
+      // Check both token role and stored role
+      if ((userRole !== 'teamleader' && decoded.role !== 'TeamLeader') && storedRole !== 'teamleader') {
+        console.log('Role mismatch - Token role:', userRole, 'Stored role:', storedRole);
         navigate('/unauthorized');
         return;
       }
@@ -109,12 +119,7 @@ const TeamLeaderHomeLayout: React.FC = () => {
 
         {/* Content area */}
         <main className="content-area">
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center p-8 bg-white rounded-lg shadow-md">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4">Team Leader Dashboard</h1>
-              <p className="text-gray-600">Welcome to the Team Leader interface. This area will be populated with content later.</p>
-            </div>
-          </div>
+          <Outlet />
         </main>
       </div>
 

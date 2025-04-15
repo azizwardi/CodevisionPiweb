@@ -25,12 +25,18 @@ import ResetPassword from './dashboard/pages/AuthPages/ResetPassword';
 import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
+import DebugAuth from "./dashboard/pages/AuthPages/DebugAuth";
+import Unauthorized from "./dashboard/pages/AuthPages/Unauthorized";
 
 // Team Leader imports
 import TeamLeaderHomeLayout from "./teamleader/layout/TeamLeaderHomeLayout";
+import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
+import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
+import MemberDashboard from "./member/pages/MemberDashboard";
+import MemberProfile from "./member/pages/MemberProfile";
 
 
 export default function App() {
@@ -45,6 +51,8 @@ export default function App() {
           <Route path="/request-reset" element={<RequestReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/debug-auth" element={<DebugAuth />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/*" element={<Frontpage />} />
 
           <Route element={<AppLayout />}>
@@ -73,8 +81,8 @@ export default function App() {
           {/* Team Leader Routes */}
           <Route element={<ProtectedRoute requiredRole="TeamLeader" />}>
             <Route element={<TeamLeaderHomeLayout />}>
-              <Route path="/team-leader-dashboard" element={<div />} />
-              <Route path="/team-leader/profile" element={<div />} />
+              <Route path="/team-leader-dashboard" element={<TeamLeaderDashboard />} />
+              <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
               <Route path="/team-leader/team" element={<div />} />
               <Route path="/team-leader/projects" element={<div />} />
               <Route path="/team-leader/tasks" element={<div />} />
@@ -85,8 +93,8 @@ export default function App() {
           {/* Member Routes */}
           <Route element={<ProtectedRoute requiredRole="member" />}>
             <Route element={<MemberHomeLayout />}>
-              <Route path="/member-dashboard" element={<div />} />
-              <Route path="/member/profile" element={<div />} />
+              <Route path="/member-dashboard" element={<MemberDashboard />} />
+              <Route path="/member/profile" element={<MemberProfile />} />
               <Route path="/member/tasks" element={<div />} />
               <Route path="/member/projects" element={<div />} />
               <Route path="/member/time-tracking" element={<div />} />

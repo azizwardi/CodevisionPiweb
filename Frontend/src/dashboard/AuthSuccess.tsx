@@ -33,17 +33,22 @@ export default function AuthSuccess() {
             localStorage.setItem("userRole", decoded.role);
 
             // Navigate to the appropriate dashboard based on user role
-            if (decoded.role === 'admin') {
+            console.log('AuthSuccess: User role from token:', decoded.role);
+            const userRole = decoded.role;
+            const userRoleLower = decoded.role.toLowerCase();
+
+            if (userRole === 'admin' || userRoleLower === 'admin') {
               // Admin goes to the admin dashboard
               navigate("/dashboard");
-            } else if (decoded.role === 'TeamLeader') {
+            } else if (userRole === 'TeamLeader' || userRoleLower === 'teamleader') {
               // Team Leader goes to the team leader dashboard
               navigate("/team-leader-dashboard");
-            } else if (decoded.role === 'member') {
+            } else if (userRole === 'member' || userRoleLower === 'member') {
               // Member goes to the member dashboard
               navigate("/member-dashboard");
             } else {
               // Default fallback
+              console.log('No matching role found, defaulting to dashboard');
               navigate("/dashboard");
             }
           } else {
@@ -57,17 +62,22 @@ export default function AuthSuccess() {
               localStorage.setItem("userRole", decoded.role);
 
               // Navigate to the appropriate dashboard based on user role
-              if (decoded.role === 'admin') {
+              console.log('AuthSuccess (regular flow): User role from token:', decoded.role);
+              const userRole = decoded.role;
+              const userRoleLower = decoded.role.toLowerCase();
+
+              if (userRole === 'admin' || userRoleLower === 'admin') {
                 // Admin goes to the admin dashboard
                 navigate("/dashboard");
-              } else if (decoded.role === 'TeamLeader') {
+              } else if (userRole === 'TeamLeader' || userRoleLower === 'teamleader') {
                 // Team Leader goes to the team leader dashboard
                 navigate("/team-leader-dashboard");
-              } else if (decoded.role === 'member') {
+              } else if (userRole === 'member' || userRoleLower === 'member') {
                 // Member goes to the member dashboard
                 navigate("/member-dashboard");
               } else {
                 // Default fallback
+                console.log('No matching role found, defaulting to dashboard');
                 navigate("/dashboard");
               }
             } else {
