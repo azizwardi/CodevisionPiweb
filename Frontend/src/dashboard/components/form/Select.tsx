@@ -6,6 +6,8 @@ interface Option {
 }
 
 interface SelectProps {
+  id?: string; // ID for accessibility
+  name?: string; // Name for form submission
   options: Option[];
   placeholder?: string;
   onChange: (value: string) => void;
@@ -15,6 +17,8 @@ interface SelectProps {
 }
 
 const Select: React.FC<SelectProps> = ({
+  id, // ID for accessibility
+  name, // Name for form submission
   options,
   placeholder = "Select an option",
   onChange,
@@ -40,6 +44,8 @@ const Select: React.FC<SelectProps> = ({
 
   return (
     <select
+      id={id}
+      name={name || id} // Utiliser l'ID comme nom par défaut si le nom n'est pas fourni
       className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
         selectedValue
           ? "text-gray-800 dark:text-white/90"

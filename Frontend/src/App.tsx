@@ -12,6 +12,11 @@ import Avatars from "./dashboard/pages/UiElements/Avatars";
 import Buttons from "./dashboard/pages/UiElements/Buttons";
 import LineChart from "./dashboard/pages/Charts/LineChart";
 import BarChart from "./dashboard/pages/Charts/BarChart";
+// Task management imports
+import TaskList from "./dashboard/pages/Tasks/TaskList";
+import CreateTask from "./dashboard/pages/Tasks/CreateTask";
+import EditTask from "./dashboard/pages/Tasks/EditTask";
+
 import Calendar from "./dashboard/pages/Calendar";
 import BasicTables from "./dashboard/pages/Tables/BasicTables";
 import FormElements from "./dashboard/pages/Forms/FormElements";
@@ -58,17 +63,21 @@ export default function App() {
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
               <Route path="/form-elements" element={<FormElements />} />
-              <Route path="/basic-tables" element={<BasicTables />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/avatars" element={<Avatars />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-              <Route path="/images" element={<Images />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="/line-chart" element={<LineChart />} />
-              <Route path="/bar-chart" element={<BarChart />} />
-            </Route>
-          </Route>
+          <Route path="/basic-tables" element={<BasicTables />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/avatars" element={<Avatars />} />
+          <Route path="/badge" element={<Badges />} />
+          <Route path="/buttons" element={<Buttons />} />
+          <Route path="/images" element={<Images />} />
+          <Route path="/videos" element={<Videos />} />
+          <Route path="/line-chart" element={<LineChart />} />
+          <Route path="/bar-chart" element={<BarChart />} />
+          {/* Task management routes */}
+          <Route path="/tasks" element={<TaskList />} />
+          <Route path="/tasks/create" element={<CreateTask />} />
+          <Route path="/tasks/edit/:taskId" element={<EditTask />} />
+        </Route>
+      </Route>
 
           {/* Team Leader Routes */}
           <Route element={<ProtectedRoute requiredRole="TeamLeader" />}>

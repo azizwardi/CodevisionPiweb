@@ -1,6 +1,8 @@
 import React from "react";
 
 interface TextareaProps {
+  id?: string; // ID for accessibility
+  name?: string; // Name for form submission
   placeholder?: string; // Placeholder text
   rows?: number; // Number of rows
   value?: string; // Current value
@@ -12,6 +14,8 @@ interface TextareaProps {
 }
 
 const TextArea: React.FC<TextareaProps> = ({
+  id, // ID for accessibility
+  name, // Name for form submission
   placeholder = "Enter your message", // Default placeholder
   rows = 3, // Default number of rows
   value = "", // Default value
@@ -40,6 +44,8 @@ const TextArea: React.FC<TextareaProps> = ({
   return (
     <div className="relative">
       <textarea
+        id={id}
+        name={name || id} // Utiliser l'ID comme nom par défaut si le nom n'est pas fourni
         placeholder={placeholder}
         rows={rows}
         value={value}
