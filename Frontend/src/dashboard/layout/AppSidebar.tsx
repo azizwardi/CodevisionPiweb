@@ -3,16 +3,16 @@ import { Link, useLocation } from "react-router-dom";
 
 // Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
+  // Commented out unused icons
+  // BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
+  //PageIcon,
+  // PieChartIcon,
+  // PlugInIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
@@ -42,17 +42,6 @@ const navItems: NavItem[] = [
     path: "/profile",
   },
   {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-    path: "/profile",
-  },
-  {
     name: "Project Management",
     icon: <ListIcon />,
      path: "/form-elements",
@@ -70,16 +59,17 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     path: "/basic-tables",
   },
-  {
+  /*{
     name: "Pages",
     icon: <PageIcon />,
     subItems: [
       { name: "Blank Page", path: "/blank", pro: false },
       { name: "404 Error", path: "/error-404", pro: false },
     ],
-  },
+  },*/
 ];
 
+/* Commented out to hide these items from the sidebar
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
@@ -110,6 +100,9 @@ const othersItems: NavItem[] = [
     ],
   },
 ];
+*/
+
+// We don't need othersItems anymore since we've commented it out
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -132,8 +125,9 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+    // Only check main items since others are commented out
+    ["main"].forEach((menuType) => {
+      const items = navItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -167,16 +161,19 @@ const AppSidebar: React.FC = () => {
   }, [openSubmenu]);
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
+    // Only handle main menu items since others are commented out
+    if (menuType === "main") {
+      setOpenSubmenu((prevOpenSubmenu) => {
+        if (
+          prevOpenSubmenu &&
+          prevOpenSubmenu.type === menuType &&
+          prevOpenSubmenu.index === index
+        ) {
+          return null;
+        }
+        return { type: menuType, index };
+      });
+    }
   };
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
@@ -185,6 +182,7 @@ const AppSidebar: React.FC = () => {
         <li key={nav.name}>
           {nav.subItems ? (
             <button
+              type="button"
               onClick={() => handleSubmenuToggle(index, menuType)}
               className={`menu-item group ${
                 openSubmenu?.type === menuType && openSubmenu?.index === index
@@ -345,22 +343,7 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {/* Others section removed */}
             {/* Section "Others" supprimée */}
           </div>
         </nav>
