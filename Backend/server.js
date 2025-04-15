@@ -203,6 +203,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", user);
 app.use("/projects", projectRouter);
 app.use("/events", eventRouter);
+app.use("/tasks", require("./routes/taskRoutes"));
 
 // Start the Server
 app.listen(PORT, () => {

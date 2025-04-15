@@ -58,6 +58,14 @@ const navItems: NavItem[] = [
      path: "/form-elements",
   },
   {
+    name: "Task Management",
+    icon: <ListIcon />,
+    subItems: [
+      { name: "Task List", path: "/tasks" },
+      { name: "Create Task", path: "/tasks/create" },
+    ],
+  },
+  {
     name: "User Management",
     icon: <UserCircleIcon />,
     path: "/basic-tables",
