@@ -51,12 +51,12 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const roleOptions = [
-    { value: "admin", label: "Administrateur" },
-    { value: "TeamLeader", label: "Chef d'équipe" },
-    { value: "user", label: "Utilisateur" },
+    { value: "admin", label: "Administrator" },
+    { value: "TeamLeader", label: "Team Leader" },
+    { value: "user", label: "User" },
   ];
 
-  // Charger les données de l'utilisateur
+  // Load user data
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -201,16 +201,16 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
         }
       );
 
-      console.log("Réponse de la modification:", response.data);
+      console.log("Edit response:", response.data);
 
-      // Afficher un toast de succès
-      toastManager.addToast("Utilisateur modifié avec succès", "success", 5000);
+      // Display success toast
+      toastManager.addToast("User updated successfully", "success", 5000);
 
-      // Notifier le parent du succès
+      // Notify parent of success
       onSuccess();
     } catch (err: any) {
-      console.error("Erreur lors de la modification de l'utilisateur:", err);
-      const errorMessage = err.response?.data?.message || "Erreur lors de la modification de l'utilisateur";
+      console.error("Error updating user:", err);
+      const errorMessage = err.response?.data?.message || "Error updating user";
       setError(errorMessage);
       toastManager.addToast(errorMessage, "error", 5000);
     } finally {
@@ -219,7 +219,7 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
   };
 
   if (fetchLoading) {
-    return <div className="text-center p-4">Chargement de l'utilisateur...</div>;
+    return <div className="text-center p-4">Loading user...</div>;
   }
 
   return (
@@ -237,14 +237,14 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="username">Nom d'utilisateur</Label>
+          <Label htmlFor="username">Username</Label>
           <Input
             type="text"
             id="username"
             name="username"
             value={formData.username}
             onChange={handleInputChange}
-            placeholder="Entrez le nom d'utilisateur"
+            placeholder="Enter username"
             error={!!validationErrors.username}
             hint={validationErrors.username}
           />
@@ -257,7 +257,7 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="Entrez l'email"
+            placeholder="Enter email"
             error={!!validationErrors.email}
             hint={validationErrors.email}
           />
@@ -266,27 +266,27 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="firstName">Prénom</Label>
+          <Label htmlFor="firstName">First Name</Label>
           <Input
             type="text"
             id="firstName"
             name="firstName"
             value={formData.firstName}
             onChange={handleInputChange}
-            placeholder="Entrez le prénom"
+            placeholder="Enter first name"
             error={!!validationErrors.firstName}
             hint={validationErrors.firstName}
           />
         </div>
         <div>
-          <Label htmlFor="lastName">Nom</Label>
+          <Label htmlFor="lastName">Last Name</Label>
           <Input
             type="text"
             id="lastName"
             name="lastName"
             value={formData.lastName}
             onChange={handleInputChange}
-            placeholder="Entrez le nom"
+            placeholder="Enter last name"
             error={!!validationErrors.lastName}
             hint={validationErrors.lastName}
           />
@@ -295,11 +295,11 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label>Rôle</Label>
+          <Label>Role</Label>
           <div className="relative">
             <Select
               options={roleOptions}
-              placeholder="Sélectionnez un rôle"
+              placeholder="Select a role"
               onChange={handleRoleChange}
               value={formData.role}
               className={`dark:bg-dark-900 ${validationErrors.role ? 'border-error-500' : ''}`}
@@ -312,14 +312,14 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
           </div>
         </div>
         <div>
-          <Label htmlFor="phoneNumber">Téléphone</Label>
+          <Label htmlFor="phoneNumber">Phone</Label>
           <Input
             type="tel"
             id="phoneNumber"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleInputChange}
-            placeholder="Entrez le numéro de téléphone"
+            placeholder="Enter phone number"
             error={!!validationErrors.phoneNumber}
             hint={validationErrors.phoneNumber}
           />
@@ -332,14 +332,14 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
           onClick={onCancel}
           className="w-full sm:w-auto"
         >
-          Annuler
+          Cancel
         </Button>
         <Button
           type="submit"
           disabled={loading}
           className="w-full sm:w-auto"
         >
-          {loading ? "Modification en cours..." : "Modifier l'utilisateur"}
+          {loading ? "Updating..." : "Update User"}
         </Button>
       </div>
     </form>

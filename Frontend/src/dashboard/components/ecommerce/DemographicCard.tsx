@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
@@ -6,6 +7,29 @@ import CountryMap from "./CountryMap";
 
 export default function DemographicCard() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Récupérer le nombre d'utilisateurs
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:8000/api/user/showuser");
+        console.log("Réponse de l'API utilisateurs:", response.data);
+        setUserCount(response.data.length);
+        setError("");
+      } catch (err) {
+        console.error("Erreur lors de la récupération des utilisateurs:", err);
+        setError("Impossible de charger le nombre d'utilisateurs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserCount();
+  }, []);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -22,7 +46,13 @@ export default function DemographicCard() {
             Customers Demographic
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Number of customer based on country
+            {loading ? (
+              "Chargement du nombre d'utilisateurs..."
+            ) : error ? (
+              <span className="text-error-500">{error}</span>
+            ) : (
+              `Nombre total d'utilisateurs: ${userCount}`
+            )}
           </p>
         </div>
         <div className="relative inline-block">
@@ -50,6 +80,22 @@ export default function DemographicCard() {
         </div>
       </div>
       <div className="px-4 py-6 my-6 overflow-hidden border border-gary-200 rounded-2xl dark:border-gray-800 sm:px-6">
+        {/* Affichage du nombre total d'utilisateurs */}
+        <div className="mb-4 text-center">
+          <div className="inline-block px-6 py-3 bg-brand-50 dark:bg-brand-900/20 rounded-lg">
+            <h4 className="text-xl font-bold text-brand-600 dark:text-brand-400">
+              {loading ? (
+                <span className="inline-block w-16 h-8 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></span>
+              ) : error ? (
+                <span className="text-error-500">Erreur</span>
+              ) : (
+                userCount
+              )}
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Utilisateurs Totaux</p>
+          </div>
+        </div>
+
         <div
           id="mapOne"
           className="mapOne map-btn -mx-4 -my-6 h-[212px] w-[252px] 2xsm:w-[307px] xsm:w-[358px] sm:-mx-6 md:w-[668px] lg:w-[634px] xl:w-[393px] 2xl:w-[554px]"

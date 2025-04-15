@@ -15,7 +15,8 @@ interface ValidationErrors {
   deadline?: string;
 }
 
-interface Project {
+// Type for project data retrieved from the API
+type ProjectData = {
   _id: string;
   name: string;
   description: string;
@@ -46,21 +47,21 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const categoryOptions = [
-    { value: "web", label: "Développement Web" },
-    { value: "mobile", label: "Développement Mobile" },
+    { value: "web", label: "Web Development" },
+    { value: "mobile", label: "Mobile Development" },
     { value: "design", label: "Design" },
     { value: "marketing", label: "Marketing" },
-    { value: "other", label: "Autre" },
+    { value: "other", label: "Other" },
   ];
 
-  // Charger les données du projet
+  // Load project data
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        // Pour le débogage, nous n'utilisons pas le token d'authentification
+        // For debugging, we're not using the authentication token
         // const token = localStorage.getItem("authToken");
         // if (!token) {
-        //   throw new Error("Vous devez être connecté pour modifier un projet");
+        //   throw new Error("You must be logged in to edit a project");
         // }
 
         const response = await axios.get(
@@ -72,9 +73,9 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
           }
         );
 
-        const project = response.data;
-        
-        // Formater les dates pour l'input date
+        const project: ProjectData = response.data;
+
+        // Format dates for the date input
         const formatDate = (dateString: string) => {
           const date = new Date(dateString);
           return date.toISOString().split('T')[0];
@@ -87,9 +88,13 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
           startDate: formatDate(project.startDate),
           deadline: formatDate(project.deadline),
         });
-      } catch (err: any) {
-        console.error("Erreur lors du chargement du projet:", err);
-        setError(err.response?.data?.message || "Erreur lors du chargement du projet");
+      } catch (err: unknown) {
+        const error = err as Error | { response?: { data?: { message?: string } } };
+        console.error("Error loading project:", err);
+        const errorMessage = 'response' in error && error.response?.data?.message
+          ? error.response.data.message
+          : "Error loading project";
+        setError(errorMessage);
       } finally {
         setFetchLoading(false);
       }
@@ -101,8 +106,8 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Effacer l'erreur de validation pour ce champ
+
+    // Clear validation error for this field
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -113,8 +118,8 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
-    
-    // Effacer l'erreur de validation pour la description
+
+    // Clear validation error for description
     if (validationErrors.description) {
       setValidationErrors(prev => ({
         ...prev,
@@ -125,8 +130,8 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
-    
-    // Effacer l'erreur de validation pour la catégorie
+
+    // Clear validation error for category
     if (validationErrors.category) {
       setValidationErrors(prev => ({
         ...prev,
@@ -134,54 +139,54 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       }));
     }
   };
-  
-  // Fonction de validation des champs
+
+  // Form validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
-    
-    // Validation du nom
+
+    // Name validation
     if (!formData.name.trim()) {
-      errors.name = "Le nom du projet est requis";
+      errors.name = "Project name is required";
       isValid = false;
     } else if (formData.name.length < 3) {
-      errors.name = "Le nom doit contenir au moins 3 caractères";
+      errors.name = "Name must be at least 3 characters";
       isValid = false;
     } else if (formData.name.length > 50) {
-      errors.name = "Le nom ne doit pas dépasser 50 caractères";
+      errors.name = "Name must not exceed 50 characters";
       isValid = false;
     }
-    
-    // Validation de la description
+
+    // Description validation
     if (!formData.description.trim()) {
-      errors.description = "La description du projet est requise";
+      errors.description = "Project description is required";
       isValid = false;
     } else if (formData.description.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must be at least 10 characters";
       isValid = false;
     }
-    
-    // Validation de la catégorie
+
+    // Category validation
     if (!formData.category) {
-      errors.category = "Veuillez sélectionner une catégorie";
+      errors.category = "Please select a category";
       isValid = false;
     }
-    
-    // Validation de la date de début
+
+    // Start date validation
     if (!formData.startDate) {
-      errors.startDate = "La date de début est requise";
+      errors.startDate = "Start date is required";
       isValid = false;
     }
-    
-    // Validation de la date limite
+
+    // Deadline validation
     if (!formData.deadline) {
-      errors.deadline = "La date limite est requise";
+      errors.deadline = "Deadline is required";
       isValid = false;
     } else if (formData.startDate && new Date(formData.deadline) < new Date(formData.startDate)) {
-      errors.deadline = "La date limite doit être postérieure à la date de début";
+      errors.deadline = "Deadline must be after start date";
       isValid = false;
     }
-    
+
     setValidationErrors(errors);
     return isValid;
   };
@@ -190,22 +195,22 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
     e.preventDefault();
     setError("");
     setSuccess("");
-    
-    // Validation des champs
+
+    // Form validation
     if (!validateForm()) {
-      return; // Arrêter si la validation échoue
+      return; // Stop if validation fails
     }
-    
+
     setLoading(true);
 
     try {
-      // Pour le débogage, nous n'utilisons pas le token d'authentification
+      // For debugging, we're not using the authentication token
       // const token = localStorage.getItem("authToken");
       // if (!token) {
-      //   throw new Error("Vous devez être connecté pour modifier un projet");
+      //   throw new Error("You must be logged in to edit a project");
       // }
 
-      const response = await axios.put(
+      await axios.put(
         `http://localhost:8000/projects/${projectId}`,
         formData,
         {
@@ -216,14 +221,17 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
         }
       );
 
-      // Afficher un toast de succès
-      toastManager.addToast("Projet modifié avec succès", "success", 5000);
-      
-      // Notifier le parent du succès
+      // Display success toast
+      toastManager.addToast("Project updated successfully", "success", 5000);
+
+      // Notify parent of success
       onSuccess();
-    } catch (err: any) {
-      console.error("Erreur lors de la modification du projet:", err);
-      const errorMessage = err.response?.data?.message || "Erreur lors de la modification du projet";
+    } catch (err: unknown) {
+      const error = err as Error | { response?: { data?: { message?: string } } };
+      console.error("Error updating project:", err);
+      const errorMessage = 'response' in error && error.response?.data?.message
+        ? error.response.data.message
+        : "Error updating project";
       setError(errorMessage);
       toastManager.addToast(errorMessage, "error", 5000);
     } finally {
@@ -232,7 +240,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
   };
 
   if (fetchLoading) {
-    return <div className="text-center p-4">Chargement du projet...</div>;
+    return <div className="text-center p-4">Loading project...</div>;
   }
 
   return (
@@ -249,14 +257,14 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       )}
 
       <div>
-        <Label htmlFor="name">Nom du projet</Label>
+        <Label htmlFor="name">Project Name</Label>
         <Input
           type="text"
           id="name"
           name="name"
           value={formData.name}
           onChange={handleInputChange}
-          placeholder="Entrez le nom du projet"
+          placeholder="Enter project name"
           error={!!validationErrors.name}
           hint={validationErrors.name}
         />
@@ -267,7 +275,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
         <TextArea
           value={formData.description}
           onChange={handleDescriptionChange}
-          placeholder="Décrivez le projet"
+          placeholder="Describe your project"
           rows={4}
           error={!!validationErrors.description}
           hint={validationErrors.description}
@@ -275,11 +283,11 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       </div>
 
       <div>
-        <Label>Catégorie</Label>
+        <Label>Category</Label>
         <div className="relative">
           <Select
             options={categoryOptions}
-            placeholder="Sélectionnez une catégorie"
+            placeholder="Select a category"
             onChange={handleCategoryChange}
             value={formData.category}
             className={`dark:bg-dark-900 ${validationErrors.category ? 'border-error-500' : ''}`}
@@ -294,7 +302,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="startDate">Date de début</Label>
+          <Label htmlFor="startDate">Start Date</Label>
           <Input
             type="date"
             id="startDate"
@@ -306,7 +314,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
           />
         </div>
         <div>
-          <Label htmlFor="deadline">Date limite</Label>
+          <Label htmlFor="deadline">Deadline</Label>
           <Input
             type="date"
             id="deadline"
@@ -320,20 +328,20 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       </div>
 
       <div className="flex justify-end gap-3 mt-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onCancel}
           className="w-full sm:w-auto"
         >
-          Annuler
+          Cancel
         </Button>
-        <Button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
         >
-          {loading ? "Modification en cours..." : "Modifier le projet"}
-        </Button>
+          {loading ? "Updating..." : "Update Project"}
+        </button>
       </div>
     </form>
   );

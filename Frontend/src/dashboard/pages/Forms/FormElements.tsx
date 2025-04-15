@@ -37,10 +37,10 @@ export default function FormElements() {
   return (
     <div>
       <PageMeta
-        title="Gestion des Projets | CodevisionPiweb"
-        description="Page de gestion des projets pour CodevisionPiweb"
+        title="Project Management | CodevisionPiweb"
+        description="Project management page for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Gestion des Projets" />
+      <PageBreadcrumb pageTitle="Project Management" />
 
       {/* Navigation entre les onglets */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -48,34 +48,35 @@ export default function FormElements() {
           variant={activeTab === 'list' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('list')}
         >
-          Liste des Projets
+          Project List
         </Button>
         <Button
           variant={activeTab === 'add' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('add')}
         >
-          Ajouter un Projet
+          Add Project
         </Button>
       </div>
 
       {/* Contenu en fonction de l'onglet actif */}
       {activeTab === 'list' && (
-        <ComponentCard title="Liste des Projets">
+        <ComponentCard title="Project List">
           <ProjectTable
             onEdit={handleEditClick}
             refreshTrigger={refreshTrigger}
+            onAddProject={() => setActiveTab('add')}
           />
         </ComponentCard>
       )}
 
       {activeTab === 'add' && (
-        <ComponentCard title="Ajouter un Nouveau Projet">
+        <ComponentCard title="Add New Project">
           <AddProjectForm onSuccess={handleAddSuccess} />
         </ComponentCard>
       )}
 
       {activeTab === 'edit' && selectedProjectId && (
-        <ComponentCard title="Modifier le Projet">
+        <ComponentCard title="Edit Project">
           <EditProjectForm
             projectId={selectedProjectId}
             onSuccess={handleEditSuccess}

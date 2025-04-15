@@ -20,7 +20,7 @@ const passport = require("passport");
 require("./auth"); // Importe la configuration de Passport depuis auth.js
 
 const app = express();
-const PORT = process.env.PORT || 8000; // Utilise 8000 comme fallback si PORT n'est pas défini
+const PORT = process.env.PORT || 8000;
 
 // Middleware
 app.use(express.json());

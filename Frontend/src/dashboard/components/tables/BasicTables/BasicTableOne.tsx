@@ -163,7 +163,7 @@ export default function BasicTableOne() {
   // Si un utilisateur est en cours de modification, afficher le formulaire d'édition
   if (editingUser) {
     return (
-      <ComponentCard title="Modifier l'utilisateur">
+      <ComponentCard title="Edit User">
         <EditUserForm
           userId={editingUser}
           onSuccess={handleEditSuccess}
@@ -177,7 +177,7 @@ export default function BasicTableOne() {
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       {loading ? (
         <div className="p-5 text-center">
-          <p className="text-gray-500 dark:text-gray-400">Chargement des utilisateurs...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading users...</p>
         </div>
       ) : error ? (
         <div className="p-5 text-center">
@@ -194,7 +194,7 @@ export default function BasicTableOne() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Nom d'utilisateur
+                    Username
                   </TableCell>
                   <TableCell
                     isHeader
@@ -206,19 +206,19 @@ export default function BasicTableOne() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Nom complet
+                    Full Name
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Rôle
+                    Role
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Statut
+                    Status
                   </TableCell>
                   <TableCell
                     isHeader
@@ -257,7 +257,7 @@ export default function BasicTableOne() {
                             {user.username}
                           </span>
                           <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                            {user.phoneNumber || "Pas de téléphone"}
+                            {user.phoneNumber || "No phone"}
                           </span>
                         </div>
                       </div>
@@ -268,7 +268,7 @@ export default function BasicTableOne() {
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       {user.firstName && user.lastName
                         ? `${user.firstName} ${user.lastName}`
-                        : "Non renseigné"}
+                        : "Not provided"}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge
@@ -289,7 +289,7 @@ export default function BasicTableOne() {
                         size="sm"
                         color={user.isVerified ? "success" : "error"}
                       >
-                        {user.isVerified ? "Vérifié" : "Non vérifié"}
+                        {user.isVerified ? "Verified" : "Not verified"}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
@@ -299,7 +299,7 @@ export default function BasicTableOne() {
                           variant="outline"
                           onClick={() => handleEditUser(user._id)}
                         >
-                          Modifier
+                          Edit
                         </Button>
                         <Button
                           size="sm"
@@ -307,7 +307,7 @@ export default function BasicTableOne() {
                           className="text-error-500 hover:bg-error-50 hover:text-error-700"
                           onClick={() => handleDeleteUser(user._id)}
                         >
-                          Supprimer
+                          Delete
                         </Button>
                       </div>
                     </TableCell>

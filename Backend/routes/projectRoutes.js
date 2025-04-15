@@ -9,19 +9,19 @@ const {
 
 const router = express.Router();
 
-// Récupérer tous les projets
+// Get all projects
 router.get("/", getAllProjects);
 
-// Récupérer un projet par son ID
+// Get a project by its ID
 router.get("/:projectId", getProjectById);
 
-// Créer un nouveau projet
-router.post("/", createProject);
+// Create a new project
+router.post("/addProject", createProject);
 
-// Mettre à jour un projet
+// Update a project
 router.put("/:projectId", updateProject);
 
-// Supprimer un projet
+// Delete a project
 router.delete("/:projectId", deleteProject);
 
 module.exports = router;

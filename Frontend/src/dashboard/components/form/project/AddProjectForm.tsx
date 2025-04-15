@@ -3,7 +3,7 @@ import axios from "axios";
 import Label from "../Label";
 import Input from "../input/InputField";
 import TextArea from "../input/TextArea";
-import Button from "../../ui/button/Button";
+
 import Select from "../Select";
 import { toastManager } from "../../ui/toast/ToastContainer";
 
@@ -24,8 +24,8 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     name: "",
     description: "",
     category: "",
-    startDate: new Date().toISOString().split('T')[0], // Date du jour par défaut
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Date du jour + 7 jours par défaut
+    startDate: new Date().toISOString().split('T')[0], // Today's date by default
+    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Today + 7 days by default
   });
 
   const [loading, setLoading] = useState(false);
@@ -34,18 +34,18 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const categoryOptions = [
-    { value: "web", label: "Développement Web" },
-    { value: "mobile", label: "Développement Mobile" },
+    { value: "web", label: "Web Development" },
+    { value: "mobile", label: "Mobile Development" },
     { value: "design", label: "Design" },
     { value: "marketing", label: "Marketing" },
-    { value: "other", label: "Autre" },
+    { value: "other", label: "Other" },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Effacer l'erreur de validation pour ce champ
+    // Clear validation error for this field
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -57,7 +57,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
 
-    // Effacer l'erreur de validation pour la description
+    // Clear validation error for description
     if (validationErrors.description) {
       setValidationErrors(prev => ({
         ...prev,
@@ -69,7 +69,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
 
-    // Effacer l'erreur de validation pour la catégorie
+    // Clear validation error for category
     if (validationErrors.category) {
       setValidationErrors(prev => ({
         ...prev,
@@ -83,55 +83,55 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     const errors: ValidationErrors = {};
     let isValid = true;
 
-    console.log("Validation des champs:", formData);
+    console.log("Validating fields:", formData);
 
-    // Validation du nom
+    // Name validation
     if (!formData.name.trim()) {
-      errors.name = "Le nom du projet est requis";
+      errors.name = "Project name is required";
       isValid = false;
     } else if (formData.name.length < 3) {
-      errors.name = "Le nom doit contenir au moins 3 caractères";
+      errors.name = "Name must be at least 3 characters";
       isValid = false;
     } else if (formData.name.length > 50) {
-      errors.name = "Le nom ne doit pas dépasser 50 caractères";
+      errors.name = "Name must not exceed 50 characters";
       isValid = false;
     }
 
-    // Validation de la description
+    // Description validation
     if (!formData.description.trim()) {
-      errors.description = "La description du projet est requise";
+      errors.description = "Project description is required";
       isValid = false;
     } else if (formData.description.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must be at least 10 characters";
       isValid = false;
     }
 
-    // Validation de la catégorie
+    // Category validation
     if (!formData.category) {
-      errors.category = "Veuillez sélectionner une catégorie";
+      errors.category = "Please select a category";
       isValid = false;
-      console.log("Erreur de catégorie: catégorie non sélectionnée");
+      console.log("Category error: no category selected");
     }
 
-    // Validation de la date de début
+    // Start date validation
     if (!formData.startDate) {
-      errors.startDate = "La date de début est requise";
+      errors.startDate = "Start date is required";
       isValid = false;
-      console.log("Erreur de date de début: date non spécifiée");
+      console.log("Start date error: date not specified");
     }
 
-    // Validation de la date limite
+    // Deadline validation
     if (!formData.deadline) {
-      errors.deadline = "La date limite est requise";
+      errors.deadline = "Deadline is required";
       isValid = false;
-      console.log("Erreur de date limite: date non spécifiée");
+      console.log("Deadline error: date not specified");
     } else if (formData.startDate && new Date(formData.deadline) < new Date(formData.startDate)) {
-      errors.deadline = "La date limite doit être postérieure à la date de début";
+      errors.deadline = "Deadline must be after start date";
       isValid = false;
-      console.log("Erreur de date limite: date antérieure à la date de début");
+      console.log("Deadline error: date is before start date");
     }
 
-    console.log("Résultat de la validation:", { isValid, errors });
+    console.log("Validation result:", { isValid, errors });
 
     setValidationErrors(errors);
     return isValid;
@@ -142,23 +142,23 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     setError("");
     setSuccess("");
 
-    console.log("Début de la soumission du formulaire");
-    console.log("Données du formulaire:", formData);
+    console.log("Starting form submission");
+    console.log("Form data:", formData);
 
-    // Validation des champs
+    // Form validation
     if (!validateForm()) {
-      console.log("Validation échouée");
-      return; // Arrêter si la validation échoue
+      console.log("Validation failed");
+      return; // Stop if validation fails
     }
 
-    console.log("Validation réussie, envoi de la requête");
+    console.log("Validation successful, sending request");
     setLoading(true);
 
     try {
       // Pour le débogage, nous n'utilisons pas le token d'authentification
       // const token = localStorage.getItem("authToken");
       // if (!token) {
-      //   throw new Error("Vous devez être connecté pour créer un projet");
+      //   throw new Error("You must be logged in to create a project");
       // }
 
       console.log("Envoi de la requête POST à http://localhost:8000/projects");
@@ -174,16 +174,16 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           }
         );
 
-        console.log("Réponse reçue:", response.data);
+        console.log("Response received:", response.data);
       } catch (axiosError) {
-        console.error("Erreur Axios:", axiosError);
-        throw axiosError; // Relancer l'erreur pour qu'elle soit traitée par le bloc catch principal
+        console.error("Axios error:", axiosError);
+        throw axiosError; // Rethrow the error to be handled by the main catch block
       }
 
-      // Afficher un toast de succès
-      toastManager.addToast("Projet créé avec succès", "success", 5000);
+      // Display success toast
+      toastManager.addToast("Project created successfully", "success", 5000);
 
-      // Réinitialiser le formulaire
+      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -192,22 +192,23 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         deadline: "",
       });
 
-      // Notifier le parent du succès
+      // Notify parent of success
       onSuccess();
-    } catch (err: any) {
-      console.error("Erreur lors de la création du projet:", err);
-      console.log("Détails de l'erreur:", {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        config: err.config
-      });
-      const errorMessage = err.response?.data?.message || "Erreur lors de la création du projet";
+    } catch (err: unknown) {
+      const error = err as Error | { response?: { data?: { message?: string } } };
+      console.error("Error creating project:", error);
+
+      let errorMessage = "Error creating project";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if ('response' in error && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       setError(errorMessage);
       toastManager.addToast(errorMessage, "error", 5000);
     } finally {
-      console.log("Fin de la soumission du formulaire");
+      console.log("Form submission completed");
       setLoading(false);
     }
   };
@@ -226,14 +227,14 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       )}
 
       <div>
-        <Label htmlFor="name">Nom du projet</Label>
+        <Label htmlFor="name">Project Name</Label>
         <Input
           type="text"
           id="name"
           name="name"
           value={formData.name}
           onChange={handleInputChange}
-          placeholder="Entrez le nom du projet"
+          placeholder="Enter project name"
           error={!!validationErrors.name}
           hint={validationErrors.name}
         />
@@ -244,7 +245,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         <TextArea
           value={formData.description}
           onChange={handleDescriptionChange}
-          placeholder="Décrivez le projet"
+          placeholder="Describe your project"
           rows={4}
           error={!!validationErrors.description}
           hint={validationErrors.description}
@@ -252,11 +253,11 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       </div>
 
       <div>
-        <Label>Catégorie</Label>
+        <Label>Category</Label>
         <div className="relative">
           <Select
             options={categoryOptions}
-            placeholder="Sélectionnez une catégorie"
+            placeholder="Select a category"
             onChange={handleCategoryChange}
             value={formData.category}
             className={`dark:bg-dark-900 ${validationErrors.category ? 'border-error-500' : ''}`}
@@ -271,7 +272,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="startDate">Date de début</Label>
+          <Label htmlFor="startDate">Start Date</Label>
           <Input
             type="date"
             id="startDate"
@@ -283,7 +284,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           />
         </div>
         <div>
-          <Label htmlFor="deadline">Date limite</Label>
+          <Label htmlFor="deadline">Deadline</Label>
           <Input
             type="date"
             id="deadline"
@@ -297,13 +298,13 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button
+        <button
           type="submit"
           disabled={loading}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
         >
-          {loading ? "Création en cours..." : "Créer le projet"}
-        </Button>
+          {loading ? "Creating..." : "Create Project"}
+        </button>
       </div>
     </form>
   );

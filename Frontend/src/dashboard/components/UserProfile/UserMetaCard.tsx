@@ -23,21 +23,21 @@ export default function UserMetaCard() {
       instagram?: string;
     }
 
-    // Fonction pour écouter les changements dans le localStorage
+    // Function to listen for changes in localStorage
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key && e.key.startsWith('user') && e.newValue) {
-        // Forcer une mise à jour du composant lorsque les liens sociaux sont modifiés
+        // Force a component update when social links are modified
         setUser(prev => prev ? {...prev} : null);
       }
     };
 
-    // Fonction pour écouter l'événement personnalisé de mise à jour des liens sociaux
+    // Function to listen for custom social links update event
     const handleSocialLinksUpdate = (e: CustomEvent<{facebook?: string, twitter?: string, linkedin?: string, instagram?: string}>) => {
-      // Forcer une mise à jour du composant avec les nouvelles valeurs
+      // Force a component update with new values
       console.log('Social links updated:', e.detail);
       setUser(prev => prev ? {
         ...prev,
-        // Mettre à jour les liens sociaux si présents dans l'événement
+        // Update social links if present in the event
         ...(e.detail.facebook && { facebook: e.detail.facebook }),
         ...(e.detail.twitter && { twitter: e.detail.twitter }),
         ...(e.detail.linkedin && { linkedin: e.detail.linkedin }),
@@ -45,7 +45,7 @@ export default function UserMetaCard() {
       } : null);
     };
 
-    // Fonction pour écouter l'événement personnalisé de mise à jour de l'avatar
+    // Function to listen for custom avatar update event
     const handleAvatarUpdate = (e: CustomEvent<{avatarUrl: string}>) => {
       console.log('Avatar updated:', e.detail);
       setUser(prev => prev ? {
@@ -54,7 +54,7 @@ export default function UserMetaCard() {
       } : null);
     };
 
-    // Fonction pour récupérer les données utilisateur par ID
+    // Function to fetch user data by ID
     const fetchUserById = async (userId: string) => {
       setLoading(true);
       setError("");

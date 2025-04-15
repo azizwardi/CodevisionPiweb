@@ -7,12 +7,12 @@ export default function BasicTables() {
   return (
     <>
       <PageMeta
-        title="Gestion des Utilisateurs | CodevisionPiweb"
-        description="Page de gestion des utilisateurs pour CodevisionPiweb"
+        title="User Management | CodevisionPiweb"
+        description="User management page for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Liste des Utilisateurs" />
+      <PageBreadcrumb pageTitle="User List" />
       <div className="space-y-6">
-        <ComponentCard title="Liste des Utilisateurs">
+        <ComponentCard title="User List">
           <BasicTableOne />
         </ComponentCard>
       </div>

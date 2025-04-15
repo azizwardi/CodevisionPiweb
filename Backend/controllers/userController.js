@@ -40,9 +40,7 @@ async function update(req, res) {
     res.status(200).json(user);
   } catch (err) {
     console.log(err);
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la mise à jour de l'utilisateur" });
+    res.status(500).json({ message: "Error updating user" });
   }
 }
 
@@ -56,26 +54,26 @@ async function changePassword(req, res) {
     if (!currentPassword || !newPassword) {
       return res
         .status(400)
-        .json({ message: "Les mots de passe actuels et nouveaux sont requis" });
+        .json({ message: "Current and new passwords are required" });
     }
 
     // Vérifier que le nouveau mot de passe est assez long
     if (newPassword.length < 6) {
       return res.status(400).json({
-        message: "Le nouveau mot de passe doit contenir au moins 6 caractères",
+        message: "New password must be at least 6 characters long",
       });
     }
 
     // Récupérer l'utilisateur
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Vérifier que le mot de passe actuel est correct
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Mot de passe actuel incorrect" });
+      return res.status(400).json({ message: "Incorrect current password" });
     }
 
     // Hasher le nouveau mot de passe
@@ -86,12 +84,10 @@ async function changePassword(req, res) {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ message: "Mot de passe modifié avec succès" });
+    res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
-    console.error("Erreur lors du changement de mot de passe:", err);
-    res
-      .status(500)
-      .json({ message: "Erreur lors du changement de mot de passe" });
+    console.error("Error changing password:", err);
+    res.status(500).json({ message: "Error changing password" });
   }
 }
 

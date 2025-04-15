@@ -27,7 +27,7 @@ export default function UserDropdown() {
     instagram?: string;
   }
 
-  // Fonction pour écouter l'événement personnalisé de mise à jour de l'avatar
+  // Function to listen for custom avatar update event
   const handleAvatarUpdate = (e: CustomEvent<{avatarUrl: string}>) => {
     console.log('Avatar updated in UserDropdown:', e.detail);
     setUser(prev => prev ? {
@@ -36,7 +36,7 @@ export default function UserDropdown() {
     } : null);
   };
 
-  // Fonction pour récupérer les données utilisateur par ID
+  // Function to fetch user data by ID
   const fetchUserById = async (userId: string) => {
     try {
       const token = localStorage.getItem("authToken");
