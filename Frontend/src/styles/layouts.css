@@ -6,12 +6,14 @@
   overflow-x: hidden; /* Prevent horizontal scrolling */
   padding-bottom: 0; /* Ensure no padding at the bottom */
   margin-bottom: 0; /* Ensure no margin at the bottom */
+  padding-top: 0; /* No space at the top */
 }
 
 /* Navbar */
 .navbar-container {
   position: relative;
   z-index: 10;
+  margin-bottom: 0; /* No space below navbar */
 }
 
 /* Main content area with sidebar */
@@ -37,8 +39,10 @@
 .content-area {
   flex: 1;
   padding: 1.5rem;
+  padding-top: 2.5rem; /* Add more space at the top of content */
   min-height: 80vh; /* Ensure enough space for content */
   background-color: #f9fafb; /* gray-50 */
+  overflow-y: auto; /* Enable scrolling for content area only */
 }
 
 /* Footer */

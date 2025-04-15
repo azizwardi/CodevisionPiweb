@@ -5,12 +5,18 @@ import { jwtDecode } from 'jwt-decode';
 import Popup from '../ui/popup/Popup';
 
 interface JwtPayload {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: string;
   isVerified?: boolean;
   googleAuth?: boolean;
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
 }
 
 export default function UserRoleSelector() {
@@ -29,16 +35,39 @@ export default function UserRoleSelector() {
 
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      // Only redirect if the user already has a role AND is verified
-      if (decoded.role && decoded.role !== '' && decoded.isVerified) {
-        navigate('/dashboard');
+      console.log('UserRoleSelector: User from token:', decoded);
+
+      // Check if the user has a role
+      const userRole = decoded.role || (decoded.user && decoded.user.role) || '';
+      console.log('User role from token:', userRole);
+
+      // Only redirect if the user already has a role
+      if (userRole && userRole !== '') {
+        console.log('User already has role:', userRole);
+        // User already has a role, redirect to appropriate dashboard
+        if (userRole === 'admin') {
+          navigate('/dashboard');
+        } else if (userRole === 'TeamLeader') {
+          navigate('/team-leader-dashboard');
+        } else if (userRole === 'Member') {
+          navigate('/member-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        console.log('User does not have a role, staying on role selection page');
+        // Set a default selected role if needed
+        if (!role) {
+          setRole('Member'); // Default to Member as a suggestion
+        }
       }
+      // Otherwise, stay on this page to let the user select a role
     } catch (err) {
       console.error('Token decode error:', err);
       localStorage.removeItem('authToken');
       navigate('/signin');
     }
-  }, [navigate]);
+  }, [navigate, role, setRole]);
 
   const handleSubmit = async () => {
     if (!role) {
@@ -53,6 +82,7 @@ export default function UserRoleSelector() {
         throw new Error('No auth token found');
       }
 
+      console.log('Sending role update request with role:', role);
       const response = await axios.put(
         'http://localhost:5000/api/auth/users/role',
         { role },
@@ -63,6 +93,8 @@ export default function UserRoleSelector() {
           }
         }
       );
+
+      console.log('Role update response:', response.data);
 
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
@@ -80,7 +112,7 @@ export default function UserRoleSelector() {
           } else if (decoded.role === 'TeamLeader') {
             // Team Leader goes to the team leader dashboard
             navigate('/team-leader-dashboard');
-          } else if (decoded.role === 'member') {
+          } else if (decoded.role === 'Member') {
             // Member goes to the member dashboard
             navigate('/member-dashboard');
           } else {
@@ -96,11 +128,13 @@ export default function UserRoleSelector() {
       // Handle error with proper type checking
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       console.error('Error updating role:', err);
-      setError(
-        axios.isAxiosError(err) && err.response?.data?.message
-          ? err.response.data.message
-          : errorMessage || 'Failed to update role. Please try again.'
-      );
+
+      if (axios.isAxiosError(err)) {
+        console.error('Axios error details:', err.response?.data);
+        setError(err.response?.data?.message || 'Failed to update role. Please try again.');
+      } else {
+        setError(errorMessage || 'Failed to update role. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -117,8 +151,18 @@ export default function UserRoleSelector() {
       <div className="p-8 bg-white rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-semibold mb-6 text-center">Select Your Role</h1>
         <p className="text-gray-600 mb-6 text-center">
-          Please select a role to continue. This will determine your access level in the system.
+          Welcome! Please select a role to continue. This will determine your access level in the system.
         </p>
+
+        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md">
+          <p className="font-medium mb-2">You've successfully signed in!</p>
+          <p>Before you can access the dashboard, please select your role in the system:</p>
+          <ul className="list-disc list-inside mt-2 ml-2">
+            <li><strong>Admin:</strong> Full access to all features</li>
+            <li><strong>Team Leader:</strong> Manage projects and team members</li>
+            <li><strong>Member:</strong> Participate in projects</li>
+          </ul>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -137,7 +181,7 @@ export default function UserRoleSelector() {
           <option value="">Select a role</option>
           <option value="admin">Admin</option>
           <option value="TeamLeader">Team Leader</option>
-          <option value="member">Member</option>
+          <option value="Member">Member</option>
           <option value="user">User</option>
         </select>
 

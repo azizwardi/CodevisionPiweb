@@ -13,7 +13,7 @@ exports.register = [
     body('lastName').isLength({ min: 2 }).trim().escape(),
     body('username').isLength({ min: 2 }).trim().escape(),
     body('phoneNumber').optional().isMobilePhone().trim().escape(),
-    body('role').optional().isIn(['admin', 'TeamLeader', 'member', 'user']).trim().escape(),
+    body('role').optional().isIn(['admin', 'TeamLeader', 'Member', '', 'user']).trim().escape(),
 
     async (req, res) => {
         const errors = validationResult(req);
@@ -62,9 +62,9 @@ exports.register = [
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
     try {
-        const user = await User.findOne({ 
+        const user = await User.findOne({
             verificationToken: token,
-            verificationTokenExpires: { $gt: Date.now() } 
+            verificationTokenExpires: { $gt: Date.now() }
         });
 
         if (!user) {

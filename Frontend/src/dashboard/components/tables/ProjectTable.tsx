@@ -89,7 +89,7 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
 
       // Mettre à jour la liste des projets après la suppression
       setProjects(projects.filter(project => project._id !== projectId));
-      
+
       // Afficher un toast de confirmation
       const projectName = projects.find(p => p._id === projectId)?.name || "Le projet";
       const message = `${projectName} a été supprimé avec succès`;
@@ -115,11 +115,11 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
   const getProjectStatus = (deadline: string) => {
     const today = new Date();
     const deadlineDate = new Date(deadline);
-    
+
     // Calculer la différence en jours
     const diffTime = deadlineDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return { label: "En retard", color: "error" as const };
     } else if (diffDays <= 7) {
@@ -138,7 +138,7 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
       "marketing": "Marketing",
       "other": "Autre"
     };
-    
+
     return categories[category] || category;
   };
 

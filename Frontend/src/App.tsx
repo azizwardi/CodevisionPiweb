@@ -27,11 +27,13 @@ import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
 import DebugAuth from "./dashboard/pages/AuthPages/DebugAuth";
 import Unauthorized from "./dashboard/pages/AuthPages/Unauthorized";
+import UserRoleSelector from "./dashboard/components/auth/UserRoleSelector";
 
 // Team Leader imports
 import TeamLeaderHomeLayout from "./teamleader/layout/TeamLeaderHomeLayout";
 import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
 import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
+import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects"
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -51,6 +53,7 @@ export default function App() {
           <Route path="/request-reset" element={<RequestReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/role-select" element={<UserRoleSelector />} />
           <Route path="/debug-auth" element={<DebugAuth />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/*" element={<Frontpage />} />
@@ -84,7 +87,7 @@ export default function App() {
               <Route path="/team-leader-dashboard" element={<TeamLeaderDashboard />} />
               <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
               <Route path="/team-leader/team" element={<div />} />
-              <Route path="/team-leader/projects" element={<div />} />
+              <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
               <Route path="/team-leader/tasks" element={<div />} />
               <Route path="/team-leader/reports" element={<div />} />
             </Route>

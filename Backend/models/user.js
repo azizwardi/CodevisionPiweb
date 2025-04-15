@@ -31,10 +31,10 @@ const userSchema = new Schema({
   address: {
     type: String,
   },
-  role: { 
-    type: String, 
-    enum: ["admin", "TeamLeader", "member", "", "user"],
-    default: "" 
+  role: {
+    type: String,
+    enum: ["admin", "TeamLeader", "Member", "", "user"],
+    default: ""
   },
   phoneNumber: {
     type: String,

@@ -14,7 +14,7 @@ interface DecodedToken {
 
 const MemberLayout: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [, setUser] = useState<{ name: string; email: string } | null>(null);
   const navigate = useNavigate();
 
   React.useEffect(() => {

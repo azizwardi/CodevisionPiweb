@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import AppAppBar from '../../home/components/AppAppBar';
+import SharedNavbar from '../../shared/components/SharedNavbar';
 import SimpleFooter from '../../shared/components/SimpleFooter';
 import '../../styles/layouts.css';
 
@@ -56,7 +56,7 @@ const MemberHomeLayout: React.FC = () => {
     <div className="layout-container">
       {/* Navbar - scrolls with the page */}
       <div className="navbar-container">
-        <AppAppBar />
+        <SharedNavbar title="Dashboard" bgColor="bg-white" />
       </div>
 
       {/* Main content with sidebar */}

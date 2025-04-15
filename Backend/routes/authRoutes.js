@@ -3,6 +3,7 @@ const router = express.Router();
 const registerController = require('../controllers/registerController');
 const loginController = require('../controllers/loginController');
 const authMiddleware = require('../middleware/authMiddleware');
+const userRoleController = require('../controllers/userRoleController');
 
 router.post('/register', registerController.register);
 router.post('/login', loginController.login);
@@ -12,5 +13,6 @@ router.post('/resend-verification-email', registerController.resendVerificationE
 router.delete('/delete-account', authMiddleware, loginController.deleteAccount);
 router.post('/request-password-reset', loginController.requestPasswordReset);
 router.post('/reset-password', loginController.resetPassword);
+router.put('/users/role', authMiddleware, userRoleController.updateRole);
 
 module.exports = router;
