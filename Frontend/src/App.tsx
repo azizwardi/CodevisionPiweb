@@ -35,7 +35,8 @@ import UserRoleSelector from "./dashboard/components/auth/UserRoleSelector";
 import TeamLeaderHomeLayout from "./teamleader/layout/TeamLeaderHomeLayout";
 import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
 import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
-import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects"
+import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects";
+import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -98,7 +99,7 @@ export default function App() {
               <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
               <Route path="/team-leader/team" element={<div />} />
               <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
-              <Route path="/team-leader/tasks" element={<div />} />
+              <Route path="/team-leader/tasks" element={<TeamLeaderTasks />} />
               <Route path="/team-leader/reports" element={<div />} />
             </Route>
           </Route>

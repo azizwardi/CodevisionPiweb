@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {  
                     def scannerHome = tool 'scanner'
-                    withSonarQubeEnv {
+                    withSonarQubeEnv('scanner') {  // Ajout du nom de la config SonarQube
                         sh """
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=piweb \
@@ -64,8 +64,8 @@ pipeline {
         stage('Deploy to Nexus') {  
             steps {  
                 script {  
-                    docker.withRegistry("http://" + registry, registryCredentials) {  
-                        sh('docker push $registry/piwebapp:6.0')  
+                    docker.withRegistry("http://${registry}", registryCredentials) {  
+                        sh 'docker push ${registry}/piwebapp:6.0'
                     }  
                 }  
             }  
@@ -76,8 +76,8 @@ pipeline {
                 dir('Backend') {
                     script {
                         docker.withRegistry("http://${registry}", registryCredentials) {
-                            sh('docker pull $registry/piwebapp:6.0')
-                            sh('docker-compose up -d')
+                            sh 'docker pull ${registry}/piwebapp:6.0'
+                            sh 'docker-compose up -d'
                         }
                     }
                 }
@@ -88,7 +88,7 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh('docker start prometheus')
+                        sh 'docker start prometheus'
                     }
                 }
             }
@@ -98,10 +98,19 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh('docker start grafana')
+                        sh 'docker start grafana'
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
