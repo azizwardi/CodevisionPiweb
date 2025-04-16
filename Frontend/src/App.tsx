@@ -12,6 +12,11 @@ import Avatars from "./dashboard/pages/UiElements/Avatars";
 import Buttons from "./dashboard/pages/UiElements/Buttons";
 import LineChart from "./dashboard/pages/Charts/LineChart";
 import BarChart from "./dashboard/pages/Charts/BarChart";
+// Task management imports
+import TaskList from "./dashboard/pages/Tasks/TaskList";
+import CreateTask from "./dashboard/pages/Tasks/CreateTask";
+import EditTask from "./dashboard/pages/Tasks/EditTask";
+
 import Calendar from "./dashboard/pages/Calendar";
 import BasicTables from "./dashboard/pages/Tables/BasicTables";
 import FormElements from "./dashboard/pages/Forms/FormElements";
@@ -21,6 +26,21 @@ import { ScrollToTop } from "./dashboard/components/common/ScrollToTop";
 import Home from "./dashboard/pages/Dashboard/Home";
 import RequestReset from './dashboard/pages/AuthPages/RequestReset';
 import ResetPassword from './dashboard/pages/AuthPages/ResetPassword';
+// import VerifyEmail from './dashboard/pages/AuthPages/VerifyEmail';
+import DebugAuth from "./dashboard/pages/AuthPages/DebugAuth";
+import Unauthorized from "./dashboard/pages/AuthPages/Unauthorized";
+import UserRoleSelector from "./dashboard/components/auth/UserRoleSelector";
+
+// Team Leader imports
+import TeamLeaderHomeLayout from "./teamleader/layout/TeamLeaderHomeLayout";
+import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
+import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
+import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects"
+
+// Member imports
+import MemberHomeLayout from "./member/layout/MemberHomeLayout";
+import MemberDashboard from "./member/pages/MemberDashboard";
+import MemberProfile from "./member/pages/MemberProfile";
 import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
@@ -39,6 +59,9 @@ export default function App() {
           <Route path="/request-reset" element={<RequestReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/role-select" element={<UserRoleSelector />} />
+          <Route path="/debug-auth" element={<DebugAuth />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/*" element={<Frontpage />} />
 
           <Route element={<AppLayout />}>
@@ -52,15 +75,43 @@ export default function App() {
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
               <Route path="/form-elements" element={<FormElements />} />
-              <Route path="/basic-tables" element={<BasicTables />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/avatars" element={<Avatars />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-              <Route path="/images" element={<Images />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="/line-chart" element={<LineChart />} />
-              <Route path="/bar-chart" element={<BarChart />} />
+          <Route path="/basic-tables" element={<BasicTables />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/avatars" element={<Avatars />} />
+          <Route path="/badge" element={<Badges />} />
+          <Route path="/buttons" element={<Buttons />} />
+          <Route path="/images" element={<Images />} />
+          <Route path="/videos" element={<Videos />} />
+          <Route path="/line-chart" element={<LineChart />} />
+          <Route path="/bar-chart" element={<BarChart />} />
+          {/* Task management routes */}
+          <Route path="/tasks" element={<TaskList />} />
+          <Route path="/tasks/create" element={<CreateTask />} />
+          <Route path="/tasks/edit/:taskId" element={<EditTask />} />
+        </Route>
+      </Route>
+
+          {/* Team Leader Routes */}
+          <Route element={<ProtectedRoute requiredRole="TeamLeader" />}>
+            <Route element={<TeamLeaderHomeLayout />}>
+              <Route path="/team-leader-dashboard" element={<TeamLeaderDashboard />} />
+              <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
+              <Route path="/team-leader/team" element={<div />} />
+              <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
+              <Route path="/team-leader/tasks" element={<div />} />
+              <Route path="/team-leader/reports" element={<div />} />
+            </Route>
+          </Route>
+
+          {/* Member Routes */}
+          <Route element={<ProtectedRoute requiredRole="member" />}>
+            <Route element={<MemberHomeLayout />}>
+              <Route path="/member-dashboard" element={<MemberDashboard />} />
+              <Route path="/member/profile" element={<MemberProfile />} />
+              <Route path="/member/tasks" element={<div />} />
+              <Route path="/member/projects" element={<div />} />
+              <Route path="/member/time-tracking" element={<div />} />
+              <Route path="/member/team-chat" element={<div />} />
             </Route>
           </Route>
 

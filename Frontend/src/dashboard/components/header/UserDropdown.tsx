@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
@@ -162,6 +162,9 @@ export default function UserDropdown() {
       localStorage.removeItem("authToken");
       localStorage.removeItem("userRole");
 
+      // Dispatch an event to notify other components about the logout
+      window.dispatchEvent(new Event('authChange'));
+
       navigate("/signin");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -171,23 +174,31 @@ export default function UserDropdown() {
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
+        aria-label="User menu"
+        title="User menu"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <img
-            src={user?.avatarUrl ?
-              (user.avatarUrl.startsWith('http') ? user.avatarUrl :
-               user.avatarUrl.startsWith('/') ? `http://localhost:5000${user.avatarUrl}` :
-               `http://localhost:5000/${user.avatarUrl}`) :
-              "/images/user/owner.jpg"}
-            alt={user?.name || "User"}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback à l'image par défaut en cas d'erreur
-              e.currentTarget.src = "/images/user/owner.jpg";
-            }}
-          />
+        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 bg-gray-200 flex items-center justify-center">
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl.startsWith('http') ? user.avatarUrl :
+                   user.avatarUrl.startsWith('/') ? `http://localhost:5000${user.avatarUrl}` :
+                   `http://localhost:5000/${user.avatarUrl}`}
+              alt={user?.name || "User"}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initials if image fails to load
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.classList.add('text-white', 'bg-blue-500', 'font-bold');
+              }}
+            />
+          ) : (
+            <span className="text-white bg-blue-500 w-full h-full flex items-center justify-center font-bold text-lg">
+              {user?.firstName?.charAt(0) || user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}
+            </span>
+          )}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
@@ -218,13 +229,22 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <div>
+        <div className="p-2">
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.username || "User"}
+            {user?.username || user?.name || "User"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user?.email || "user@example.com"}
           </span>
+          {user?.role && (
+            <span className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-md
+              ${user.role === 'admin' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                user.role === 'TeamLeader' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}>
+              {user.role === 'TeamLeader' ? 'Team Leader' :
+               user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+            </span>
+          )}
         </div>
 
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
@@ -232,7 +252,9 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              to="/profile"
+              to={user?.role === 'admin' ? "/profile" :
+                  user?.role === 'TeamLeader' ? "/team-leader/profile" :
+                  user?.role === 'member' ? "/member/profile" : "/profile"}
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -258,7 +280,9 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              to="/profile"
+              to={user?.role === 'admin' ? "/dashboard" :
+                  user?.role === 'TeamLeader' ? "/team-leader-dashboard" :
+                  user?.role === 'member' ? "/member-dashboard" : "/dashboard"}
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -276,11 +300,12 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              Support
+              Dashboard
             </DropdownItem>
           </li>
         </ul>
         <button
+          type="button"
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >

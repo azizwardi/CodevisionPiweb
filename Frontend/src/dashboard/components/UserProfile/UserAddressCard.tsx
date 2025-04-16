@@ -109,13 +109,14 @@ export default function UserAddressCard() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-              Sécurité du compte
+            Account security
+
             </h4>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  Mot de passe
+                Password
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   ********
@@ -124,7 +125,7 @@ export default function UserAddressCard() {
 
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  Dernière mise à jour
+                Last update
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                   {new Date().toLocaleDateString()}
@@ -133,10 +134,10 @@ export default function UserAddressCard() {
 
               <div className="col-span-1 lg:col-span-2">
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  Sécurité
+                Security
                 </p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  Pour protéger votre compte, utilisez un mot de passe fort et unique que vous n'utilisez pas ailleurs.
+                To protect your account, use a strong, unique password that you don't use elsewhere.
                 </p>
               </div>
             </div>
@@ -169,10 +170,10 @@ export default function UserAddressCard() {
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Changer votre mot de passe
+              Change your password
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Mettez à jour votre mot de passe pour sécuriser votre compte.
+              Update your password to secure your account.
             </p>
           </div>
           <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
@@ -189,7 +190,7 @@ export default function UserAddressCard() {
               )}
               <div className="grid grid-cols-1 gap-x-6 gap-y-5">
                 <div>
-                  <Label>Mot de passe actuel</Label>
+                  <Label>Current password</Label>
                   <Input
                     type="password"
                     value={currentPassword}
@@ -198,17 +199,18 @@ export default function UserAddressCard() {
                 </div>
 
                 <div>
-                  <Label>Nouveau mot de passe</Label>
+                  <Label>New Password</Label>
                   <Input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
-                  <p className="mt-1 text-xs text-gray-500">Le mot de passe doit contenir au moins 6 caractères</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                  Password must contain at least 6 characters</p>
                 </div>
 
                 <div>
-                  <Label>Confirmer le nouveau mot de passe</Label>
+                  <Label>Confirm new password</Label>
                   <Input
                     type="password"
                     value={confirmPassword}

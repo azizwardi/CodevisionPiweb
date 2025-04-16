@@ -28,10 +28,11 @@ exports.login = [
                 return res.status(400).json({ message: "Invalid credentials" });
             }
 
-
-            if (!user.role) {
-                return res.status(500).json({ message: "User role not found" });
-            }
+            // Allow users without roles to sign in
+            // They will be redirected to role selection on the frontend
+            console.log('User role from database:', user.role);
+            const userRole = user.role || '';
+            console.log('Using role:', userRole);
 
             if (!user.isVerified) {
                 return res.status(401).json({
@@ -45,11 +46,12 @@ exports.login = [
                 user: {
                     id: user.id,
                     email: user.email,
-                    role: user.role,
+                    role: userRole, // Use the userRole variable which handles null/undefined
                     name: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     phoneNumber: user.phoneNumber,
+                    isVerified: user.isVerified,
                 },
             };
 
@@ -65,7 +67,7 @@ exports.login = [
                     res.json({
                         message: "Login successful",
                         token,
-                        role: user.role,
+                        role: userRole, // Use the userRole variable which handles null/undefined
                     });
                 }
             );

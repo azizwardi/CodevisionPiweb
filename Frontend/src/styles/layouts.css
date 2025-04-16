@@ -1,0 +1,76 @@
+/* Layout container */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  padding-bottom: 0; /* Ensure no padding at the bottom */
+  margin-bottom: 0; /* Ensure no margin at the bottom */
+  padding-top: 0; /* No space at the top */
+}
+
+/* Navbar */
+.navbar-container {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 0; /* No space below navbar */
+}
+
+/* Main content area with sidebar */
+.main-content {
+  display: flex;
+  flex: 1;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 16rem;
+  background-color: #1f2937; /* gray-800 */
+  color: white;
+}
+
+.sidebar-member {
+  width: 16rem;
+  background-color: #374151; /* gray-700 */
+  color: white;
+}
+
+/* Content area */
+.content-area {
+  flex: 1;
+  padding: 1.5rem;
+  padding-top: 2.5rem; /* Add more space at the top of content */
+  min-height: 80vh; /* Ensure enough space for content */
+  background-color: #f9fafb; /* gray-50 */
+  overflow-y: auto; /* Enable scrolling for content area only */
+}
+
+/* Footer */
+.footer-container {
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+  margin-bottom: 0;
+  display: block;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .sidebar, .sidebar-member {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: block;
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 40;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-button {
+    display: none;
+  }
+}

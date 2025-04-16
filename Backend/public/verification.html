@@ -31,7 +31,7 @@
             color: #555;
             font-size: 16px;
         }
-        .container button {
+        .container button, .container a.button {
             margin-top: 20px;
             padding: 10px 20px;
             border: none;
@@ -40,8 +40,11 @@
             color: white;
             cursor: pointer;
             font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
         }
-        .container button:hover {
+        .container button:hover, .container a.button:hover {
             background-color: rgba(70, 95, 255, 0.8);
         }
     </style>
@@ -49,8 +52,11 @@
 <body>
     <div class="container">
         <h1>Account Verified</h1>
-        <p>Your account has been successfully verified. You can close this page now.</p>
-        <button onclick="window.close()">Close</button>
+        <p>Your account has been successfully verified. You can now sign in to access your dashboard.</p>
+        <div>
+            <a href="http://localhost:5173/signin" class="button">Go to Sign In</a>
+            <button type="button" onclick="window.close()">Close</button>
+        </div>
     </div>
 </body>
 </html>

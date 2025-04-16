@@ -17,7 +17,7 @@ export default function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [role] = useState("user");
+  const [role] = useState(""); // Empty role to trigger role selection after signup
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -26,6 +26,7 @@ export default function SignUpForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const navigate = useNavigate();
 
   const validateEmail = (email: string) => {
@@ -107,8 +108,14 @@ export default function SignUpForm() {
         role
       });
       console.log(response.data);
-      // Show success popup
+      // Set registration success and show popup
+      setRegistrationSuccess(true);
       setShowPopup(true);
+
+      // Store the token if available
+      if (response.data && response.data.token) {
+        localStorage.setItem("authToken", response.data.token);
+      }
     } catch (error) {
       setErrorMessage("Failed to register");
       console.error(error);
@@ -119,7 +126,16 @@ export default function SignUpForm() {
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    navigate("/signin");
+
+    // If registration was successful, redirect to role selection
+    if (registrationSuccess) {
+      console.log('Registration successful, redirecting to role selection');
+      navigate("/role-select");
+    } else {
+      // Otherwise, redirect to signin
+      console.log('Registration not successful, redirecting to signin');
+      navigate("/signin");
+    }
   };
 
   return (
@@ -349,8 +365,8 @@ export default function SignUpForm() {
         </div>
       </div>
       {showPopup && (
-        <Popup 
-          message="Account created successfully. Please check your email to verify your account before signing in."
+        <Popup
+          message="Account created successfully! You will now be redirected to select your role."
           onClose={handleClosePopup}
         />
       )}

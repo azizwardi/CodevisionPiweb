@@ -88,6 +88,7 @@ export default function BasicTableOne() {
       // Afficher un toast de confirmation
       const message = `${userName} a été supprimé avec succès`;
       toastManager.addToast(message, "success", 5000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Erreur lors de la suppression de l'utilisateur:", err);
       const errorMessage = `Erreur lors de la suppression: ${err.response?.data?.message || err.message || "Une erreur est survenue"}`;

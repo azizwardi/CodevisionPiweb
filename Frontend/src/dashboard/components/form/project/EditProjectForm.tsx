@@ -122,7 +122,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
+    
     // Effacer l'erreur de validation pour ce champ
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({
@@ -134,7 +134,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
-
+    
     // Effacer l'erreur de validation pour la description
     if (validationErrors.description) {
       setValidationErrors(prev => ({
@@ -146,7 +146,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
-
+    
     // Effacer l'erreur de validation pour la catégorie
     if (validationErrors.category) {
       setValidationErrors(prev => ({
@@ -155,12 +155,10 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       }));
     }
   };
-
   // Fonction de validation des champs
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
-
     // Validation du nom
     if (!formData.name.trim()) {
       errors.name = "Le nom du projet est requis";
@@ -172,7 +170,6 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       errors.name = "Le nom ne doit pas dépasser 50 caractères";
       isValid = false;
     }
-
     // Validation de la description
     if (!formData.description.trim()) {
       errors.description = "La description du projet est requise";
@@ -181,19 +178,16 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       errors.description = "La description doit contenir au moins 10 caractères";
       isValid = false;
     }
-
     // Validation de la catégorie
     if (!formData.category) {
       errors.category = "Veuillez sélectionner une catégorie";
       isValid = false;
     }
-
     // Validation de la date de début
     if (!formData.startDate) {
       errors.startDate = "La date de début est requise";
       isValid = false;
     }
-
     // Validation de la date limite
     if (!formData.deadline) {
       errors.deadline = "La date limite est requise";
@@ -202,7 +196,6 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       errors.deadline = "La date limite doit être postérieure à la date de début";
       isValid = false;
     }
-
     setValidationErrors(errors);
     return isValid;
   };
@@ -223,15 +216,22 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
     if (!validateForm()) {
       return; // Arrêter si la validation échoue
     }
-
+    
     setLoading(true);
 
     try {
+      // Pour le débogage, nous n'utilisons pas le token d'authentification
+      // const token = localStorage.getItem("authToken");
+      // if (!token) {
+      //   throw new Error("Vous devez être connecté pour modifier un projet");
+      // }
+
       const response = await axios.put(
         `http://localhost:8000/projects/${projectId}`,
         formData,
         {
           headers: {
+            // Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -239,7 +239,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
       // Afficher un toast de succès
       toastManager.addToast("Projet modifié avec succès", "success", 5000);
-
+      
       // Notifier le parent du succès
       onSuccess();
     } catch (err: any) {

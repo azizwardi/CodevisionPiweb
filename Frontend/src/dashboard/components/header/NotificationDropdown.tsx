@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { Link } from "react-router";
 import { useNotifications } from "../notifications/NotificationContext";
 
 export default function NotificationDropdown() {

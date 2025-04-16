@@ -59,11 +59,11 @@ export default function SignInForm() {
         try {
           const decoded = jwtDecode<JwtPayload>(token);
           localStorage.setItem("authToken", token);
-          
+
           if (decoded.role) {
             localStorage.setItem("userRole", decoded.role);
           }
-          
+
           deleteCookie('authToken');
           navigate("/dashboard");
         } catch (error) {
@@ -127,7 +127,31 @@ export default function SignInForm() {
 
       console.log("Login successful:", response.data);
 
-      navigate("/dashboard");
+      // Dispatch an event to notify other components about the login
+      window.dispatchEvent(new Event('authChange'));
+
+      // Navigate to the appropriate dashboard based on user role
+      console.log('SignInForm: User role from login response:', role);
+
+      if (!role || role === '') {
+        // If no role, redirect to role selection
+        console.log('User has no role, redirecting to role selection');
+        navigate("/role-select");
+        return; // Exit early
+      } else if (role === 'admin' || role.toLowerCase() === 'admin') {
+        // Admin goes to the admin dashboard
+        navigate("/dashboard");
+      } else if (role === 'TeamLeader' || role.toLowerCase() === 'teamleader') {
+        // Team Leader goes to the team leader dashboard
+        navigate("/team-leader-dashboard");
+      } else if (role === 'Member' || role.toLowerCase() === 'member') {
+        // Member goes to the member dashboard
+        navigate("/member-dashboard");
+      } else {
+        // Default fallback
+        console.log('No matching role found, redirecting to role selection');
+        navigate("/role-select");
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.data.requiresVerification) {
         setErrorMessage("Account not verified. Please verify your email.");
@@ -311,6 +335,7 @@ export default function SignInForm() {
                     Verification required! Please check your email.
                   </p>
                   <button
+                    type="button"
                     onClick={() => setShowVerificationPopup(false)}
                     className="bg-blue-500 text-white w-full py-2 rounded mb-2"
                   >

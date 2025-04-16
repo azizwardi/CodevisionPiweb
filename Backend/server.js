@@ -27,6 +27,7 @@ const PORT = process.env.PORT || 8000; // Utilise 8000 comme fallback si PORT n'
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 // Configuration CORS pour permettre l'accès aux images
 app.use(
@@ -71,17 +72,23 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Session configuration
+// Session configuration - MUST be before Passport initialization
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "fallback_secret",
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    // Utiliser une session en mémoire temporairement pour le débogage
-    // store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { maxAge: 180 * 60 * 1000 }, // 3 hours
   })
 );
+
+// Passport initialization - MUST be after session middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/user", user);
 
 // Middleware pour vérifier si l'utilisateur est connecté
 function isLoggedIn(req, res, next) {
@@ -108,34 +115,41 @@ app.get(
 
     try {
       let user = await User.findOne({
-        $or: [{ googleId: req.user.id }, { email: req.user.email }],
+        $or: [{ googleId: req.user.id }, { email: req.user.email }]
       });
 
       if (!user) {
-        console.log(
-          "User not found, updating existing user or creating a new one."
-        );
+        // Create new user without setting a default role
+        user = await User.create({
+          googleId: req.user.id,
+          displayName: req.user.displayName,
+          email: req.user.email,
+          firstName: req.user.name.givenName,
+          lastName: req.user.name.familyName,
+          role: '',  // Leave role empty to trigger role selection
+          username: req.user.email.split('@')[0],
+          password: 'default',
+          isVerified: true  // Keep Google users verified
+        });
+      } else {
+        // Ensure the user is marked as verified since they authenticated with Google
+        if (!user.isVerified) {
+          user.isVerified = true;
+          await user.save();
+        }
 
-        user = await User.findOneAndUpdate(
-          { email: req.user.email }, // Find the user by email if they exist
-          { googleId: req.user.id }, // Update googleId if missing
-          { new: true } // Return updated user
-        );
-
-        // If no user exists with this email, create a new one
-        if (!user) {
-          user = await User.create({
-            googleId: req.user.id,
-            displayName: req.user.displayName,
-            email: req.user.email,
-            firstName: req.user.name.givenName,
-            lastName: req.user.name.familyName,
-            role: "admin",
-            username: req.user.email.split("@")[0],
-            password: "default",
-          });
+        // Update googleId if it's missing
+        if (!user.googleId) {
+          user = await User.findOneAndUpdate(
+            { email: req.user.email },
+            { googleId: req.user.id },
+            { new: true }
+          );
+          console.log("Updated existing user with Google ID");
         }
       }
+
+      // Create token with additional information for admin users
       console.log("User object before signing JWT:", user);
 
       const token = jwt.sign(
@@ -146,16 +160,15 @@ app.get(
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          isVerified: user.isVerified,
+          // Add a flag to indicate this is a Google auth user
+          googleAuth: true
         },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
       );
-      const decodedToken = jwt.decode(token);
-      console.log("Decoded Token:", decodedToken);
 
-      res.redirect(
-        `http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`
-      );
+      res.redirect(`http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`);
     } catch (error) {
       console.error("Error handling Google authentication:", error);
       res.redirect("http://localhost:5173/signin?error=server-error");
@@ -283,6 +296,7 @@ io.engine.on("connection_error", (err) => {
 });
 
 console.log("Socket.IO server initialized and waiting for connections");
+app.use("/tasks", require("./routes/taskRoutes"));
 
 // Start the Server
 server.listen(PORT, () => {
@@ -290,9 +304,8 @@ server.listen(PORT, () => {
 });
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/piweb";
-console.log("Connecting to MongoDB with URI:", mongoUri);
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/codevisionpiweb';
 mongoose
-  .connect(mongoUri)
-  .then(() => console.log("✅ MongoDB Connected Successfully"))
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+  .connect(MONGO_URI)
+  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .catch((err) => console.error('❌ MongoDB Connection Error:', err));

@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 
 // Assume these icons are imported from an icon library
 import {
+  // Commented out unused icons
+  // BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
-  PageIcon,
+  //PageIcon,
+  // PieChartIcon,
+  // PlugInIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
@@ -34,7 +38,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: <UserCircleIcon />,
-    name: "User",
+    name: "User Profile",
     path: "/profile",
   },
   {
@@ -43,22 +47,62 @@ const navItems: NavItem[] = [
      path: "/form-elements",
   },
   {
+    name: "Task Management",
+    icon: <ListIcon />,
+    subItems: [
+      { name: "Task List", path: "/tasks" },
+      { name: "Create Task", path: "/tasks/create" },
+    ],
+  },
+  {
     name: "User Management",
     icon: <UserCircleIcon />,
     path: "/basic-tables",
   },
-  {
+  /*{
     name: "Pages",
     icon: <PageIcon />,
     subItems: [
       { name: "Blank Page", path: "/blank", pro: false },
       { name: "404 Error", path: "/error-404", pro: false },
     ],
-  },
+  },*/
 ];
 
-// Suppression de la section "Others"
-const othersItems: NavItem[] = [];
+/* Commented out to hide these items from the sidebar
+const othersItems: NavItem[] = [
+  {
+    icon: <PieChartIcon />,
+    name: "Charts",
+    subItems: [
+      { name: "Line Chart", path: "/line-chart", pro: false },
+      { name: "Bar Chart", path: "/bar-chart", pro: false },
+    ],
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "UI Elements",
+    subItems: [
+      { name: "Alerts", path: "/alerts", pro: false },
+      { name: "Avatar", path: "/avatars", pro: false },
+      { name: "Badge", path: "/badge", pro: false },
+      { name: "Buttons", path: "/buttons", pro: false },
+      { name: "Images", path: "/images", pro: false },
+      { name: "Videos", path: "/videos", pro: false },
+    ],
+  },
+  {
+    icon: <PlugInIcon />,
+    name: "Authentication",
+    subItems: [
+      { name: "Sign In", path: "/signin", pro: false },
+      { name: "Sign Up", path: "/signup", pro: false },
+    ],
+  },
+];
+*/
+
+// We don't need othersItems anymore since we've commented it out
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -81,8 +125,9 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+    // Only check main items since others are commented out
+    ["main"].forEach((menuType) => {
+      const items = navItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -116,16 +161,19 @@ const AppSidebar: React.FC = () => {
   }, [openSubmenu]);
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
+    // Only handle main menu items since others are commented out
+    if (menuType === "main") {
+      setOpenSubmenu((prevOpenSubmenu) => {
+        if (
+          prevOpenSubmenu &&
+          prevOpenSubmenu.type === menuType &&
+          prevOpenSubmenu.index === index
+        ) {
+          return null;
+        }
+        return { type: menuType, index };
+      });
+    }
   };
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
@@ -134,6 +182,7 @@ const AppSidebar: React.FC = () => {
         <li key={nav.name}>
           {nav.subItems ? (
             <button
+              type="button"
               onClick={() => handleSubmenuToggle(index, menuType)}
               className={`menu-item group ${
                 openSubmenu?.type === menuType && openSubmenu?.index === index
@@ -271,7 +320,9 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <h1 className="text-xl font-bold text-brand-500">Codevision</h1>
+        <Link to="/" className="text-xl font-bold text-brand-500 hover:text-brand-600 transition-colors duration-200">
+          Codevision
+        </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
@@ -292,6 +343,7 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
+            {/* Others section removed */}
             {/* Section "Others" supprimée */}
           </div>
         </nav>
