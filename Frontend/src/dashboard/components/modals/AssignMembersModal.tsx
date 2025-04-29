@@ -50,7 +50,7 @@ export default function AssignMembersModal({
     const fetchMembers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/projects/${projectId}/members`);
+        const response = await axios.get(`http://localhost:5000/projects/${projectId}/members`);
         setMembers(response.data);
       } catch (err: any) {
         console.error("Erreur lors de la récupération des membres:", err);
@@ -75,7 +75,7 @@ export default function AssignMembersModal({
       setSearchLoading(true);
       setError("");
       console.log("Recherche d'utilisateurs avec email:", searchEmail);
-      const response = await axios.get(`http://localhost:8000/projects/users/all`, {
+      const response = await axios.get(`http://localhost:5000/projects/users/all`, {
         params: { email: searchEmail }
       });
       console.log("Utilisateurs trouvés:", response.data);
@@ -106,7 +106,7 @@ export default function AssignMembersModal({
   const addMember = async (userId: string) => {
     try {
       setLoading(true);
-      const response = await axios.post(`http://localhost:8000/projects/${projectId}/members`, {
+      const response = await axios.post(`http://localhost:5000/projects/${projectId}/members`, {
         userId,
         role: "member"
       });
@@ -143,7 +143,7 @@ export default function AssignMembersModal({
   const removeMember = async (userId: string) => {
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:8000/projects/${projectId}/members/${userId}`);
+      await axios.delete(`http://localhost:5000/projects/${projectId}/members/${userId}`);
 
       // Supprimer le membre de la liste
       setMembers(members.filter(member => member.user._id !== userId));
@@ -318,7 +318,7 @@ export default function AssignMembersModal({
                         </TableCell>
                         <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                           <Button
-                            variant="danger"
+                            variant="primary"
                             size="sm"
                             onClick={() => removeMember(member.user._id)}
                             disabled={loading}

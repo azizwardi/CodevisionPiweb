@@ -60,7 +60,7 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
         //   throw new Error("Aucun token d'authentification trouvé");
         // }
 
-        const response = await axios.get("http://localhost:8000/projects", {
+        const response = await axios.get("http://localhost:5000/projects", {
           // headers: {
           //   Authorization: `Bearer ${token}`
           // }
@@ -121,7 +121,7 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
     }
 
     try {
-      await axios.delete(`http://localhost:8000/projects/${projectId}`, {
+      await axios.delete(`http://localhost:5000/projects/${projectId}`, {
         data: { userId }
       });
 

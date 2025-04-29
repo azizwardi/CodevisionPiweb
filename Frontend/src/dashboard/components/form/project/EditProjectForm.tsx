@@ -84,7 +84,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
         }
 
         const response = await axios.get(
-          `http://localhost:8000/projects/${projectId}`
+          `http://localhost:5000/projects/${projectId}`
         );
 
         const project = response.data;
@@ -227,7 +227,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       // }
 
       const response = await axios.put(
-        `http://localhost:8000/projects/${projectId}`,
+        `http://localhost:5000/projects/${projectId}`,
         formData,
         {
           headers: {
@@ -366,7 +366,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
           Annuler
         </Button>
         <Button
-          type="submit"
+          variant="primary"
           disabled={loading}
           className="w-full sm:w-auto"
         >

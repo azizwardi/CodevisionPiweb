@@ -47,7 +47,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ projectId }) => {
     const fetchComments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/comments/project/${projectId}`);
+        const response = await axios.get(`http://localhost:5000/comments/project/${projectId}`);
         setComments(response.data);
       } catch (err: any) {
         console.error("Erreur lors de la récupération des commentaires:", err);
@@ -64,7 +64,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ projectId }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/user/showuser');
+        const response = await axios.get('http://localhost:5000/api/user/showuser');
         setUsers(response.data);
       } catch (err) {
         console.error("Erreur lors de la récupération des utilisateurs:", err);
@@ -160,7 +160,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ projectId }) => {
         return;
       }
 
-      const response = await axios.post('http://localhost:8000/comments', {
+      const response = await axios.post('http://localhost:5000/comments', {
         content: newComment,
         projectId,
         userId
@@ -230,7 +230,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ projectId }) => {
         return;
       }
 
-      const response = await axios.put(`http://localhost:8000/comments/${commentId}`, {
+      const response = await axios.put(`http://localhost:5000/comments/${commentId}`, {
         content: editContent,
         userId
       });
@@ -293,7 +293,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ projectId }) => {
         return;
       }
 
-      await axios.delete(`http://localhost:8000/comments/${commentId}`, {
+      await axios.delete(`http://localhost:5000/comments/${commentId}`, {
         data: { userId }
       });
 

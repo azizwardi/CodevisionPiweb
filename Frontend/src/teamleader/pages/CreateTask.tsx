@@ -30,7 +30,14 @@ interface ValidationErrors {
   dueDate?: string;
 }
 
-const CreateTask: React.FC = () => {
+// 👇 Ajout des props pour CreateTask
+interface CreateTaskProps {
+  onClose: () => void;
+  onTaskCreated: (newTask: any) => void;
+}
+
+// 👇 Accepter les props dans CreateTask
+const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -48,34 +55,10 @@ const CreateTask: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
 
-  // Chargement des utilisateurs et des projets
   useEffect(() => {
-    // Définir des utilisateurs statiques pour permettre l'utilisation de l'application
-    // Utiliser des IDs au format MongoDB (24 caractères hexadécimaux)
-    const staticUsers: User[] = [
-      { _id: "507f1f77bcf86cd799439011", username: "admin", firstName: "Admin", lastName: "User" },
-      { _id: "507f1f77bcf86cd799439012", username: "member1", firstName: "Team", lastName: "Member" },
-      { _id: "507f1f77bcf86cd799439013", username: "leader1", firstName: "Team", lastName: "Leader" },
-    ];
-
-    // Projets statiques en cas d'échec
-    // Utiliser des IDs au format MongoDB (24 caractères hexadécimaux)
-    const staticProjects: Project[] = [
-      { _id: "507f1f77bcf86cd799439021", name: "Projet Web" },
-      { _id: "507f1f77bcf86cd799439022", name: "Projet Mobile" },
-      { _id: "507f1f77bcf86cd799439023", name: "Projet Design" },
-    ];
-
-    // Utiliser d'abord les données statiques pour assurer que l'interface fonctionne
-    console.log("Using static data initially");
-    setUsers(staticUsers);
-    setProjects(staticProjects);
-
-    // Fetch projects
     const fetchProjects = async () => {
       try {
-        const projectsResponse = await axios.get("http://localhost:8000/projects");
-        console.log("Projects fetched successfully:", projectsResponse.data);
+        const projectsResponse = await axios.get("http://localhost:5000/projects");
         if (projectsResponse.data && projectsResponse.data.length > 0) {
           setProjects(projectsResponse.data);
         }
@@ -85,27 +68,21 @@ const CreateTask: React.FC = () => {
       }
     };
 
-    // Récupération des utilisateurs - essayer directement le port 5000
     const fetchUsers = async () => {
       try {
-        // Récupérer le token d'authentification
         const token = localStorage.getItem("authToken");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        console.log("Fetching users from port 5000...");
         const usersResponse = await axios.get("http://localhost:5000/api/user/showuser", { headers });
-        console.log("Users fetched successfully from port 5000:", usersResponse.data);
-
         if (usersResponse.data && usersResponse.data.length > 0) {
           setUsers(usersResponse.data);
         }
       } catch (userErr) {
-        console.error("Error fetching users from port 5000:", userErr);
+        console.error("Error fetching users:", userErr);
         toastManager.addToast("Erreur lors du chargement des utilisateurs", "error", 5000);
       }
     };
 
-    // Exécuter les requêtes
     fetchProjects();
     fetchUsers();
   }, []);
@@ -116,7 +93,6 @@ const CreateTask: React.FC = () => {
       [field]: value,
     });
 
-    // Clear validation error for this field
     if (validationErrors[field as keyof ValidationErrors]) {
       setValidationErrors({
         ...validationErrors,
@@ -131,19 +107,15 @@ const CreateTask: React.FC = () => {
     if (!formData.title.trim()) {
       errors.title = "Title is required";
     }
-
     if (!formData.description.trim()) {
       errors.description = "Description is required";
     }
-
     if (!formData.assignedTo) {
       errors.assignedTo = "Please assign this task to a user";
     }
-
     if (!formData.projectId) {
       errors.projectId = "Please select a project";
     }
-
     if (!formData.dueDate) {
       errors.dueDate = "Due date is required";
     }
@@ -156,59 +128,41 @@ const CreateTask: React.FC = () => {
     e.preventDefault();
     setSubmitError("");
 
-    console.log("Form data before validation:", formData);
-
     if (!validateForm()) {
-      console.log("Form validation failed");
       return;
     }
 
     setLoading(true);
-    console.log("Submitting form data:", formData);
 
     try {
-      // Envoyer les données à l'API
-      console.log("Sending task data to API:", formData);
-      console.log("assignedTo type:", typeof formData.assignedTo);
-      console.log("projectId type:", typeof formData.projectId);
-
-      // Convertir les données pour MongoDB
       const taskData = {
         title: formData.title,
         description: formData.description,
         status: formData.status,
-        // S'assurer que les IDs sont au bon format pour MongoDB
         assignedTo: formData.assignedTo,
         projectId: formData.projectId,
-        // Convertir la date au format ISO
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined
+        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
       };
 
-      // Vérifier si les IDs sont valides pour MongoDB (24 caractères hexadécimaux)
       const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);
 
       if (!isValidMongoId(formData.assignedTo)) {
-        console.error("Invalid MongoDB ID format for assignedTo:", formData.assignedTo);
         throw new Error("Invalid user ID format");
       }
-
       if (!isValidMongoId(formData.projectId)) {
-        console.error("Invalid MongoDB ID format for projectId:", formData.projectId);
         throw new Error("Invalid project ID format");
       }
 
-      console.log("Formatted task data for API:", taskData);
-      
-
-
       const response = await axios.post("http://localhost:5000/tasks", taskData);
-      console.log("Task created successfully:", response.data);
+
       toastManager.addToast("Task created successfully", "success", 5000);
-      navigate("/team-leader/tasks");
+
+      // 👇 Appeler onTaskCreated et onClose après création
+      onTaskCreated(response.data);
+      onClose();
+      
     } catch (err: any) {
       console.error("Error creating task:", err);
-      console.error("Error details:", err.response?.data);
-      console.error("Error stack:", err.stack);
       setSubmitError(err.response?.data?.message || "Failed to create task");
       toastManager.addToast("Error creating task", "error", 5000);
     } finally {
@@ -216,7 +170,6 @@ const CreateTask: React.FC = () => {
     }
   };
 
-  // Prepare options for select inputs
   const statusOptions = [
     { value: "pending", label: "Pending" },
     { value: "in-progress", label: "In Progress" },
@@ -237,10 +190,7 @@ const CreateTask: React.FC = () => {
 
   return (
     <div>
-      <PageMeta
-        title="Create Task | CodevisionPiweb"
-        description="Create a new task for CodevisionPiweb"
-      />
+      <PageMeta title="Create Task | CodevisionPiweb" description="Create a new task for CodevisionPiweb" />
       <PageBreadcrumb pageTitle="Create Task" />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
@@ -337,10 +287,7 @@ const CreateTask: React.FC = () => {
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/team-leader/tasks")}
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <button

@@ -78,7 +78,7 @@ const TaskList: React.FC = () => {
       const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);
       if (!isValidMongoId(taskId)) throw new Error("Invalid task ID format");
 
-      await axios.delete(`http://localhost:8000/tasks/${taskId}`);
+      await axios.delete(`http://localhost:5000/tasks/${taskId}`);
       setTasks(tasks.filter(task => task._id !== taskId));
       setFilteredTasks(filteredTasks.filter(task => task._id !== taskId));
       toastManager.addToast("Task deleted successfully", "success", 5000);

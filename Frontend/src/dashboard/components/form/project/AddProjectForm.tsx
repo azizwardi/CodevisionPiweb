@@ -187,10 +187,10 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       //   throw new Error("Vous devez être connecté pour créer un projet");
       // }
 
-      console.log("Envoi de la requête POST à http://localhost:8000/projects");
+      console.log("Envoi de la requête POST à http://localhost:5000/projects");
       try {
         const response = await axios.post(
-          "http://localhost:8000/projects",
+          "http://localhost:5000/projects",
           formData,
           {
             headers: {
@@ -214,8 +214,9 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         name: "",
         description: "",
         category: "",
-        startDate: "",
-        deadline: "",
+        startDate: new Date().toISOString().split('T')[0],
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        userId: formData.userId
       });
 
       // Notifier le parent du succès
@@ -324,7 +325,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
       <div className="flex justify-end mt-6">
         <Button
-          type="submit"
+          variant="primary"
           disabled={loading}
           className="w-full sm:w-auto"
         >
