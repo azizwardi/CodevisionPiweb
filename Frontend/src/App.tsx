@@ -16,6 +16,8 @@ import BarChart from "./dashboard/pages/Charts/BarChart";
 import TaskList from "./dashboard/pages/Tasks/TaskList";
 import CreateTask from "./dashboard/pages/Tasks/CreateTask";
 import EditTask from "./dashboard/pages/Tasks/EditTask";
+// Chatbot import
+import ChatbotPage from "./dashboard/pages/ChatbotPage";
 
 import Calendar from "./dashboard/pages/Calendar";
 import BasicTables from "./dashboard/pages/Tables/BasicTables";
@@ -42,6 +44,8 @@ import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
 import MemberDashboard from "./member/pages/MemberDashboard";
 import MemberProfile from "./member/pages/MemberProfile";
+import MemberTasks from "./member/pages/MemberTasks";
+import MemberProjects from "./member/pages/MemberProjects";
 import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
@@ -89,6 +93,8 @@ export default function App() {
           <Route path="/tasks" element={<TaskList />} />
           <Route path="/tasks/create" element={<CreateTask />} />
           <Route path="/tasks/edit/:taskId" element={<EditTask />} />
+          {/* Chatbot route */}
+          <Route path="/assistant" element={<ChatbotPage />} />
         </Route>
       </Route>
 
@@ -100,19 +106,22 @@ export default function App() {
               <Route path="/team-leader/team" element={<div />} />
               <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
               <Route path="/team-leader/tasks" element={<TeamLeaderTasks />} />
+              <Route path="/team-leader/tasks/edit/:taskId" element={<EditTask />} />
               <Route path="/team-leader/reports" element={<div />} />
+              <Route path="/team-leader/assistant" element={<ChatbotPage />} />
             </Route>
           </Route>
 
           {/* Member Routes */}
-          <Route element={<ProtectedRoute requiredRole="member" />}>
+          <Route element={<ProtectedRoute requiredRole="Member" />}>
             <Route element={<MemberHomeLayout />}>
               <Route path="/member-dashboard" element={<MemberDashboard />} />
               <Route path="/member/profile" element={<MemberProfile />} />
-              <Route path="/member/tasks" element={<div />} />
-              <Route path="/member/projects" element={<div />} />
+              <Route path="/member/tasks" element={<MemberTasks />} />
+              <Route path="/member/projects" element={<MemberProjects />} />
               <Route path="/member/time-tracking" element={<div />} />
               <Route path="/member/team-chat" element={<div />} />
+              <Route path="/member/assistant" element={<ChatbotPage />} />
             </Route>
           </Route>
 

@@ -12,12 +12,27 @@ const isAuthenticated = (requiredRole?: string): boolean => {
   }
 
   console.log("Token found in localStorage:", token);
+  console.log("User role in localStorage:", userRole);
+
   // If no role is required, just check authentication
   if (!requiredRole) return true;
 
   // Check if the user has the required role (case-insensitive)
   console.log('ProtectedRoute checking role:', userRole, 'required:', requiredRole);
-  if (userRole?.toLowerCase() === requiredRole?.toLowerCase() || userRole === requiredRole) {
+
+  // Normalize roles for comparison (convert "Member" to "member", etc.)
+  const normalizedUserRole = userRole?.toLowerCase();
+  const normalizedRequiredRole = requiredRole?.toLowerCase();
+
+  // Special case for "Member" role - accept both "member" and "Member"
+  if ((normalizedRequiredRole === 'member' || requiredRole === 'Member') &&
+      (normalizedUserRole === 'member' || userRole === 'Member')) {
+    console.log(`User has required member role`);
+    return true;
+  }
+
+  // General case for other roles
+  if (normalizedUserRole === normalizedRequiredRole || userRole === requiredRole) {
     console.log(`User has required role: ${requiredRole}`);
     return true;
   } else {

@@ -113,6 +113,14 @@ const TeamLeaderHomeLayout: React.FC = () => {
                   Profile
                 </a>
               </li>
+              <li>
+                <a
+                  href="/team-leader/assistant"
+                  className="block py-2 px-4 rounded hover:bg-gray-700"
+                >
+                  Assistant IA
+                </a>
+              </li>
             </ul>
           </nav>
         </aside>
@@ -218,6 +226,15 @@ const TeamLeaderHomeLayout: React.FC = () => {
                   onClick={toggleMenu}
                 >
                   Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/team-leader/assistant"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Assistant IA
                 </a>
               </li>
             </ul>

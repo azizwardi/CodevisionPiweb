@@ -14,6 +14,7 @@ import {
   // PieChartIcon,
   // PlugInIcon,
   UserCircleIcon,
+  ChatIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -58,6 +59,11 @@ const navItems: NavItem[] = [
     name: "User Management",
     icon: <UserCircleIcon />,
     path: "/basic-tables",
+  },
+  {
+    name: "Assistant IA",
+    icon: <ChatIcon />,
+    path: "/assistant",
   },
   /*{
     name: "Pages",

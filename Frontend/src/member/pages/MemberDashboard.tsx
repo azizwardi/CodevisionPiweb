@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { toastManager } from '../../dashboard/components/ui/toast/ToastContainer';
+
+interface User {
+  _id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+}
 
 interface Task {
-  id: string;
+  _id: string;
   title: string;
+  description: string;
+  status: string;
+  priority?: 'high' | 'medium' | 'low';
+  assignedTo: User;
+  projectId: Project;
   dueDate: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
+  createdAt: string;
 }
 
 interface Project {
-  id: string;
+  _id: string;
   name: string;
-  progress: number;
-  teamLeader: string;
-  teamLeaderAvatar: string;
+  description: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  teamMembers: User[];
+  teamLeader: User;
 }
 
 interface Announcement {
@@ -24,85 +43,102 @@ interface Announcement {
   authorAvatar: string;
 }
 
+interface DecodedToken {
+  id: string;
+  user?: {
+    id: string;
+  };
+}
+
 const MemberDashboard: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Get user ID from token
   useEffect(() => {
-    // Simulate API call to fetch tasks, projects, and announcements
-    setTimeout(() => {
-      setTasks([
-        {
-          id: '1',
-          title: 'Create user interface mockups',
-          dueDate: '2023-06-15',
-          priority: 'high',
-          status: 'in-progress'
-        },
-        {
-          id: '2',
-          title: 'Fix login page bug',
-          dueDate: '2023-06-20',
-          priority: 'medium',
-          status: 'completed'
-        },
-        {
-          id: '3',
-          title: 'Implement responsive design',
-          dueDate: '2023-06-25',
-          priority: 'high',
-          status: 'not-started'
-        },
-        {
-          id: '4',
-          title: 'Write unit tests',
-          dueDate: '2023-06-30',
-          priority: 'medium',
-          status: 'blocked'
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const id = decoded.user?.id || decoded.id;
+        if (id) {
+          setUserId(id);
         }
-      ]);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        setError("Authentication error");
+      }
+    }
+  }, []);
 
-      setProjects([
-        {
-          id: '1',
-          name: 'Website Redesign',
-          progress: 75,
-          teamLeader: 'John Doe',
-          teamLeaderAvatar: '/images/user/user-01.png'
-        },
-        {
-          id: '2',
-          name: 'Mobile App Development',
-          progress: 45,
-          teamLeader: 'Jane Smith',
-          teamLeaderAvatar: '/images/user/user-02.png'
-        }
-      ]);
+  // Fetch data when userId is available
+  useEffect(() => {
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
 
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Fetch tasks assigned to the user
+      const tasksResponse = await axios.get("http://localhost:5000/tasks");
+      const userTasks = tasksResponse.data.filter(
+        (task: Task) => task.assignedTo?._id === userId
+      );
+      setTasks(userTasks);
+
+      // Fetch projects the user is involved in
+      const projectsResponse = await axios.get("http://localhost:5000/projects");
+      const userProjects = projectsResponse.data.filter((project: Project) => {
+        // Check if user is a team member
+        const isTeamMember = project.teamMembers?.some(member => member._id === userId);
+
+        // Check if user has tasks in this project
+        const hasTasksInProject = userTasks.some(
+          (task: Task) => task.projectId?._id === project._id
+        );
+
+        return isTeamMember || hasTasksInProject;
+      });
+      setProjects(userProjects);
+
+      // For announcements, we'll keep the static data for now
+      // In a real application, you would fetch these from an API
       setAnnouncements([
         {
           id: '1',
           title: 'Team Meeting Tomorrow',
-          date: '2023-06-14',
-          author: 'John Doe',
-          authorAvatar: '/images/user/user-01.png'
+          date: new Date().toISOString(),
+          author: 'Team Leader',
+          authorAvatar: 'https://via.placeholder.com/40'
         },
         {
           id: '2',
           title: 'New Project Starting Next Week',
-          date: '2023-06-10',
-          author: 'Jane Smith',
-          authorAvatar: '/images/user/user-02.png'
+          date: new Date().toISOString(),
+          author: 'Project Manager',
+          authorAvatar: 'https://via.placeholder.com/40'
         }
       ]);
 
       setLoading(false);
-    }, 1000);
-  }, []);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch data");
+      toastManager.addToast("Error loading dashboard data", "error", 5000);
+      setLoading(false);
+    }
+  };
 
-  const getPriorityColor = (priority: 'high' | 'medium' | 'low') => {
+  const getPriorityColor = (priority?: 'high' | 'medium' | 'low') => {
+    if (!priority) return 'bg-gray-100 text-gray-800';
+
     switch (priority) {
       case 'high':
         return 'bg-red-100 text-red-800';
@@ -115,10 +151,10 @@ const MemberDashboard: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: 'not-started' | 'in-progress' | 'completed' | 'blocked') => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'not-started':
-        return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       case 'in-progress':
         return 'bg-blue-100 text-blue-800';
       case 'completed':
@@ -130,10 +166,19 @@ const MemberDashboard: React.FC = () => {
     }
   };
 
+  // Calculate progress for a project based on completed tasks
+  const calculateProgress = (projectId: string) => {
+    const projectTasks = tasks.filter(task => task.projectId?._id === projectId);
+    if (projectTasks.length === 0) return 0;
+
+    const completedTasks = projectTasks.filter(task => task.status === 'completed');
+    return Math.round((completedTasks.length / projectTasks.length) * 100);
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Member Dashboard</h1>
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -155,7 +200,7 @@ const MemberDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
@@ -169,7 +214,7 @@ const MemberDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-red-100 text-red-500 mr-4">
@@ -183,7 +228,7 @@ const MemberDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
@@ -198,14 +243,14 @@ const MemberDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* My Tasks */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow mb-6">
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                   <h2 className="text-lg font-semibold">My Tasks</h2>
-                  <a href="/member/my-tasks" className="text-sm text-green-600 hover:text-green-800">View All</a>
+                  <a href="/member/tasks" className="text-sm text-green-600 hover:text-green-800">View All</a>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -226,8 +271,8 @@ const MemberDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {tasks.map((task) => (
-                        <tr key={task.id}>
+                      {tasks.slice(0, 4).map((task) => (
+                        <tr key={task._id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{task.title}</div>
                           </td>
@@ -236,7 +281,9 @@ const MemberDashboard: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                              {task.priority
+                                ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1)
+                                : 'Medium'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -250,30 +297,38 @@ const MemberDashboard: React.FC = () => {
                   </table>
                 </div>
               </div>
-              
+
               {/* My Projects */}
               <div className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                   <h2 className="text-lg font-semibold">My Projects</h2>
-                  <a href="/member/my-projects" className="text-sm text-green-600 hover:text-green-800">View All</a>
+                  <a href="/member/projects" className="text-sm text-green-600 hover:text-green-800">View All</a>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {projects.map((project) => (
-                    <div key={project.id} className="border rounded-lg p-4">
+                  {projects.slice(0, 2).map((project) => (
+                    <div key={project._id} className="border rounded-lg p-4">
                       <h3 className="font-semibold text-lg mb-2">{project.name}</h3>
                       <div className="flex items-center mb-4">
-                        <img className="h-8 w-8 rounded-full mr-2" src={project.teamLeaderAvatar} alt={project.teamLeader} />
-                        <span className="text-sm text-gray-600">Team Leader: {project.teamLeader}</span>
+                        <img
+                          className="h-8 w-8 rounded-full mr-2"
+                          src={project.teamLeader?.avatarUrl || "https://via.placeholder.com/40"}
+                          alt={project.teamLeader?.username || "Team Leader"}
+                        />
+                        <span className="text-sm text-gray-600">
+                          Team Leader: {project.teamLeader?.firstName && project.teamLeader?.lastName
+                            ? `${project.teamLeader.firstName} ${project.teamLeader.lastName}`
+                            : project.teamLeader?.username || "Unknown"}
+                        </span>
                       </div>
                       <div className="mb-2">
                         <div className="flex justify-between mb-1">
                           <span className="text-sm font-medium text-gray-700">Progress</span>
-                          <span className="text-sm font-medium text-gray-700">{project.progress}%</span>
+                          <span className="text-sm font-medium text-gray-700">{calculateProgress(project._id)}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-green-600 h-2.5 rounded-full" 
-                            style={{ width: `${project.progress}%` }}
+                          <div
+                            className="bg-green-600 h-2.5 rounded-full"
+                            style={{ width: `${calculateProgress(project._id)}%` }}
                           ></div>
                         </div>
                       </div>
@@ -282,7 +337,7 @@ const MemberDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Announcements */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow">

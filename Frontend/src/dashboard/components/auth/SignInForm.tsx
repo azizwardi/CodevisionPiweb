@@ -93,6 +93,10 @@ export default function SignInForm() {
     setEmailError("");
     setPasswordError("");
 
+    // Clear localStorage to avoid stale data
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userRole");
+
     let valid = true;
 
     if (!validateEmail(email)) {
@@ -126,6 +130,7 @@ export default function SignInForm() {
       localStorage.setItem("userRole", role);
 
       console.log("Login successful:", response.data);
+      console.log("Role stored in localStorage:", localStorage.getItem("userRole"));
 
       // Dispatch an event to notify other components about the login
       window.dispatchEvent(new Event('authChange'));
@@ -140,12 +145,18 @@ export default function SignInForm() {
         return; // Exit early
       } else if (role === 'admin' || role.toLowerCase() === 'admin') {
         // Admin goes to the admin dashboard
+        // Ensure we always store the role as "admin" for consistency
+        localStorage.setItem("userRole", "admin");
         navigate("/dashboard");
       } else if (role === 'TeamLeader' || role.toLowerCase() === 'teamleader') {
         // Team Leader goes to the team leader dashboard
+        // Ensure we always store the role as "TeamLeader" for consistency
+        localStorage.setItem("userRole", "TeamLeader");
         navigate("/team-leader-dashboard");
       } else if (role === 'Member' || role.toLowerCase() === 'member') {
         // Member goes to the member dashboard
+        // Ensure we always store the role as "Member" for consistency
+        localStorage.setItem("userRole", "Member");
         navigate("/member-dashboard");
       } else {
         // Default fallback

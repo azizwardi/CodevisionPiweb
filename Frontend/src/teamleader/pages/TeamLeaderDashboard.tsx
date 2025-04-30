@@ -1,112 +1,194 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import { toastManager } from '../../dashboard/components/ui/toast/ToastContainer';
+
+interface User {
+  _id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  role: string;
+  avatarUrl?: string;
+  isVerified: boolean;
+}
+
+interface Task {
+  _id: string;
+  title: string;
+  description: string;
+  status: string;
+  assignedTo: User;
+  projectId: Project;
+  dueDate: string;
+  createdAt: string;
+}
+
+interface Project {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  teamMembers: User[];
+  teamLeader: User;
+}
+
+interface DecodedToken {
+  id: string;
+  user?: {
+    id: string;
+  };
+}
 
 interface TeamMember {
-  id: string;
-  name: string;
+  _id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
   role: string;
-  avatar: string;
+  avatarUrl?: string;
   tasksCompleted: number;
   tasksTotal: number;
   status: 'online' | 'offline' | 'away';
 }
 
-interface Project {
-  id: string;
-  name: string;
-  progress: number;
-  deadline: string;
-  status: 'on-track' | 'at-risk' | 'delayed';
-}
-
 const TeamLeaderDashboard: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<number>(0);
+  const [overallProgress, setOverallProgress] = useState<number>(0);
 
+  // Get user ID from token
   useEffect(() => {
-    // Simulate API call to fetch team members and projects
-    setTimeout(() => {
-      setTeamMembers([
-        {
-          id: '1',
-          name: 'John Doe',
-          role: 'Frontend Developer',
-          avatar: '/images/user/user-01.png',
-          tasksCompleted: 18,
-          tasksTotal: 25,
-          status: 'online'
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          role: 'Backend Developer',
-          avatar: '/images/user/user-02.png',
-          tasksCompleted: 12,
-          tasksTotal: 20,
-          status: 'offline'
-        },
-        {
-          id: '3',
-          name: 'Mike Johnson',
-          role: 'UI/UX Designer',
-          avatar: '/images/user/user-03.png',
-          tasksCompleted: 8,
-          tasksTotal: 15,
-          status: 'away'
-        },
-        {
-          id: '4',
-          name: 'Sarah Williams',
-          role: 'QA Engineer',
-          avatar: '/images/user/user-04.png',
-          tasksCompleted: 15,
-          tasksTotal: 18,
-          status: 'online'
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const id = decoded.user?.id || decoded.id;
+        if (id) {
+          setUserId(id);
         }
-      ]);
-
-      setProjects([
-        {
-          id: '1',
-          name: 'Website Redesign',
-          progress: 75,
-          deadline: '2023-06-30',
-          status: 'on-track'
-        },
-        {
-          id: '2',
-          name: 'Mobile App Development',
-          progress: 45,
-          deadline: '2023-07-15',
-          status: 'at-risk'
-        },
-        {
-          id: '3',
-          name: 'API Integration',
-          progress: 90,
-          deadline: '2023-06-15',
-          status: 'on-track'
-        },
-        {
-          id: '4',
-          name: 'Database Migration',
-          progress: 30,
-          deadline: '2023-08-01',
-          status: 'delayed'
-        }
-      ]);
-
-      setLoading(false);
-    }, 1000);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        setError("Authentication error");
+      }
+    }
   }, []);
 
-  const getStatusColor = (status: 'on-track' | 'at-risk' | 'delayed') => {
+  // Fetch data when userId is available
+  useEffect(() => {
+    if (userId) {
+      fetchData();
+    }
+  }, [userId]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Fetch all users
+      const usersResponse = await axios.get("http://localhost:5000/api/user/showuser");
+
+      // Fetch all tasks
+      const tasksResponse = await axios.get("http://localhost:5000/tasks");
+      setTasks(tasksResponse.data);
+
+      // Fetch all projects
+      const projectsResponse = await axios.get("http://localhost:5000/projects");
+
+      // Filter projects where the current user is the team leader
+      const leaderProjects = projectsResponse.data.filter(
+        (project: Project) => project.teamLeader?._id === userId
+      );
+      setProjects(leaderProjects);
+
+      // Process team members data
+      const teamMembersData: TeamMember[] = [];
+      const teamMemberIds = new Set<string>();
+
+      // Add team members from projects
+      leaderProjects.forEach((project: Project) => {
+        project.teamMembers?.forEach((member: User) => {
+          if (!teamMemberIds.has(member._id)) {
+            teamMemberIds.add(member._id);
+
+            // Count tasks for this member
+            const memberTasks = tasksResponse.data.filter(
+              (task: Task) => task.assignedTo?._id === member._id
+            );
+            const completedTasks = memberTasks.filter(
+              (task: Task) => task.status === 'completed'
+            ).length;
+
+            // Add to team members array
+            teamMembersData.push({
+              _id: member._id,
+              username: member.username,
+              firstName: member.firstName,
+              lastName: member.lastName,
+              role: member.role || "Team Member",
+              avatarUrl: member.avatarUrl,
+              tasksCompleted: completedTasks,
+              tasksTotal: memberTasks.length,
+              status: Math.random() > 0.5 ? 'online' : 'offline' // Random status for demo
+            });
+          }
+        });
+      });
+
+      setTeamMembers(teamMembersData);
+
+      // Calculate upcoming deadlines (projects with deadlines in the next 7 days)
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+
+      const upcoming = leaderProjects.filter((project: Project) => {
+        const endDate = new Date(project.endDate);
+        return endDate >= today && endDate <= nextWeek;
+      }).length;
+
+      setUpcomingDeadlines(upcoming);
+
+      // Calculate overall progress
+      if (leaderProjects.length > 0) {
+        const totalTasks = tasksResponse.data.filter(
+          (task: Task) => leaderProjects.some((project: Project) => project._id === task.projectId?._id)
+        );
+
+        if (totalTasks.length > 0) {
+          const completedTasks = totalTasks.filter((task: Task) => task.status === 'completed').length;
+          setOverallProgress(Math.round((completedTasks / totalTasks.length) * 100));
+        }
+      }
+
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch data");
+      toastManager.addToast("Error loading dashboard data", "error", 5000);
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'on-track':
+      case 'completed':
         return 'bg-green-100 text-green-800';
       case 'at-risk':
+      case 'in-progress':
         return 'bg-yellow-100 text-yellow-800';
       case 'delayed':
+      case 'pending':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -126,10 +208,19 @@ const TeamLeaderDashboard: React.FC = () => {
     }
   };
 
+  // Calculate progress for a project based on completed tasks
+  const calculateProjectProgress = (projectId: string) => {
+    const projectTasks = tasks.filter(task => task.projectId?._id === projectId);
+    if (projectTasks.length === 0) return 0;
+
+    const completedTasks = projectTasks.filter(task => task.status === 'completed');
+    return Math.round((completedTasks.length / projectTasks.length) * 100);
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Team Leader Dashboard</h1>
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -151,7 +242,7 @@ const TeamLeaderDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-green-100 text-green-500 mr-4">
@@ -165,7 +256,7 @@ const TeamLeaderDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
@@ -175,11 +266,11 @@ const TeamLeaderDashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">Upcoming Deadlines</p>
-                  <p className="text-2xl font-bold">2</p>
+                  <p className="text-2xl font-bold">{upcomingDeadlines}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
@@ -189,12 +280,12 @@ const TeamLeaderDashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">Overall Progress</p>
-                  <p className="text-2xl font-bold">68%</p>
+                  <p className="text-2xl font-bold">{overallProgress}%</p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Team Members */}
           <div className="bg-white rounded-lg shadow mb-8">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -222,45 +313,61 @@ const TeamLeaderDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {teamMembers.map((member) => (
-                    <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <img className="h-10 w-10 rounded-full" src={member.avatar} alt={member.name} />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{member.role}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className={`h-2.5 w-2.5 rounded-full ${getMemberStatusColor(member.status)} mr-2`}></div>
-                          <span className="text-sm text-gray-500 capitalize">{member.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {member.tasksCompleted} / {member.tasksTotal}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-blue-600 h-2.5 rounded-full" 
-                            style={{ width: `${(member.tasksCompleted / member.tasksTotal) * 100}%` }}
-                          ></div>
-                        </div>
+                  {teamMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                        No team members found. Add members to your projects to see them here.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    teamMembers.map((member) => (
+                      <tr key={member._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <img
+                                className="h-10 w-10 rounded-full"
+                                src={member.avatarUrl || "https://via.placeholder.com/40"}
+                                alt={member.username}
+                              />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {member.firstName && member.lastName
+                                  ? `${member.firstName} ${member.lastName}`
+                                  : member.username}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{member.role}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className={`h-2.5 w-2.5 rounded-full ${getMemberStatusColor(member.status)} mr-2`}></div>
+                            <span className="text-sm text-gray-500 capitalize">{member.status}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {member.tasksCompleted} / {member.tasksTotal}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div
+                              className="bg-blue-600 h-2.5 rounded-full"
+                              style={{ width: `${member.tasksTotal > 0 ? (member.tasksCompleted / member.tasksTotal) * 100 : 0}%` }}
+                            ></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
-          
+
           {/* Projects */}
           <div className="bg-white rounded-lg shadow">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -285,32 +392,40 @@ const TeamLeaderDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {projects.map((project) => (
-                    <tr key={project.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{project.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{new Date(project.deadline).toLocaleDateString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}`}>
-                          {project.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                            <div 
-                              className="bg-blue-600 h-2.5 rounded-full" 
-                              style={{ width: `${project.progress}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm text-gray-500">{project.progress}%</span>
-                        </div>
+                  {projects.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                        No projects found. Create new projects to see them here.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    projects.map((project) => (
+                      <tr key={project._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{new Date(project.endDate).toLocaleDateString()}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}`}>
+                            {project.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                              <div
+                                className="bg-blue-600 h-2.5 rounded-full"
+                                style={{ width: `${calculateProjectProgress(project._id)}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm text-gray-500">{calculateProjectProgress(project._id)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

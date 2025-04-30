@@ -36,8 +36,18 @@ const MemberHomeLayout: React.FC = () => {
 
       console.log('Checking member role - Token role:', userRole, 'Stored role:', storedRole);
 
-      // Check both token role and stored role
-      if ((userRole !== 'member' && decoded.role !== 'member') && storedRole !== 'member') {
+      // Check both token role and stored role - accept both "member" and "Member"
+      console.log('Checking member role - Token role:', decoded.role, 'Stored role:', localStorage.getItem('userRole'));
+
+      const isMember =
+        userRole === 'member' ||
+        decoded.role === 'member' ||
+        decoded.role === 'Member' ||
+        storedRole === 'member' ||
+        storedRole === 'Member' ||
+        localStorage.getItem('userRole') === 'Member';
+
+      if (!isMember) {
         console.log('Role mismatch - Token role:', userRole, 'Stored role:', storedRole);
         navigate('/unauthorized');
         return;
@@ -111,6 +121,14 @@ const MemberHomeLayout: React.FC = () => {
                   className="block py-2 px-4 rounded hover:bg-gray-600"
                 >
                   Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/assistant"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Assistant IA
                 </a>
               </li>
             </ul>
@@ -218,6 +236,15 @@ const MemberHomeLayout: React.FC = () => {
                   onClick={toggleMenu}
                 >
                   Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/assistant"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Assistant IA
                 </a>
               </li>
             </ul>

@@ -9,6 +9,7 @@ import Input from "../../components/form/input/InputField";
 import TextArea from "../../components/form/input/TextArea";
 import Select from "../../components/form/Select";
 import Button from "../../components/ui/button/Button";
+import TaskChatbotHelper from "../../components/chatbot/TaskChatbotHelper";
 
 interface User {
   _id: string;
@@ -387,6 +388,13 @@ const EditTask: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Intégration de l'assistant IA pour cette tâche */}
+        {taskId && !fetchLoading && (
+          <div className="mt-8">
+            <TaskChatbotHelper taskId={taskId} taskTitle={formData.title} />
+          </div>
+        )}
       </div>
     </div>
   );

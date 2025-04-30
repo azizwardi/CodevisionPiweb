@@ -16,6 +16,7 @@ const User = require("./models/user");
 const projectRouter = require("./routes/projectRoutes");
 const eventRouter = require("./routes/eventRoutes");
 const commentRouter = require("./routes/commentRoutes");
+const chatbotRouter = require("./routes/chatbotRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -207,6 +208,7 @@ app.use("/api/user", user);
 app.use("/projects", projectRouter);
 app.use("/events", eventRouter);
 app.use("/comments", commentRouter);
+app.use("/chatbot", chatbotRouter);
 
 // Create HTTP server
 const server = http.createServer(app);

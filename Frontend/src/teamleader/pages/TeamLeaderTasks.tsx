@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { toastManager } from "../../dashboard/components/ui/toast/ToastContainer";
 import Button from "../../dashboard/components/ui/button/Button";
 import Badge from "../../dashboard/components/ui/badge/Badge";
 import PageBreadcrumb from "../../dashboard/components/common/PageBreadCrumb";
 import PageMeta from "../../dashboard/components/common/PageMeta";
-import CreateTaskForm from "../../teamleader/pages/CreateTask"; 
+import CreateTaskForm from "../../teamleader/pages/CreateTask";
 
 interface User {
   _id: string;
@@ -34,6 +35,7 @@ interface Task {
 }
 
 const TaskList: React.FC = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -85,6 +87,10 @@ const TaskList: React.FC = () => {
     } catch (err: any) {
       toastManager.addToast("Error deleting task", "error", 5000);
     }
+  };
+
+  const handleEditTask = (taskId: string) => {
+    navigate(`/team-leader/tasks/edit/${taskId}`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -160,7 +166,20 @@ const TaskList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(task.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => handleDeleteTask(task._id)} className="text-red-600 hover:text-red-900">Delete</button>
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          onClick={() => handleEditTask(task._id)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(task._id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
