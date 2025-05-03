@@ -409,7 +409,7 @@ const TeamLeaderDashboard: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}`}>
-                            {project.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {project.status.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

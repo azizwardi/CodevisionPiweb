@@ -22,9 +22,9 @@ interface SharedCalendarProps {
   description?: string;
 }
 
-const SharedCalendar: React.FC<SharedCalendarProps> = ({ 
-  title = "Calendrier", 
-  description = "Calendrier des événements" 
+const SharedCalendar: React.FC<SharedCalendarProps> = ({
+  title = "Calendrier",
+  description = "Calendrier des événements"
 }) => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
@@ -51,7 +51,11 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
   // Fonction pour charger les événements depuis l'API
   const fetchEvents = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/events");
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get("http://localhost:5000/events", { headers });
       console.log("Événements récupérés:", response.data);
 
       // Transformer les données pour FullCalendar
@@ -102,7 +106,11 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
     }
 
     try {
-      await axios.delete(`http://localhost:8000/events/${selectedEvent.id}`);
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      await axios.delete(`http://localhost:5000/events/${selectedEvent.id}`, { headers });
       toastManager.addToast("Événement supprimé avec succès", "success", 5000);
       fetchEvents();
       closeModal();
@@ -120,30 +128,34 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
         return;
       }
 
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       if (selectedEvent) {
         // Mettre à jour un événement existant
         console.log("Mise à jour de l'événement:", selectedEvent.id);
 
-        await axios.put(`http://localhost:8000/events/${selectedEvent.id}`, {
+        await axios.put(`http://localhost:5000/events/${selectedEvent.id}`, {
           title: eventTitle,
           start: eventStartDate,
           end: eventEndDate || eventStartDate,
           allDay: true,
           calendar: eventLevel,
-        });
+        }, { headers });
 
         toastManager.addToast("Événement mis à jour avec succès", "success", 5000);
       } else {
         // Ajouter un nouvel événement
         console.log("Création d'un nouvel événement");
 
-        await axios.post("http://localhost:8000/events", {
+        await axios.post("http://localhost:5000/events", {
           title: eventTitle,
           start: eventStartDate,
           end: eventEndDate || eventStartDate,
           allDay: true,
           calendar: eventLevel,
-        });
+        }, { headers });
 
         toastManager.addToast("Événement créé avec succès", "success", 5000);
       }
@@ -173,7 +185,7 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
         description={description}
       />
       <PageBreadcrumb pageTitle={title} />
-      
+
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
           <FullCalendar

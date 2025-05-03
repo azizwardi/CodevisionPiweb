@@ -74,7 +74,7 @@ const TaskList: React.FC = () => {
         // Récupérer tous les projets créés par ce TeamLeader
         const projectsResponse = await axios.get("http://localhost:5000/projects");
         const teamLeaderProjects = projectsResponse.data.filter(
-          (project: Project) => project.creator === userId
+          (project: any) => project.creator === userId
         );
         setProjects(teamLeaderProjects);
 

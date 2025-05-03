@@ -101,7 +101,6 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
         : role === "TeamLeader"
           ? [
               { name: "Task List", path: "/team-leader/tasks" },
-              { name: "Create Task", path: "/tasks/create" },
             ]
           : [
               { name: "Task List", path: "/member/tasks" },
