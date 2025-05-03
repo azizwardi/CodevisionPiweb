@@ -10,6 +10,17 @@ exports.getAllTasks = async (req, res) => {
   }
 };
 
+// Get tasks by project
+exports.getTasksByProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const tasks = await Task.find({ projectId }).populate("assignedTo").populate("projectId");
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving tasks", error });
+  }
+};
+
 // Get task by ID
 exports.getTaskById = async (req, res) => {
   try {
@@ -26,6 +37,15 @@ exports.getTaskById = async (req, res) => {
 // Create a new task
 exports.createTask = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin ou un membre
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'Member')) {
+      return res.status(403).json({
+        message: "Les administrateurs et les membres ne sont pas autorisés à créer des tâches",
+        isAdmin: req.user.role === 'admin',
+        isMember: req.user.role === 'Member'
+      });
+    }
+
     console.log("Received task creation request:", req.body);
     const { title, description, status, assignedTo, projectId, dueDate } = req.body;
 
@@ -75,6 +95,14 @@ exports.createTask = async (req, res) => {
 // Update a task
 exports.updateTask = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === 'admin') {
+      return res.status(403).json({
+        message: "Les administrateurs ne sont pas autorisés à modifier des tâches",
+        isAdmin: true
+      });
+    }
+
     const { title, description, status, assignedTo, projectId, dueDate } = req.body;
 
     if (!title || !assignedTo || !projectId) {
@@ -103,6 +131,14 @@ exports.updateTask = async (req, res) => {
 // Delete a task
 exports.deleteTask = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === 'admin') {
+      return res.status(403).json({
+        message: "Les administrateurs ne sont pas autorisés à supprimer des tâches",
+        isAdmin: true
+      });
+    }
+
     const task = await Task.findById(req.params.taskId);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });

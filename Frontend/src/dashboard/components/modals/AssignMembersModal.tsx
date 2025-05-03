@@ -75,6 +75,25 @@ export default function AssignMembersModal({
       setSearchLoading(true);
       setError("");
       console.log("Recherche d'utilisateurs avec email:", searchEmail);
+
+      // Vérifier d'abord si l'utilisateur existe et a le rôle "Member"
+      const checkResponse = await axios.get(`http://localhost:5000/api/user/check-email`, {
+        params: { email: searchEmail }
+      });
+
+      // Si l'utilisateur existe mais n'a pas le rôle "Member"
+      if (checkResponse.data.exists && checkResponse.data.role !== "Member") {
+        toastManager.addToast(
+          "Ce mail n'est pas d'un member",
+          "error",
+          5000
+        );
+        setError("Ce mail n'est pas d'un member");
+        setSearchLoading(false);
+        return;
+      }
+
+      // Si l'utilisateur n'existe pas ou a le rôle "Member", continuer avec la recherche normale
       const response = await axios.get(`http://localhost:5000/projects/users/all`, {
         params: { email: searchEmail }
       });

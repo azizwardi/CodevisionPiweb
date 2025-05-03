@@ -5,12 +5,16 @@ const {
   createTask,
   updateTask,
   deleteTask,
+  getTasksByProject,
 } = require("../controllers/taskController");
 
 const router = express.Router();
 
 // Get all tasks
 router.get("/", getAllTasks);
+
+// Get tasks by project
+router.get("/project/:projectId", getTasksByProject);
 
 // Get task by ID
 router.get("/:taskId", getTaskById);

@@ -38,9 +38,10 @@ interface Project {
 interface ProjectTableProps {
   onEdit: (projectId: string) => void;
   refreshTrigger: number;
+  isAdmin?: boolean;
 }
 
-export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTableProps) {
+export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }: ProjectTableProps) {
   // État pour stocker les données des projets
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -48,37 +49,61 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
   const [showAssignModal, setShowAssignModal] = useState<boolean>(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Effet pour récupérer l'ID de l'utilisateur depuis le token
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decoded = jwtDecode<{ id: string; user?: { id: string } }>(token);
+        const id = decoded.user?.id || decoded.id;
+        if (id) {
+          setUserId(id);
+        }
+      } catch (error) {
+        console.error("Erreur lors du décodage du token:", error);
+      }
+    }
+  }, []);
 
   // Fonction pour récupérer les projets
   const fetchProjects = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        // Pour le débogage, nous n'utilisons pas le token d'authentification
-        // const token = localStorage.getItem("authToken");
-        // if (!token) {
-        //   throw new Error("Aucun token d'authentification trouvé");
-        // }
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get("http://localhost:5000/projects");
 
-        const response = await axios.get("http://localhost:5000/projects", {
-          // headers: {
-          //   Authorization: `Bearer ${token}`
-          // }
-        });
-
+      // Si c'est un admin, afficher tous les projets
+      if (isAdmin) {
         setProjects(response.data);
-      } catch (err: any) {
-        console.error("Erreur lors de la récupération des projets:", err);
-        setError("Échec du chargement des projets");
-      } finally {
-        setLoading(false);
+      } else {
+        // Pour les TeamLeaders, filtrer les projets dont ils sont créateurs
+        const userRole = localStorage.getItem('userRole');
+        if (userRole === 'TeamLeader' && userId) {
+          const filteredProjects = response.data.filter(
+            (project: any) => project.creator === userId
+          );
+          setProjects(filteredProjects);
+        } else {
+          // Pour les autres rôles, afficher tous les projets
+          setProjects(response.data);
+        }
       }
-    };
+    } catch (err: any) {
+      console.error("Erreur lors de la récupération des projets:", err);
+      setError("Échec du chargement des projets");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Effet pour récupérer les données des projets depuis l'API
   useEffect(() => {
-    fetchProjects();
-  }, [refreshTrigger]);
+    if (userId || isAdmin) {
+      fetchProjects();
+    }
+  }, [refreshTrigger, userId, isAdmin]);
 
   const handleDelete = async (projectId: string) => {
     // Récupérer l'ID de l'utilisateur connecté
@@ -301,44 +326,51 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setExpandedProjectId(expandedProjectId === project._id ? null : project._id)}
-                          >
-                            {expandedProjectId === project._id ? "Masquer" : "Commentaires"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onEdit(project._id)}
-                          >
-                            Modifier
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => {
-                              setSelectedProject(project);
-                              setShowAssignModal(true);
-                            }}
-                          >
-                            Assigner membres
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-error-500 hover:bg-error-50 hover:text-error-700"
-                            onClick={() => handleDelete(project._id)}
-                          >
-                            Supprimer
-                          </Button>
+                          {!isAdmin && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setExpandedProjectId(expandedProjectId === project._id ? null : project._id)}
+                              >
+                                {expandedProjectId === project._id ? "Masquer" : "Commentaires"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onEdit(project._id)}
+                              >
+                                Modifier
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                onClick={() => {
+                                  setSelectedProject(project);
+                                  setShowAssignModal(true);
+                                }}
+                              >
+                                Assigner membres
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-error-500 hover:bg-error-50 hover:text-error-700"
+                                onClick={() => handleDelete(project._id)}
+                              >
+                                Supprimer
+                              </Button>
+                            </>
+                          )}
+                          {isAdmin && (
+                            <span className="text-gray-400 text-sm">Accès en lecture seule</span>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
 
-                    {/* Section de commentaires expansible */}
-                    {expandedProjectId === project._id && (
+                    {/* Section de commentaires expansible - uniquement pour les non-admins */}
+                    {!isAdmin && expandedProjectId === project._id && (
                       <TableRow>
                         <TableCell className="px-4 py-4 bg-gray-50 dark:bg-gray-800" colSpan={6}>
                           <CommentSection projectId={project._id} />

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import SharedNavbar from '../../shared/components/SharedNavbar';
 import SimpleFooter from '../../shared/components/SimpleFooter';
+import SharedSidebar from '../../shared/components/SharedSidebar';
+import { SharedSidebarProvider, useSharedSidebar } from '../../shared/context/SharedSidebarContext';
 import '../../styles/layouts.css';
 
 interface DecodedToken {
@@ -14,8 +16,8 @@ interface DecodedToken {
   role?: string;
 }
 
-const MemberHomeLayout: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const MemberHomeLayoutContent: React.FC = () => {
+  const { isMobileOpen, toggleMobile, isExpanded, isHovered, setIsHovered } = useSharedSidebar();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,9 +60,7 @@ const MemberHomeLayout: React.FC = () => {
     }
   }, [navigate]);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+
 
   return (
     <div className="layout-container">
@@ -69,71 +69,17 @@ const MemberHomeLayout: React.FC = () => {
         <SharedNavbar title="Dashboard" bgColor="bg-white" />
       </div>
 
-      {/* Main content with sidebar */}
+      {/* Sidebar */}
+      <SharedSidebar
+        role="Member"
+        isExpanded={isExpanded}
+        isMobileOpen={isMobileOpen}
+        isHovered={isHovered}
+        setIsHovered={setIsHovered}
+      />
+
+      {/* Main content */}
       <div className="main-content">
-        {/* Sidebar */}
-        <aside className="sidebar-member hidden md:block">
-          <nav className="p-4">
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="/member-dashboard"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Dashboard
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/tasks"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Tasks
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/projects"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Projects
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/time-tracking"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Time Tracking
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/team-chat"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Team Chat
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/profile"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Profile
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/assistant"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Assistant IA
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </aside>
 
         {/* Content area */}
         <main className="content-area">
@@ -145,7 +91,7 @@ const MemberHomeLayout: React.FC = () => {
       <div className="mobile-menu-button">
         <button
           type="button"
-          onClick={toggleMenu}
+          onClick={toggleMobile}
           className="bg-green-600 text-white p-3 rounded-full shadow-lg"
           aria-label="Toggle menu"
         >
@@ -161,102 +107,19 @@ const MemberHomeLayout: React.FC = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 z-50 md:hidden">
-          <div className="flex justify-end p-4">
-            <button
-              type="button"
-              onClick={toggleMenu}
-              className="text-white"
-              aria-label="Close menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <nav className="p-4">
-            <ul className="space-y-4">
-              <li>
-                <a
-                  href="/member-dashboard"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Dashboard
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/tasks"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Tasks
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/projects"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Projects
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/time-tracking"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Time Tracking
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/team-chat"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Team Chat
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/profile"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Profile
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/member/assistant"
-                  className="block py-2 px-4 text-white text-lg"
-                  onClick={toggleMenu}
-                >
-                  Assistant IA
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      )}
-
       {/* Footer - Full width and visible */}
       <footer className="footer-container">
         <SimpleFooter />
       </footer>
     </div>
+  );
+};
+
+const MemberHomeLayout: React.FC = () => {
+  return (
+    <SharedSidebarProvider>
+      <MemberHomeLayoutContent />
+    </SharedSidebarProvider>
   );
 };
 

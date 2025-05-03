@@ -39,6 +39,7 @@ import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
 import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
 import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects";
 import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
+import TeamLeaderCalendar from "./teamleader/pages/TeamLeaderCalendar";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -46,6 +47,8 @@ import MemberDashboard from "./member/pages/MemberDashboard";
 import MemberProfile from "./member/pages/MemberProfile";
 import MemberTasks from "./member/pages/MemberTasks";
 import MemberProjects from "./member/pages/MemberProjects";
+import MemberCalendar from "./member/pages/MemberCalendar";
+import EditMemberTask from "./member/pages/EditMemberTask";
 import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
@@ -107,6 +110,7 @@ export default function App() {
               <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
               <Route path="/team-leader/tasks" element={<TeamLeaderTasks />} />
               <Route path="/team-leader/tasks/edit/:taskId" element={<EditTask />} />
+              <Route path="/team-leader/calendar" element={<TeamLeaderCalendar />} />
               <Route path="/team-leader/reports" element={<div />} />
               <Route path="/team-leader/assistant" element={<ChatbotPage />} />
             </Route>
@@ -118,7 +122,9 @@ export default function App() {
               <Route path="/member-dashboard" element={<MemberDashboard />} />
               <Route path="/member/profile" element={<MemberProfile />} />
               <Route path="/member/tasks" element={<MemberTasks />} />
+              <Route path="/member/tasks/edit/:taskId" element={<EditMemberTask />} />
               <Route path="/member/projects" element={<MemberProjects />} />
+              <Route path="/member/calendar" element={<MemberCalendar />} />
               <Route path="/member/time-tracking" element={<div />} />
               <Route path="/member/team-chat" element={<div />} />
               <Route path="/member/assistant" element={<ChatbotPage />} />

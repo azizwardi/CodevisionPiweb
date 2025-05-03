@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { toastManager } from "../../dashboard/components/ui/toast/ToastContainer";
 import Button from "../../dashboard/components/ui/button/Button";
 import Badge from "../../dashboard/components/ui/badge/Badge";
@@ -44,19 +45,50 @@ const TaskList: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [showCreatePopup, setShowCreatePopup] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Récupérer l'ID de l'utilisateur depuis le token
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decoded = jwtDecode<{ id: string; user?: { id: string } }>(token);
+        const id = decoded.user?.id || decoded.id;
+        if (id) {
+          setUserId(id);
+        }
+      } catch (error) {
+        console.error("Erreur lors du décodage du token:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!userId) return;
+
       setLoading(true);
       setError("");
 
       try {
-        const tasksResponse = await axios.get("http://localhost:5000/tasks");
-        setTasks(tasksResponse.data);
-        setFilteredTasks(tasksResponse.data);
-
+        // Récupérer tous les projets créés par ce TeamLeader
         const projectsResponse = await axios.get("http://localhost:5000/projects");
-        setProjects(projectsResponse.data);
+        const teamLeaderProjects = projectsResponse.data.filter(
+          (project: Project) => project.creator === userId
+        );
+        setProjects(teamLeaderProjects);
+
+        // Récupérer toutes les tâches
+        const tasksResponse = await axios.get("http://localhost:5000/tasks");
+
+        // Filtrer les tâches pour n'inclure que celles associées aux projets du TeamLeader
+        const teamLeaderProjectIds = teamLeaderProjects.map((project: Project) => project._id);
+        const teamLeaderTasks = tasksResponse.data.filter(
+          (task: Task) => teamLeaderProjectIds.includes(task.projectId._id)
+        );
+
+        setTasks(teamLeaderTasks);
+        setFilteredTasks(teamLeaderTasks);
       } catch (err: any) {
         setError(err.message || "Failed to fetch data");
         toastManager.addToast("Error loading tasks", "error", 5000);
@@ -66,7 +98,7 @@ const TaskList: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     let result = [...tasks];

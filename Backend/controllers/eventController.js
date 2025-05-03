@@ -35,6 +35,15 @@ exports.getEventById = async (req, res) => {
 exports.createEvent = async (req, res) => {
   try {
     console.log("Requête de création d'événement reçue:", req.body);
+
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === 'admin') {
+      return res.status(403).json({
+        message: "Les administrateurs ne sont pas autorisés à créer des événements",
+        isAdmin: true
+      });
+    }
+
     const { title, start, end, allDay, calendar } = req.body;
 
     if (!title || !start) {
@@ -52,7 +61,7 @@ exports.createEvent = async (req, res) => {
       allDay,
       calendar,
     });
-    
+
     const event = new Event({
       title,
       start,
@@ -77,9 +86,17 @@ exports.updateEvent = async (req, res) => {
   try {
     console.log("Requête de modification d'événement reçue:", req.body);
     console.log("ID de l'événement à modifier:", req.params.eventId);
-    
+
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === 'admin') {
+      return res.status(403).json({
+        message: "Les administrateurs ne sont pas autorisés à modifier des événements",
+        isAdmin: true
+      });
+    }
+
     const { title, start, end, allDay, calendar } = req.body;
-    
+
     // Vérification des champs requis
     if (!title || !start) {
       console.log("Validation échouée - champs manquants:", {
@@ -88,27 +105,27 @@ exports.updateEvent = async (req, res) => {
       });
       return res.status(400).json({ message: "Le titre et la date de début sont requis" });
     }
-    
+
     // Recherche de l'événement
     const event = await Event.findById(req.params.eventId);
     if (!event) {
       console.log("Événement non trouvé avec l'ID:", req.params.eventId);
       return res.status(404).json({ message: "Événement non trouvé" });
     }
-    
+
     console.log("Événement trouvé:", event);
-    
+
     // Mise à jour des champs
     event.title = title;
     event.start = start;
     event.end = end;
     event.allDay = allDay !== undefined ? allDay : event.allDay;
     event.calendar = calendar || event.calendar;
-    
+
     console.log("Sauvegarde des modifications...");
     await event.save();
     console.log("Événement mis à jour avec succès");
-    
+
     res.status(200).json({ message: "Événement mis à jour avec succès", event });
   } catch (error) {
     console.error("Erreur lors de la modification de l'événement:", error);
@@ -120,11 +137,20 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     console.log("Suppression de l'événement avec l'ID:", req.params.eventId);
+
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === 'admin') {
+      return res.status(403).json({
+        message: "Les administrateurs ne sont pas autorisés à supprimer des événements",
+        isAdmin: true
+      });
+    }
+
     const event = await Event.findById(req.params.eventId);
     if (!event) {
       return res.status(404).json({ message: "Événement non trouvé" });
     }
-    
+
     await Event.findByIdAndDelete(req.params.eventId);
     console.log("Événement supprimé avec succès");
     res.status(200).json({ message: "Événement supprimé avec succès" });

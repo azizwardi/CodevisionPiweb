@@ -8,6 +8,7 @@ admin_router.get("/showByid/:id", userController.showByid);
 admin_router.put("/update/:id", userController.update);
 admin_router.delete("/deleteuser/:id", userController.deleteuser);
 admin_router.post("/add", userController.add);
+admin_router.get("/check-email", userController.checkEmail);
 
 // Route pour télécharger une image de profil
 admin_router.post(

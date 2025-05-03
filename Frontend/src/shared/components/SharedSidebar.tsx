@@ -1,24 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// Assume these icons are imported from an icon library
+// Import icons
 import {
-  // Commented out unused icons
-  // BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
-  //PageIcon,
-  // PieChartIcon,
-  // PlugInIcon,
   UserCircleIcon,
   ChatIcon,
-} from "../icons";
-import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
+} from "../../dashboard/icons";
 
+// Define the NavItem type
 type NavItem = {
   name: string;
   icon: React.ReactNode;
@@ -26,119 +20,161 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-// Fonction pour obtenir les éléments de navigation en fonction du rôle de l'utilisateur
-const getNavItems = (): NavItem[] => {
-  // Vérifier si l'utilisateur est un admin
-  const userRole = localStorage.getItem("userRole");
-  const isAdmin = userRole === "admin";
+interface SharedSidebarProps {
+  role: "admin" | "TeamLeader" | "Member";
+  isExpanded: boolean;
+  isMobileOpen: boolean;
+  isHovered: boolean;
+  setIsHovered: (isHovered: boolean) => void;
+}
 
-  return [
-    {
-      icon: <GridIcon />,
-      name: "Dashboard",
-      path: "/dashboard",
-    },
-    {
-      icon: <CalenderIcon />,
-      name: "Calendar",
-      path: "/calendar",
-    },
-    {
-      icon: <UserCircleIcon />,
-      name: "User Profile",
-      path: "/profile",
-    },
-    {
-      name: "Project Management",
-      icon: <ListIcon />,
-      path: "/form-elements",
-    },
-    {
-      name: "Task Management",
-      icon: <ListIcon />,
-      subItems: isAdmin
-        ? [{ name: "Task List", path: "/tasks" }]  // Admin ne voit que la liste des tâches
-        : [
-            { name: "Task List", path: "/tasks" },
-            { name: "Create Task", path: "/tasks/create" },
-          ],
-    },
-    {
-      name: "User Management",
-      icon: <UserCircleIcon />,
-      path: "/basic-tables",
-    },
-    {
-      name: "Assistant IA",
-      icon: <ChatIcon />,
-      path: "/assistant",
-    },
-  ];
-};
-
-// Initialiser les éléments de navigation
-const navItems = getNavItems();
-
-/* Commented out to hide these items from the sidebar
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
-];
-*/
-
-// We don't need othersItems anymore since we've commented it out
-
-const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+const SharedSidebar: React.FC<SharedSidebarProps> = ({
+  role,
+  isExpanded,
+  isMobileOpen,
+  isHovered,
+  setIsHovered,
+}) => {
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
+  // Function to check if a path is active
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
   );
 
-  // Effet pour mettre à jour les sous-menus actifs en fonction de l'URL
+  // Get navigation items based on user role
+  const getNavItems = (): NavItem[] => {
+    // Base items for all roles
+    const baseItems: NavItem[] = [
+      {
+        icon: <GridIcon />,
+        name: "Dashboard",
+        path: role === "admin"
+          ? "/dashboard"
+          : role === "TeamLeader"
+            ? "/team-leader-dashboard"
+            : "/member-dashboard",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: "Calendar",
+        path: role === "admin"
+          ? "/calendar"
+          : role === "TeamLeader"
+            ? "/team-leader/calendar"
+            : "/member/calendar",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "User Profile",
+        path: role === "admin"
+          ? "/profile"
+          : role === "TeamLeader"
+            ? "/team-leader/profile"
+            : "/member/profile",
+      },
+      {
+        name: "Project Management",
+        icon: <ListIcon />,
+        path: role === "admin"
+          ? "/form-elements"
+          : role === "TeamLeader"
+            ? "/team-leader/projects"
+            : "/member/projects",
+      },
+    ];
+
+    // Task Management with conditional subItems
+    const taskManagement: NavItem = {
+      name: "Task Management",
+      icon: <ListIcon />,
+      subItems: role === "admin"
+        ? [{ name: "Task List", path: "/tasks" }]
+        : role === "TeamLeader"
+          ? [
+              { name: "Task List", path: "/team-leader/tasks" },
+              { name: "Create Task", path: "/tasks/create" },
+            ]
+          : [
+              { name: "Task List", path: "/member/tasks" },
+            ],
+    };
+
+    // Add role-specific items
+    if (role === "admin") {
+      return [
+        ...baseItems,
+        taskManagement,
+        {
+          name: "User Management",
+          icon: <UserCircleIcon />,
+          path: "/basic-tables",
+        },
+        {
+          name: "Assistant IA",
+          icon: <ChatIcon />,
+          path: "/assistant",
+        },
+      ];
+    } else if (role === "TeamLeader") {
+      return [
+        ...baseItems,
+        taskManagement,
+        {
+          name: "My Team",
+          icon: <UserCircleIcon />,
+          path: "/team-leader/team",
+        },
+        {
+          name: "Reports",
+          icon: <ListIcon />,
+          path: "/team-leader/reports",
+        },
+        {
+          name: "Assistant IA",
+          icon: <ChatIcon />,
+          path: "/team-leader/assistant",
+        },
+      ];
+    } else { // Member
+      return [
+        ...baseItems,
+        taskManagement,
+        {
+          name: "Time Tracking",
+          icon: <ListIcon />,
+          path: "/member/time-tracking",
+        },
+        {
+          name: "Team Chat",
+          icon: <ChatIcon />,
+          path: "/member/team-chat",
+        },
+        {
+          name: "Assistant IA",
+          icon: <ChatIcon />,
+          path: "/member/assistant",
+        },
+      ];
+    }
+  };
+
+  // Get navigation items
+  const navItems = getNavItems();
+
+  // Effect to update active submenu based on URL
   useEffect(() => {
     let submenuMatched = false;
-    // Only check main items since others are commented out
+    // Only check main items
     ["main"].forEach((menuType) => {
-      // Utiliser les éléments de navigation mis à jour
       const items = getNavItems();
       items.forEach((nav, index) => {
         if (nav.subItems) {
@@ -160,6 +196,7 @@ const AppSidebar: React.FC = () => {
     }
   }, [location, isActive]);
 
+  // Effect to update submenu height
   useEffect(() => {
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
@@ -172,8 +209,9 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
+  // Handle submenu toggle
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    // Only handle main menu items since others are commented out
+    // Only handle main menu items
     if (menuType === "main") {
       setOpenSubmenu((prevOpenSubmenu) => {
         if (
@@ -188,6 +226,7 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+  // Render menu items
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-4">
       {items.map((nav, index) => (
@@ -355,14 +394,11 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            {/* Others section removed */}
-            {/* Section "Others" supprimée */}
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );
 };
 
-export default AppSidebar;
+export default SharedSidebar;

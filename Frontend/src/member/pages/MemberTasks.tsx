@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 import { toastManager } from '../../dashboard/components/ui/toast/ToastContainer';
 
 interface User {
@@ -45,6 +46,7 @@ const MemberTasks: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get user ID from token
@@ -76,12 +78,12 @@ const MemberTasks: React.FC = () => {
     try {
       // Fetch all tasks
       const tasksResponse = await axios.get("http://localhost:5000/tasks");
-      
+
       // Filter tasks assigned to the current user
       const userTasks = tasksResponse.data.filter(
         (task: Task) => task.assignedTo?._id === userId
       );
-      
+
       setTasks(userTasks);
       setFilteredTasks(userTasks);
 
@@ -116,6 +118,11 @@ const MemberTasks: React.FC = () => {
     }
   };
 
+  // Fonction pour éditer une tâche
+  const handleEditTask = (taskId: string) => {
+    navigate(`/member/tasks/edit/${taskId}`);
+  };
+
   if (loading) return <div className="p-4">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-600">Error loading tasks: {error}</div>;
 
@@ -127,9 +134,9 @@ const MemberTasks: React.FC = () => {
         <div className="mb-6 flex flex-wrap gap-4">
           <div className="w-full md:w-auto">
             <label className="block mb-1 text-sm font-medium">Filter by Status</label>
-            <select 
-              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              value={statusFilter} 
+            <select
+              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All Statuses</option>
@@ -141,9 +148,9 @@ const MemberTasks: React.FC = () => {
 
           <div className="w-full md:w-auto">
             <label className="block mb-1 text-sm font-medium">Filter by Project</label>
-            <select 
-              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              value={projectFilter} 
+            <select
+              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
             >
               <option value="">All Projects</option>
@@ -167,6 +174,7 @@ const MemberTasks: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -179,6 +187,14 @@ const MemberTasks: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">{task.projectId?.name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(task.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEditTask(task._id)}
+                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
+                      >
+                        Edit
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
