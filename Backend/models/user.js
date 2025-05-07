@@ -67,6 +67,11 @@ const userSchema = new Schema({
   instagram: {
     type: String,
   },
+  grade: {
+    type: String,
+    enum: ['Débutant', 'Intermédiaire', 'Avancé', 'Expert'],
+    default: 'Débutant'
+  },
 });
 
 const User = mongoose.model("User", userSchema);

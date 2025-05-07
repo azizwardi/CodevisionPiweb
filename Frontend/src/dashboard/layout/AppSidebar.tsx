@@ -15,6 +15,7 @@ import {
   // PlugInIcon,
   UserCircleIcon,
   ChatIcon,
+  QuizIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -77,7 +78,62 @@ const getNavItems = (): NavItem[] => {
 };
 
 // Initialiser les éléments de navigation
-const navItems = getNavItems();
+const navItems: NavItem[] = [
+  {
+    icon: <GridIcon />,
+    name: "Dashboard",
+    path: "/dashboard",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Calendar",
+    path: "/calendar",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "User Profile",
+    path: "/profile",
+  },
+  {
+    name: "Project Management",
+    icon: <ListIcon />,
+     path: "/form-elements",
+  },
+  {
+    name: "Quiz Management",
+    icon: <QuizIcon />,
+    subItems: [
+      { name: "Gérer les Quiz", path: "/quiz-management" },
+      { name: "Participer aux Quiz", path: "/quiz-participation" },
+    ],
+  },
+  {
+    name: "Task Management",
+    icon: <ListIcon />,
+    subItems: [
+      { name: "Task List", path: "/tasks" },
+      { name: "Create Task", path: "/tasks/create" },
+    ],
+  },
+  {
+    name: "User Management",
+    icon: <UserCircleIcon />,
+    path: "/basic-tables",
+  },
+  {
+    name: "Assistant IA",
+    icon: <ChatIcon />,
+    path: "/assistant",
+  },
+  /*{
+    name: "Pages",
+    icon: <PageIcon />,
+    subItems: [
+      { name: "Blank Page", path: "/blank", pro: false },
+      { name: "404 Error", path: "/error-404", pro: false },
+    ],
+  },*/
+];
 
 /* Commented out to hide these items from the sidebar
 const othersItems: NavItem[] = [

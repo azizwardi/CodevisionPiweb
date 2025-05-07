@@ -62,6 +62,10 @@ const MemberHomeLayoutContent: React.FC = () => {
 
 
 
+  function toggleMenu(): void {
+    toggleMobile();
+  }
+
   return (
     <div className="layout-container">
       {/* Navbar - scrolls with the page */}
@@ -80,6 +84,77 @@ const MemberHomeLayoutContent: React.FC = () => {
 
       {/* Main content */}
       <div className="main-content">
+        {/* Sidebar */}
+        <aside className="sidebar-member hidden md:block">
+          <nav className="p-4">
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="/member-dashboard"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/tasks"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Tasks
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/projects"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Projects
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/time-tracking"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Time Tracking
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/team-chat"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Team Chat
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/profile"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/assistant"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Assistant IA
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/quiz-participation"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Participer aux Quiz
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </aside>
 
         {/* Content area */}
         <main className="content-area">
@@ -106,6 +181,106 @@ const MemberHomeLayoutContent: React.FC = () => {
           </svg>
         </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 z-50 md:hidden">
+          <div className="flex justify-end p-4">
+            <button
+              type="button"
+              onClick={toggleMenu}
+              className="text-white"
+              aria-label="Close menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <nav className="p-4">
+            <ul className="space-y-4">
+              <li>
+                <a
+                  href="/member-dashboard"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/tasks"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Tasks
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/projects"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Projects
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/time-tracking"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Time Tracking
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/team-chat"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Team Chat
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/profile"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/assistant"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Assistant IA
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/member/quiz-participation"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Participer aux Quiz
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
 
       {/* Footer - Full width and visible */}
       <footer className="footer-container">

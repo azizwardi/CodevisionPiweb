@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
@@ -14,6 +13,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Typography } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
 
 interface User {
   _id?: string;
@@ -45,57 +45,9 @@ interface DecodedToken {
 
 export default function UserDropdown() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const open = Boolean(anchorEl);
-
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<DecodedToken>(token);
-
-        // Handle both structures
-        const userData = decodedToken.user || decodedToken;
-
-        // Set the user state with token data
-        setUser({
-          _id: userData.id,
-          name: userData.name,
-          firstName: userData.firstName || "",
-          lastName: userData.lastName || "",
-          username: userData.name || "",
-          email: userData.email || "",
-          avatarUrl: localStorage.getItem("userAvatarUrl") || "/images/user/owner.jpg",
-          role: userData.role || "",
-        });
-
-        // Fetch complete user data if we have an ID
-        if (userData.id) {
-          fetchUserById(userData.id);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, []);
-
-  const fetchUserById = async (userId: string) => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get(`http://localhost:5000/api/user/showByid/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data) {
-        setUser(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -107,30 +59,8 @@ export default function UserDropdown() {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-
-      if (!token) {
-        console.warn("No token found in localStorage. Redirecting to signin...");
-        navigate("/signin");
-        return;
-      }
-
-      await axios.post(
-        "http://localhost:5000/api/auth/logout",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userRole");
-
-      // Dispatch an event to notify other components about the logout
-      window.dispatchEvent(new Event('authChange'));
-
+      // Appeler la fonction de déconnexion du contexte d'authentification
+      logout();
       navigate("/signin");
     } catch (error) {
       console.error("Error during logout:", error);

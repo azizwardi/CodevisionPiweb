@@ -6,7 +6,8 @@ export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 // Props pour le composant Toast
 interface ToastProps {
-  message: string;
+  title: string;
+  description: string;
   type: ToastType;
   duration?: number;
   onClose: () => void;
@@ -14,7 +15,8 @@ interface ToastProps {
 
 // Composant Toast
 const Toast: React.FC<ToastProps> = ({
-  message,
+  title,
+  description,
   type = 'info',
   duration = 3000,
   onClose
@@ -38,7 +40,7 @@ const Toast: React.FC<ToastProps> = ({
 
   // Fermer le toast après la durée spécifiée
   useEffect(() => {
-    console.log("Toast monté avec le message:", message);
+    console.log("Toast monté avec le titre:", title);
     const timer = setTimeout(() => {
       console.log("Fermeture du toast après", duration, "ms");
       setIsVisible(false);
@@ -49,7 +51,7 @@ const Toast: React.FC<ToastProps> = ({
       console.log("Nettoyage du timer du toast");
       clearTimeout(timer);
     };
-  }, [duration, onClose, message]);
+  }, [duration, onClose, title]);
 
   // Animation de sortie
   const animationClass = isVisible
@@ -65,7 +67,10 @@ const Toast: React.FC<ToastProps> = ({
       role="alert"
     >
       <div className="flex items-center justify-between p-4">
-        <p className="text-sm font-medium">{message}</p>
+        <div>
+          <h4 className="text-sm font-bold">{title}</h4>
+          <p className="text-sm mt-1">{description}</p>
+        </div>
         <button
           onClick={() => {
             setIsVisible(false);

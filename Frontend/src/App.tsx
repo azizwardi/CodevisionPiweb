@@ -22,6 +22,8 @@ import ChatbotPage from "./dashboard/pages/ChatbotPage";
 import Calendar from "./dashboard/pages/Calendar";
 import BasicTables from "./dashboard/pages/Tables/BasicTables";
 import FormElements from "./dashboard/pages/Forms/FormElements";
+import QuizManagement from "./dashboard/pages/Forms/QuizManagement";
+import QuizParticipation from "./dashboard/pages/Forms/QuizParticipation";
 import Blank from "./dashboard/pages/Blank";
 import AppLayout from "./dashboard/layout/AppLayout";
 import { ScrollToTop } from "./dashboard/components/common/ScrollToTop";
@@ -53,24 +55,27 @@ import ProtectedRoute from "./ProtectedRoute";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
 import { NotificationProvider } from "./dashboard/components/notifications/NotificationContext";
+// Auth context
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return (
     <NotificationProvider>
-      <Router>
-        <ScrollToTop />
-        <ToastContainer />
-        <Routes>
-          {/* Auth Layout (No Protection) */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/request-reset" element={<RequestReset />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth/success" element={<AuthSuccess />} />
-          <Route path="/role-select" element={<UserRoleSelector />} />
-          <Route path="/debug-auth" element={<DebugAuth />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/*" element={<Frontpage />} />
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <ToastContainer />
+          <Routes>
+            {/* Auth Layout (No Protection) */}
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/request-reset" element={<RequestReset />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/success" element={<AuthSuccess />} />
+            <Route path="/role-select" element={<UserRoleSelector />} />
+            <Route path="/debug-auth" element={<DebugAuth />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/*" element={<Frontpage />} />
 
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<UserProfiles />} />
@@ -83,6 +88,8 @@ export default function App() {
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
               <Route path="/form-elements" element={<FormElements />} />
+              <Route path="/quiz-management" element={<QuizManagement />} />
+              <Route path="/quiz-participation" element={<QuizParticipation />} />
           <Route path="/basic-tables" element={<BasicTables />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/avatars" element={<Avatars />} />
@@ -128,6 +135,7 @@ export default function App() {
               <Route path="/member/time-tracking" element={<div />} />
               <Route path="/member/team-chat" element={<div />} />
               <Route path="/member/assistant" element={<ChatbotPage />} />
+              <Route path="/member/quiz-participation" element={<QuizParticipation />} />
             </Route>
           </Route>
 
@@ -135,6 +143,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
+      </AuthProvider>
     </NotificationProvider>
   );
 }
