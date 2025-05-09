@@ -20,9 +20,70 @@
 .main-content {
   display: flex;
   flex: 1;
+  margin-left: 90px; /* Default width of collapsed sidebar */
 }
 
-/* Sidebar */
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: 290px; /* Width of expanded sidebar */
+  }
+}
+
+/* Sidebar styles for admin-like sidebar */
+/* These styles are used by the SharedSidebar component */
+.menu-item {
+  @apply flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200;
+}
+
+.menu-item-active {
+  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-500;
+}
+
+.menu-item-inactive {
+  @apply text-gray-700 hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/[0.05];
+}
+
+.menu-item-icon-size {
+  @apply size-5;
+}
+
+.menu-item-icon-active {
+  @apply text-brand-500;
+}
+
+.menu-item-icon-inactive {
+  @apply text-gray-500 group-hover:text-gray-700 dark:text-white/50 dark:group-hover:text-white/70;
+}
+
+.menu-item-text {
+  @apply text-sm font-medium;
+}
+
+.menu-dropdown-item {
+  @apply flex items-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200;
+}
+
+.menu-dropdown-item-active {
+  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-500;
+}
+
+.menu-dropdown-item-inactive {
+  @apply text-gray-700 hover:bg-gray-100 dark:text-white/70 dark:hover:bg-white/[0.05];
+}
+
+.menu-dropdown-badge {
+  @apply rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase;
+}
+
+.menu-dropdown-badge-active {
+  @apply bg-brand-100 text-brand-500 dark:bg-brand-500/20;
+}
+
+.menu-dropdown-badge-inactive {
+  @apply bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-white/70;
+}
+
+/* Legacy sidebar styles - kept for compatibility */
 .sidebar {
   width: 16rem;
   background-color: #1f2937; /* gray-800 */

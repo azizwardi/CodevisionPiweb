@@ -188,10 +188,21 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       // }
 
       console.log("Envoi de la requête POST à http://localhost:5000/projects");
+
+      // Créer une copie des données du formulaire pour la requête
+      const requestData = {
+        ...formData,
+        // S'assurer que les dates sont au format ISO pour le backend
+        startDate: new Date(formData.startDate).toISOString(),
+        deadline: new Date(formData.deadline).toISOString()
+      };
+
+      console.log("Données formatées pour la requête:", requestData);
+
       try {
         const response = await axios.post(
           "http://localhost:5000/projects",
-          formData,
+          requestData,
           {
             headers: {
               // Authorization: `Bearer ${token}`,
@@ -207,7 +218,11 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       }
 
       // Afficher un toast de succès
-      toastManager.addToast("Projet créé avec succès", "success", 5000);
+      toastManager.addToast({
+        title: "Succès",
+        description: "Projet créé avec succès",
+        type: "success"
+      });
 
       // Réinitialiser le formulaire
       setFormData({
@@ -232,7 +247,11 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       });
       const errorMessage = err.response?.data?.message || "Erreur lors de la création du projet";
       setError(errorMessage);
-      toastManager.addToast(errorMessage, "error", 5000);
+      toastManager.addToast({
+        title: "Erreur",
+        description: errorMessage,
+        type: "error"
+      });
     } finally {
       console.log("Fin de la soumission du formulaire");
       setLoading(false);
@@ -326,6 +345,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       <div className="flex justify-end mt-6">
         <Button
           variant="primary"
+          type="submit"
           disabled={loading}
           className="w-full sm:w-auto"
         >

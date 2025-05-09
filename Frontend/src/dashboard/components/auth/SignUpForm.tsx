@@ -98,6 +98,7 @@ export default function SignUpForm() {
     }
 
     try {
+      console.log("Sending registration request with data:", { email, password, firstName, lastName, username, phoneNumber, role });
       const response = await axios.post("http://localhost:5000/api/auth/register", {
         email,
         password,
@@ -107,7 +108,8 @@ export default function SignUpForm() {
         phoneNumber,
         role
       });
-      console.log(response.data);
+      console.log("Registration response:", response.data);
+
       // Set registration success and show popup
       setRegistrationSuccess(true);
       setShowPopup(true);
@@ -117,8 +119,37 @@ export default function SignUpForm() {
         localStorage.setItem("authToken", response.data.token);
       }
     } catch (error) {
-      setErrorMessage("Failed to register");
-      console.error(error);
+      console.error("Registration error:", error);
+
+      // More detailed error handling
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error("Error response data:", error.response.data);
+          console.error("Error response status:", error.response.status);
+
+          if (error.response.data && error.response.data.message) {
+            setErrorMessage(error.response.data.message);
+          } else if (error.response.data && error.response.data.errors) {
+            // Handle validation errors
+            const validationErrors = error.response.data.errors;
+            const firstError = validationErrors[0];
+            setErrorMessage(firstError.msg || "Validation error");
+          } else {
+            setErrorMessage(`Registration failed (${error.response.status})`);
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error("No response received:", error.request);
+          setErrorMessage("No response from server. Please check your connection.");
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setErrorMessage("Failed to send request: " + error.message);
+        }
+      } else {
+        setErrorMessage("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -199,7 +230,7 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {/* Username */}
@@ -342,7 +373,12 @@ export default function SignUpForm() {
                 </div>
                 {/* Button */}
                 <div>
-                  <Button className="w-full" size="sm" disabled={loading}>
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    disabled={loading}
+                    type="submit"
+                  >
                     {loading ? 'Signing up...' : 'Sign Up'}
                   </Button>
                   {errorMessage && <p className="text-red-500 text-xs italic mt-2">{errorMessage}</p>}

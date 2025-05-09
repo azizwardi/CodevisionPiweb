@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Toast, { ToastType } from './Toast';
 
+// Interface pour les paramètres du toast
+interface ToastParams {
+  title: string;
+  description: string;
+  type: ToastType;
+  duration?: number;
+}
+
 // Interface pour un toast individuel
 interface ToastItem {
   id: string;
-  message: string;
+  title: string;
+  description: string;
   type: ToastType;
   duration?: number;
 }
@@ -12,17 +21,18 @@ interface ToastItem {
 // Créer un gestionnaire global de toasts
 export const toastManager = {
   // Référence à la fonction d'ajout de toast (sera définie par le composant)
-  addToast: (message: string, type: ToastType, duration?: number) => {},
+  addToast: (params: ToastParams) => {},
 };
 
 const ToastContainer: React.FC = () => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   // Fonction pour ajouter un toast
-  const addToast = useCallback((message: string, type: ToastType, duration?: number) => {
-    console.log("Ajout d'un toast:", { message, type, duration });
+  const addToast = useCallback((params: ToastParams) => {
+    const { title, description, type, duration } = params;
+    console.log("Ajout d'un toast:", { title, description, type, duration });
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { id, message, type, duration }]);
+    setToasts(prev => [...prev, { id, title, description, type, duration }]);
   }, []);
 
   // Fonction pour supprimer un toast
@@ -41,7 +51,8 @@ const ToastContainer: React.FC = () => {
       {toasts.map(toast => (
         <Toast
           key={toast.id}
-          message={toast.message}
+          title={toast.title}
+          description={toast.description}
           type={toast.type}
           duration={toast.duration}
           onClose={() => removeToast(toast.id)}

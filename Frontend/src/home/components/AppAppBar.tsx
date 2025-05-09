@@ -15,6 +15,7 @@ import ColorModeIconDropdown from "../shared-theme/ColorModeIconDropdown";
 import Sitemark from "./SitemarkIcon";
 import { Link } from 'react-router-dom';
 import UserDropdown from "./UserDropdown";
+import { useAuth } from "../../context/AuthContext";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
@@ -33,35 +34,7 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-
-  React.useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('authToken');
-    setIsLoggedIn(!!token);
-
-    // Add event listener for storage changes to detect login/logout
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'authToken') {
-        setIsLoggedIn(!!e.newValue);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    // Custom event for logout from other components
-    const handleAuthChange = () => {
-      const currentToken = localStorage.getItem('authToken');
-      setIsLoggedIn(!!currentToken);
-    };
-
-    window.addEventListener('authChange', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
+  const { isAuthenticated } = useAuth();
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -130,7 +103,7 @@ export default function AppAppBar() {
               alignItems: "center",
             }}
           >
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <>
                 <UserDropdown />
                 <ColorModeIconDropdown />
@@ -213,7 +186,7 @@ export default function AppAppBar() {
                 </MenuItem>
                 <Divider sx={{ my: 3 }} />
 
-                {isLoggedIn ? (
+                {isAuthenticated ? (
                   <>
                     <MenuItem component={Link} to="/profile">
                       <Button color="primary" variant="outlined" fullWidth size="medium">

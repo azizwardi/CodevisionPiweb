@@ -8,7 +8,8 @@ const {
   getAllUsers,
   addMemberToProject,
   removeMemberFromProject,
-  getProjectMembers
+  getProjectMembers,
+  getProjectsByCreator
 } = require("../controllers/projectController");
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.get("/users/all", getAllUsers);
 
 // Récupérer tous les projets
 router.get("/", getAllProjects);
+
+// Récupérer les projets par créateur
+router.get("/creator/:creatorId", getProjectsByCreator);
 
 // Créer un nouveau projet
 router.post("/", createProject);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { toastManager } from "../../dashboard/components/ui/toast/ToastContainer";
 import PageBreadcrumb from "../../dashboard/components/common/PageBreadCrumb";
 import PageMeta from "../../dashboard/components/common/PageMeta";
@@ -10,11 +10,17 @@ import TextArea from "../../dashboard/components/form/input/TextArea";
 import Select from "../../dashboard/components/form/Select";
 import Button from "../../dashboard/components/ui/button/Button";
 
-interface User {
-  _id: string;
-  username: string;
-  firstName?: string;
-  lastName?: string;
+// Interface pour les membres du projet
+interface ProjectMember {
+  user: {
+    _id: string;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  role: string;
+  addedAt: string;
 }
 
 interface Project {
@@ -25,9 +31,15 @@ interface Project {
 interface ValidationErrors {
   title?: string;
   description?: string;
-  assignedTo?: string;
   projectId?: string;
   dueDate?: string;
+}
+
+interface DecodedToken {
+  id?: string;
+  user?: {
+    id: string;
+  };
 }
 
 // 👇 Ajout des props pour CreateTask
@@ -38,7 +50,6 @@ interface CreateTaskProps {
 
 // 👇 Accepter les props dans CreateTask
 const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -50,18 +61,41 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
     dueDate: "",
   });
 
-  const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [submitError, setSubmitError] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Récupérer l'ID de l'utilisateur depuis le token
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const id = decoded.user?.id || decoded.id;
+        if (id) {
+          setUserId(id);
+        }
+      } catch (error) {
+        console.error("Erreur lors du décodage du token:", error);
+      }
+    }
+  }, []);
+
+  // Récupérer les projets créés par l'utilisateur connecté
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!userId) return;
+
       try {
         const projectsResponse = await axios.get("http://localhost:5000/projects");
         if (projectsResponse.data && projectsResponse.data.length > 0) {
-          setProjects(projectsResponse.data);
+          // Filtrer les projets pour n'inclure que ceux créés par l'utilisateur connecté
+          const userProjects = projectsResponse.data.filter(
+            (project: any) => project.creator === userId
+          );
+          setProjects(userProjects);
         }
       } catch (err) {
         console.error("Error fetching projects:", err);
@@ -69,24 +103,8 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
       }
     };
 
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const usersResponse = await axios.get("http://localhost:5000/api/user/showuser", { headers });
-        if (usersResponse.data && usersResponse.data.length > 0) {
-          setUsers(usersResponse.data);
-        }
-      } catch (userErr) {
-        console.error("Error fetching users:", userErr);
-        toastManager.addToast("Erreur lors du chargement des utilisateurs", "error", 5000);
-      }
-    };
-
     fetchProjects();
-    fetchUsers();
-  }, []);
+  }, [userId]);
 
   const handleChange = (field: string, value: string) => {
     setFormData({
@@ -111,9 +129,6 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
     if (!formData.description.trim()) {
       errors.description = "Description is required";
     }
-    if (!formData.assignedTo) {
-      errors.assignedTo = "Please assign this task to a user";
-    }
     if (!formData.projectId) {
       errors.projectId = "Please select a project";
     }
@@ -136,19 +151,34 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
     setLoading(true);
 
     try {
+      // Récupérer les membres du projet sélectionné
+      const projectMembersResponse = await axios.get(`http://localhost:5000/projects/${formData.projectId}/members`);
+      const projectMembers = projectMembersResponse.data as ProjectMember[];
+
+      // Vérifier s'il y a des membres dans le projet
+      if (!projectMembers || projectMembers.length === 0) {
+        setSubmitError("Ce projet n'a pas de membres. Veuillez d'abord ajouter des membres au projet.");
+        toastManager.addToast("Ce projet n'a pas de membres", "error", 5000);
+        setLoading(false);
+        return;
+      }
+
+      // Sélectionner le premier membre du projet
+      const assignedMember = projectMembers[0].user._id;
+
       const taskData = {
         title: formData.title,
         description: formData.description,
         status: formData.status,
         taskType: formData.taskType,
-        assignedTo: formData.assignedTo,
+        assignedTo: formData.assignedTo || assignedMember, // Utiliser la valeur sélectionnée ou assigner automatiquement
         projectId: formData.projectId,
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
       };
 
       const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);
 
-      if (!isValidMongoId(formData.assignedTo)) {
+      if (!isValidMongoId(assignedMember)) {
         throw new Error("Invalid user ID format");
       }
       if (!isValidMongoId(formData.projectId)) {
@@ -191,14 +221,6 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
     { value: "JS", label: "JavaScript" },
     { value: "other", label: "Other" },
   ];
-
-  const userOptions = users.map(user => ({
-    value: user._id,
-    label: user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user.username,
-  }));
-
   const projectOptions = projects.map(project => ({
     value: project._id,
     label: project.name,
@@ -243,36 +265,22 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <Label htmlFor="projectId">Project <span className="text-red-500">*</span></Label>
-              <Select
-                id="projectId"
-                name="projectId"
-                options={projectOptions}
-                placeholder="Select a project"
-                onChange={(value) => handleChange("projectId", value)}
-                value={formData.projectId}
-              />
-              {validationErrors.projectId && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.projectId}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="assignedTo">Assign To <span className="text-red-500">*</span></Label>
-              <Select
-                id="assignedTo"
-                name="assignedTo"
-                options={userOptions}
-                placeholder="Select a user"
-                onChange={(value) => handleChange("assignedTo", value)}
-                value={formData.assignedTo}
-              />
-              {validationErrors.assignedTo && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.assignedTo}</p>
-              )}
-            </div>
+          <div>
+            <Label htmlFor="projectId">Project <span className="text-red-500">*</span></Label>
+            <Select
+              id="projectId"
+              name="projectId"
+              options={projectOptions}
+              placeholder="Select a project"
+              onChange={(value) => handleChange("projectId", value)}
+              value={formData.projectId}
+            />
+            {validationErrors.projectId && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.projectId}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Note: La tâche sera automatiquement assignée à un membre du projet.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

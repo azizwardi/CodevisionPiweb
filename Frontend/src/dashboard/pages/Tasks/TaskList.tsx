@@ -42,6 +42,10 @@ const TaskList: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
 
+  // Check if user is admin
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "admin";
+
   // Fetch tasks and projects
   useEffect(() => {
     const fetchData = async () => {
@@ -177,11 +181,13 @@ const TaskList: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-end ml-auto">
-            <Link to="/tasks/create">
-              <Button variant="primary">Create New Task</Button>
-            </Link>
-          </div>
+          {!isAdmin && (
+            <div className="flex items-end ml-auto">
+              <Link to="/tasks/create">
+                <Button variant="primary">Create New Task</Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Task Table */}
@@ -255,18 +261,24 @@ const TaskList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        to={`/tasks/edit/${task._id}`}
-                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                        onClick={() => handleDeleteTask(task._id)}
-                      >
-                        Delete
-                      </button>
+                      {!isAdmin ? (
+                        <>
+                          <Link
+                            to={`/tasks/edit/${task._id}`}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            onClick={() => handleDeleteTask(task._id)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-400">View Only</span>
+                      )}
                     </td>
                   </tr>
                 ))}

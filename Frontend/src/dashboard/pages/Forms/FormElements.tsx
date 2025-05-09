@@ -12,6 +12,10 @@ export default function FormElements() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
+  // Admin users can only view projects, not add or edit them
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "admin";
+
   const handleAddSuccess = () => {
     setActiveTab('list');
     // Déclencher un rafraîchissement de la liste des projets
@@ -25,6 +29,10 @@ export default function FormElements() {
   };
 
   const handleEditClick = (projectId: string) => {
+    // Admin users cannot edit projects
+    if (isAdmin) {
+      return;
+    }
     setSelectedProjectId(projectId);
     setActiveTab('edit');
   };
@@ -50,12 +58,14 @@ export default function FormElements() {
         >
           Liste des Projets
         </Button>
-        <Button
-          variant={activeTab === 'add' ? 'primary' : 'outline'}
-          onClick={() => setActiveTab('add')}
-        >
-          Ajouter un Projet
-        </Button>
+        {!isAdmin && (
+          <Button
+            variant={activeTab === 'add' ? 'primary' : 'outline'}
+            onClick={() => setActiveTab('add')}
+          >
+            Ajouter un Projet
+          </Button>
+        )}
       </div>
 
       {/* Contenu en fonction de l'onglet actif */}
@@ -64,17 +74,18 @@ export default function FormElements() {
           <ProjectTable
             onEdit={handleEditClick}
             refreshTrigger={refreshTrigger}
+            isAdmin={isAdmin}
           />
         </ComponentCard>
       )}
 
-      {activeTab === 'add' && (
+      {!isAdmin && activeTab === 'add' && (
         <ComponentCard title="Ajouter un Nouveau Projet">
           <AddProjectForm onSuccess={handleAddSuccess} />
         </ComponentCard>
       )}
 
-      {activeTab === 'edit' && selectedProjectId && (
+      {!isAdmin && activeTab === 'edit' && selectedProjectId && (
         <ComponentCard title="Modifier le Projet">
           <EditProjectForm
             projectId={selectedProjectId}

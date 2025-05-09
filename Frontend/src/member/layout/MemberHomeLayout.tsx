@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import SharedNavbar from '../../shared/components/SharedNavbar';
 import SimpleFooter from '../../shared/components/SimpleFooter';
+import SharedSidebar from '../../shared/components/SharedSidebar';
+import { SharedSidebarProvider, useSharedSidebar } from '../../shared/context/SharedSidebarContext';
 import '../../styles/layouts.css';
 
 interface DecodedToken {
@@ -14,8 +16,8 @@ interface DecodedToken {
   role?: string;
 }
 
-const MemberHomeLayout: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const MemberHomeLayoutContent: React.FC = () => {
+  const { isMobileOpen, toggleMobile, isExpanded, isHovered, setIsHovered } = useSharedSidebar();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,9 +60,11 @@ const MemberHomeLayout: React.FC = () => {
     }
   }, [navigate]);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+
+
+  function toggleMenu(): void {
+    toggleMobile();
+  }
 
   return (
     <div className="layout-container">
@@ -69,7 +73,16 @@ const MemberHomeLayout: React.FC = () => {
         <SharedNavbar title="Dashboard" bgColor="bg-white" />
       </div>
 
-      {/* Main content with sidebar */}
+      {/* Sidebar */}
+      <SharedSidebar
+        role="Member"
+        isExpanded={isExpanded}
+        isMobileOpen={isMobileOpen}
+        isHovered={isHovered}
+        setIsHovered={setIsHovered}
+      />
+
+      {/* Main content */}
       <div className="main-content">
         {/* Sidebar */}
         <aside className="sidebar-member hidden md:block">
@@ -131,6 +144,14 @@ const MemberHomeLayout: React.FC = () => {
                   Assistant IA
                 </a>
               </li>
+              <li>
+                <a
+                  href="/member/quiz-participation"
+                  className="block py-2 px-4 rounded hover:bg-gray-600"
+                >
+                  Participer aux Quiz
+                </a>
+              </li>
             </ul>
           </nav>
         </aside>
@@ -145,7 +166,7 @@ const MemberHomeLayout: React.FC = () => {
       <div className="mobile-menu-button">
         <button
           type="button"
-          onClick={toggleMenu}
+          onClick={toggleMobile}
           className="bg-green-600 text-white p-3 rounded-full shadow-lg"
           aria-label="Toggle menu"
         >
@@ -162,7 +183,7 @@ const MemberHomeLayout: React.FC = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
+      {isMobileOpen && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-75 z-50 md:hidden">
           <div className="flex justify-end p-4">
             <button
@@ -247,6 +268,15 @@ const MemberHomeLayout: React.FC = () => {
                   Assistant IA
                 </a>
               </li>
+              <li>
+                <a
+                  href="/member/quiz-participation"
+                  className="block py-2 px-4 text-white text-lg"
+                  onClick={toggleMenu}
+                >
+                  Participer aux Quiz
+                </a>
+              </li>
             </ul>
           </nav>
         </div>
@@ -257,6 +287,14 @@ const MemberHomeLayout: React.FC = () => {
         <SimpleFooter />
       </footer>
     </div>
+  );
+};
+
+const MemberHomeLayout: React.FC = () => {
+  return (
+    <SharedSidebarProvider>
+      <MemberHomeLayoutContent />
+    </SharedSidebarProvider>
   );
 };
 

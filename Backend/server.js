@@ -17,6 +17,7 @@ const projectRouter = require("./routes/projectRoutes");
 const eventRouter = require("./routes/eventRoutes");
 const commentRouter = require("./routes/commentRoutes");
 const chatbotRouter = require("./routes/chatbotRoutes");
+const quizRouter = require("./routes/quizRoutes");
 const skillRouter = require("./routes/skillRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -67,9 +68,6 @@ ensureDirectories();
 const jwt = require("jsonwebtoken");
 
 //Routes
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -210,12 +208,14 @@ app.get("/logout", (req, res, next) => {
   });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", user);
+
 app.use("/projects", projectRouter);
 app.use("/events", eventRouter);
 app.use("/comments", commentRouter);
 app.use("/chatbot", chatbotRouter);
+app.use("/quizzes", quizRouter);
+app.use("/quiz-attempts", require("./routes/quizAttemptRoutes"));
+app.use("/certificates", require("./routes/certificateRoutes"));
 // Log des routes pour le débogage
 console.log("Routes des compétences:");
 skillRouter.stack.forEach((r) => {

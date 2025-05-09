@@ -8,6 +8,7 @@ import FeaturesSection from './components/FeaturesSection';
 import HowItWorksSection from './components/HowItWorksSection';
 import TestimonialsSection from './components/TestimonialsSection';
 import CtaSection from './components/CtaSection';
+import FloatingChatbot from './components/FloatingChatbot';
 import '../styles/smoothScroll.css';
 
 export default function Frontpage(props: { disableCustomTheme?: boolean }) {
@@ -24,6 +25,7 @@ export default function Frontpage(props: { disableCustomTheme?: boolean }) {
         <CtaSection />
       </Box>
       <Footer />
+      <FloatingChatbot />
     </AppTheme>
   );
 }

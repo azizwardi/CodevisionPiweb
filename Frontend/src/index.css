@@ -498,6 +498,20 @@ span.flatpickr-weekday,
 .event-fc-color.fc-bg-primary .fc-daygrid-event-dot {
   @apply bg-brand-500;
 }
+
+/* Styles pour l'exportation PDF */
+.pdf-export {
+  /* Assurer que tous les éléments sont visibles lors de l'exportation */
+  overflow: visible !important;
+  page-break-inside: avoid !important;
+  /* Améliorer le rendu des polices */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Assurer que les couleurs sont correctement rendues */
+  color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
 .event-fc-color.fc-bg-warning .fc-daygrid-event-dot {
   @apply bg-orange-500;
 }

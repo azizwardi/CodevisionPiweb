@@ -28,6 +28,10 @@ const Calendar: React.FC = () => {
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
+  // Vérifier si l'utilisateur est un admin
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "admin";
+
   const calendarsEvents = {
     Danger: "danger",
     Success: "success",
@@ -64,6 +68,12 @@ const Calendar: React.FC = () => {
   }, []);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
+    // Les administrateurs ne peuvent pas ajouter d'événements
+    if (isAdmin) {
+      toastManager.addToast("Les administrateurs ne sont pas autorisés à créer des événements", "error", 5000);
+      return;
+    }
+
     resetModalFields();
     setEventStartDate(selectInfo.startStr);
     setEventEndDate(selectInfo.endStr || selectInfo.startStr);
@@ -72,6 +82,20 @@ const Calendar: React.FC = () => {
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
+
+    // Si c'est un admin, on affiche juste les détails sans possibilité de modification
+    if (isAdmin) {
+      // Afficher les détails de l'événement en lecture seule
+      setSelectedEvent(event as unknown as CalendarEvent);
+      setEventTitle(event.title);
+      setEventStartDate(event.start?.toISOString().split("T")[0] || "");
+      setEventEndDate(event.end?.toISOString().split("T")[0] || "");
+      setEventLevel(event.extendedProps.calendar);
+      openModal();
+      return;
+    }
+
+    // Pour les non-admins, permettre la modification
     setSelectedEvent(event as unknown as CalendarEvent);
     setEventTitle(event.title);
     setEventStartDate(event.start?.toISOString().split("T")[0] || "");
@@ -83,6 +107,12 @@ const Calendar: React.FC = () => {
   // Fonction pour supprimer un événement
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
+
+    // Les administrateurs ne peuvent pas supprimer d'événements
+    if (isAdmin) {
+      toastManager.addToast("Les administrateurs ne sont pas autorisés à supprimer des événements", "error", 5000);
+      return;
+    }
 
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'événement "${eventTitle}" ?`)) {
       return;
@@ -102,10 +132,20 @@ const Calendar: React.FC = () => {
 
   const handleAddOrUpdateEvent = async () => {
     try {
+      // Les administrateurs ne peuvent pas ajouter ou modifier d'événements
+      if (isAdmin) {
+        toastManager.addToast("Les administrateurs ne sont pas autorisés à modifier des événements", "error", 5000);
+        return;
+      }
+
       if (!eventTitle || !eventStartDate) {
         toastManager.addToast("Le titre et la date de début sont requis", "error", 5000);
         return;
       }
+
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem("authToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       if (selectedEvent) {
         // Mettre à jour un événement existant
@@ -117,7 +157,7 @@ const Calendar: React.FC = () => {
           end: eventEndDate || eventStartDate,
           allDay: true,
           calendar: eventLevel,
-        });
+        }, { headers });
 
         toastManager.addToast("Événement mis à jour avec succès", "success", 5000);
       } else {
@@ -130,7 +170,7 @@ const Calendar: React.FC = () => {
           end: eventEndDate || eventStartDate,
           allDay: true,
           calendar: eventLevel,
-        });
+        }, { headers });
 
         toastManager.addToast("Événement créé avec succès", "success", 5000);
       }
@@ -166,12 +206,12 @@ const Calendar: React.FC = () => {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             headerToolbar={{
-              left: "prev,next addEventButton",
+              left: isAdmin ? "prev,next" : "prev,next addEventButton",
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
             events={events}
-            selectable={true}
+            selectable={!isAdmin}
             select={handleDateSelect}
             eventClick={handleEventClick}
             eventContent={renderEventContent}
@@ -191,11 +231,10 @@ const Calendar: React.FC = () => {
           <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
             <div>
               <h5 className="mb-2 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
-                {selectedEvent ? "Edit Event" : "Add Event"}
+                {isAdmin ? "Détails de l'événement" : (selectedEvent ? "Edit Event" : "Add Event")}
               </h5>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Plan your next big moment: schedule or edit an event to stay on
-                track
+                {isAdmin ? "Vous pouvez consulter les détails de l'événement mais ne pouvez pas le modifier" : "Plan your next big moment: schedule or edit an event to stay on track"}
               </p>
             </div>
             <div className="mt-8">
@@ -209,6 +248,7 @@ const Calendar: React.FC = () => {
                     type="text"
                     value={eventTitle}
                     onChange={(e) => setEventTitle(e.target.value)}
+                    disabled={isAdmin}
                     className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                   />
                 </div>
@@ -236,6 +276,7 @@ const Calendar: React.FC = () => {
                               id={`modal${key}`}
                               checked={eventLevel === key}
                               onChange={() => setEventLevel(key)}
+                              disabled={isAdmin}
                             />
                             <span className="flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full box dark:border-gray-700">
                               <span className="w-2 h-2 bg-white rounded-full dark:bg-transparent"></span>
@@ -259,6 +300,7 @@ const Calendar: React.FC = () => {
                     type="date"
                     value={eventStartDate}
                     onChange={(e) => setEventStartDate(e.target.value)}
+                    disabled={isAdmin}
                     className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                   />
                 </div>
@@ -274,6 +316,7 @@ const Calendar: React.FC = () => {
                     type="date"
                     value={eventEndDate}
                     onChange={(e) => setEventEndDate(e.target.value)}
+                    disabled={isAdmin}
                     className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                   />
                 </div>
@@ -287,7 +330,7 @@ const Calendar: React.FC = () => {
               >
                 Fermer
               </button>
-              {selectedEvent && (
+              {selectedEvent && !isAdmin && (
                 <button
                   onClick={handleDeleteEvent}
                   type="button"
@@ -296,13 +339,15 @@ const Calendar: React.FC = () => {
                   Supprimer
                 </button>
               )}
-              <button
-                onClick={handleAddOrUpdateEvent}
-                type="button"
-                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
-              >
-                {selectedEvent ? "Mettre à jour" : "Ajouter"}
-              </button>
+              {!isAdmin && (
+                <button
+                  onClick={handleAddOrUpdateEvent}
+                  type="button"
+                  className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
+                >
+                  {selectedEvent ? "Mettre à jour" : "Ajouter"}
+                </button>
+              )}
             </div>
           </div>
         </Modal>

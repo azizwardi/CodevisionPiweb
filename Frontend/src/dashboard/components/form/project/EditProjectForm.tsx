@@ -122,7 +122,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Effacer l'erreur de validation pour ce champ
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({
@@ -134,7 +134,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
-    
+
     // Effacer l'erreur de validation pour la description
     if (validationErrors.description) {
       setValidationErrors(prev => ({
@@ -146,7 +146,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
-    
+
     // Effacer l'erreur de validation pour la catégorie
     if (validationErrors.category) {
       setValidationErrors(prev => ({
@@ -208,7 +208,11 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
     // Vérifier si l'utilisateur est le créateur
     if (!isCreator) {
       setError("Vous n'êtes pas autorisé à modifier ce projet");
-      toastManager.addToast("Vous n'êtes pas autorisé à modifier ce projet", "error", 5000);
+      toastManager.addToast({
+        title: "Erreur d'autorisation",
+        description: "Vous n'êtes pas autorisé à modifier ce projet",
+        type: "error"
+      });
       return;
     }
 
@@ -216,7 +220,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
     if (!validateForm()) {
       return; // Arrêter si la validation échoue
     }
-    
+
     setLoading(true);
 
     try {
@@ -226,9 +230,19 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       //   throw new Error("Vous devez être connecté pour modifier un projet");
       // }
 
+      // Créer une copie des données du formulaire pour la requête
+      const requestData = {
+        ...formData,
+        // S'assurer que les dates sont au format ISO pour le backend
+        startDate: new Date(formData.startDate).toISOString(),
+        deadline: new Date(formData.deadline).toISOString()
+      };
+
+      console.log("Données formatées pour la requête:", requestData);
+
       const response = await axios.put(
         `http://localhost:5000/projects/${projectId}`,
-        formData,
+        requestData,
         {
           headers: {
             // Authorization: `Bearer ${token}`,
@@ -238,8 +252,12 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
       );
 
       // Afficher un toast de succès
-      toastManager.addToast("Projet modifié avec succès", "success", 5000);
-      
+      toastManager.addToast({
+        title: "Succès",
+        description: "Projet modifié avec succès",
+        type: "success"
+      });
+
       // Notifier le parent du succès
       onSuccess();
     } catch (err: any) {
@@ -252,7 +270,11 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
 
       const errorMessage = err.response?.data?.message || "Erreur lors de la modification du projet";
       setError(errorMessage);
-      toastManager.addToast(errorMessage, "error", 5000);
+      toastManager.addToast({
+        title: "Erreur",
+        description: errorMessage,
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -367,6 +389,7 @@ export default function EditProjectForm({ projectId, onSuccess, onCancel }: Edit
         </Button>
         <Button
           variant="primary"
+          type="submit"
           disabled={loading}
           className="w-full sm:w-auto"
         >

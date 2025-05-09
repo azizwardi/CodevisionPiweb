@@ -15,6 +15,7 @@ import {
   // PlugInIcon,
   UserCircleIcon,
   ChatIcon,
+  QuizIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -26,6 +27,57 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
+// Fonction pour obtenir les éléments de navigation en fonction du rôle de l'utilisateur
+const getNavItems = (): NavItem[] => {
+  // Vérifier si l'utilisateur est un admin
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "admin";
+
+  return [
+    {
+      icon: <GridIcon />,
+      name: "Dashboard",
+      path: "/dashboard",
+    },
+    {
+      icon: <CalenderIcon />,
+      name: "Calendar",
+      path: "/calendar",
+    },
+    {
+      icon: <UserCircleIcon />,
+      name: "User Profile",
+      path: "/profile",
+    },
+    {
+      name: "Project Management",
+      icon: <ListIcon />,
+      path: "/form-elements",
+    },
+    {
+      name: "Task Management",
+      icon: <ListIcon />,
+      subItems: isAdmin
+        ? [{ name: "Task List", path: "/tasks" }]  // Admin ne voit que la liste des tâches
+        : [
+            { name: "Task List", path: "/tasks" },
+            { name: "Create Task", path: "/tasks/create" },
+          ],
+    },
+    {
+      name: "User Management",
+      icon: <UserCircleIcon />,
+      path: "/basic-tables",
+    },
+    {
+      name: "Assistant IA",
+      icon: <ChatIcon />,
+      path: "/assistant",
+    },
+  ];
+};
+
+// Initialiser les éléments de navigation
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
@@ -46,6 +98,14 @@ const navItems: NavItem[] = [
     name: "Project Management",
     icon: <ListIcon />,
      path: "/form-elements",
+  },
+  {
+    name: "Quiz Management",
+    icon: <QuizIcon />,
+    subItems: [
+      { name: "Gérer les Quiz", path: "/quiz-management" },
+      { name: "Participer aux Quiz", path: "/quiz-participation" },
+    ],
   },
   {
     name: "Task Management",
@@ -91,11 +151,13 @@ const AppSidebar: React.FC = () => {
     [location.pathname]
   );
 
+  // Effet pour mettre à jour les sous-menus actifs en fonction de l'URL
   useEffect(() => {
     let submenuMatched = false;
     // Only check main items since others are commented out
     ["main"].forEach((menuType) => {
-      const items = navItems;
+      // Utiliser les éléments de navigation mis à jour
+      const items = getNavItems();
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {

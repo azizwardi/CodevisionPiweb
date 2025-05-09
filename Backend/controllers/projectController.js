@@ -14,6 +14,19 @@ exports.getAllProjects = async (req, res) => {
   }
 };
 
+// Récupérer les projets par créateur
+exports.getProjectsByCreator = async (req, res) => {
+  try {
+    const { creatorId } = req.params;
+    const projects = await Project.find({ creator: creatorId });
+    res.status(200).json(projects);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la récupération des projets", error });
+  }
+};
+
 // Récupérer un projet par son ID
 exports.getProjectById = async (req, res) => {
   try {
@@ -35,6 +48,15 @@ exports.createProject = async (req, res) => {
     console.log("Requête de création de projet reçue:", req.body);
     const { name, description, category, startDate, deadline, userId } =
       req.body;
+
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === "admin") {
+      return res.status(403).json({
+        message:
+          "Les administrateurs ne sont pas autorisés à créer des projets",
+        isAdmin: true,
+      });
+    }
 
     if (!name || !description || !category || !startDate || !deadline) {
       console.log("Validation échouée - champs manquants:", {
@@ -88,6 +110,15 @@ exports.updateProject = async (req, res) => {
   try {
     console.log("Requête de modification de projet reçue:", req.body);
     console.log("ID du projet à modifier:", req.params.projectId);
+
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === "admin") {
+      return res.status(403).json({
+        message:
+          "Les administrateurs ne sont pas autorisés à modifier des projets",
+        isAdmin: true,
+      });
+    }
 
     const { name, description, category, startDate, deadline, userId } =
       req.body;
@@ -159,6 +190,15 @@ exports.updateProject = async (req, res) => {
 // Supprimer un projet
 exports.deleteProject = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === "admin") {
+      return res.status(403).json({
+        message:
+          "Les administrateurs ne sont pas autorisés à supprimer des projets",
+        isAdmin: true,
+      });
+    }
+
     const { userId } = req.body;
     const project = await Project.findById(req.params.projectId);
     if (!project) {
@@ -190,12 +230,13 @@ exports.deleteProject = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const { searchTerm } = req.query;
-    let query = {};
+    let query = { role: "Member" }; // Ne récupérer que les utilisateurs avec le rôle "Member"
 
     // Filtrer par terme de recherche si fourni
     if (searchTerm) {
       // Recherche par email, username, firstName ou lastName
       query = {
+        role: "Member",
         $or: [
           { email: { $regex: searchTerm, $options: "i" } },
           { username: { $regex: searchTerm, $options: "i" } },
@@ -206,7 +247,7 @@ exports.getAllUsers = async (req, res) => {
     }
 
     const users = await User.find(query).select(
-      "_id username email firstName lastName"
+      "_id username email firstName lastName role"
     );
     res.status(200).json(users);
   } catch (error) {
@@ -221,8 +262,17 @@ exports.getAllUsers = async (req, res) => {
 // Ajouter un membre à un projet
 exports.addMemberToProject = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === "admin") {
+      return res.status(403).json({
+        message:
+          "Les administrateurs ne sont pas autorisés à ajouter des membres aux projets",
+        isAdmin: true,
+      });
+    }
+
     const { projectId } = req.params;
-    const { userId, role = "member", email } = req.body;
+    const { userId, role = "member" } = req.body;
 
     // Vérifier si le projet existe
     const project = await Project.findById(projectId);
@@ -234,6 +284,14 @@ exports.addMemberToProject = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    // Vérifier si l'utilisateur a le rôle "Member"
+    if (user.role !== "Member") {
+      return res.status(403).json({
+        message: "Ce mail n'est pas d'un member",
+        role: user.role,
+      });
     }
 
     // Vérifier si l'utilisateur est déjà membre du projet
@@ -380,6 +438,15 @@ exports.addMemberToProject = async (req, res) => {
 // Supprimer un membre d'un projet
 exports.removeMemberFromProject = async (req, res) => {
   try {
+    // Vérifier si l'utilisateur est un admin
+    if (req.user && req.user.role === "admin") {
+      return res.status(403).json({
+        message:
+          "Les administrateurs ne sont pas autorisés à supprimer des membres des projets",
+        isAdmin: true,
+      });
+    }
+
     const { projectId, userId } = req.params;
 
     // Vérifier si le projet existe
