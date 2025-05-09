@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 import CommentSection from "../comments/CommentSection";
 import axios from "axios";
 import {
@@ -41,6 +42,8 @@ interface ProjectTableProps {
 }
 
 export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTableProps) {
+  const navigate = useNavigate();
+
   // État pour stocker les données des projets
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -235,12 +238,6 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Description
-                  </TableCell>
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
                     Catégorie
                   </TableCell>
                   <TableCell
@@ -281,11 +278,6 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
                         {project.name || 'Sans nom'}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {project.description && project.description.length > 50
-                          ? `${project.description.substring(0, 50)}...`
-                          : project.description || 'Aucune description'}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {project.category ? getCategoryLabel(project.category) : 'Non catégorisé'}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -307,6 +299,24 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
                             onClick={() => setExpandedProjectId(expandedProjectId === project._id ? null : project._id)}
                           >
                             {expandedProjectId === project._id ? "Masquer" : "Commentaires"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => {
+                              // Rediriger en fonction du rôle de l'utilisateur
+                              const userRole = localStorage.getItem("userRole");
+                              if (userRole?.toLowerCase() === "teamleader") {
+                                navigate(`/team-leader/projects/${project._id}`);
+                              } else if (userRole?.toLowerCase() === "member") {
+                                navigate(`/member/projects/${project._id}`);
+                              } else {
+                                // Pour les administrateurs et autres rôles
+                                navigate(`/projects/${project._id}`);
+                              }
+                            }}
+                          >
+                            Voir les tâches
                           </Button>
                           <Button
                             size="sm"
@@ -340,7 +350,7 @@ export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTablePro
                     {/* Section de commentaires expansible */}
                     {expandedProjectId === project._id && (
                       <TableRow>
-                        <TableCell className="px-4 py-4 bg-gray-50 dark:bg-gray-800" colSpan={6}>
+                        <TableCell className="px-4 py-4 bg-gray-50 dark:bg-gray-800" colSpan={5}>
                           <CommentSection projectId={project._id} />
                         </TableCell>
                       </TableRow>

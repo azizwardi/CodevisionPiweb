@@ -16,6 +16,11 @@ import BarChart from "./dashboard/pages/Charts/BarChart";
 import TaskList from "./dashboard/pages/Tasks/TaskList";
 import CreateTask from "./dashboard/pages/Tasks/CreateTask";
 import EditTask from "./dashboard/pages/Tasks/EditTask";
+import AutoAssignTask from "./dashboard/pages/AutoAssignTask";
+import KanbanBoard from "./dashboard/pages/Tasks/KanbanBoard";
+import UserProfile from "./dashboard/pages/UserProfile";
+// Project management imports
+import ProjectDetails from "./dashboard/pages/Projects/ProjectDetails";
 // Chatbot import
 import ChatbotPage from "./dashboard/pages/ChatbotPage";
 
@@ -39,6 +44,7 @@ import TeamLeaderDashboard from "./teamleader/pages/TeamLeaderDashboard";
 import TeamLeaderProfile from "./teamleader/pages/TeamLeaderProfile";
 import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects";
 import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
+import TeamLeaderProjectDetails from "./teamleader/pages/ProjectDetails";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -46,7 +52,9 @@ import MemberDashboard from "./member/pages/MemberDashboard";
 import MemberProfile from "./member/pages/MemberProfile";
 import MemberTasks from "./member/pages/MemberTasks";
 import MemberProjects from "./member/pages/MemberProjects";
+import MemberProjectDetails from "./member/pages/ProjectDetails";
 import ProtectedRoute from "./ProtectedRoute";
+import ProjectKanban from "./dashboard/pages/Projects/ProjectKanban";
 import AuthSuccess from "./dashboard/AuthSuccess";
 import Frontpage from "./home/Acceuil";
 import { NotificationProvider } from "./dashboard/components/notifications/NotificationContext";
@@ -91,8 +99,14 @@ export default function App() {
           <Route path="/bar-chart" element={<BarChart />} />
           {/* Task management routes */}
           <Route path="/tasks" element={<TaskList />} />
+          <Route path="/tasks/kanban" element={<KanbanBoard />} />
           <Route path="/tasks/create" element={<CreateTask />} />
           <Route path="/tasks/edit/:taskId" element={<EditTask />} />
+          <Route path="/tasks/auto-assign" element={<AutoAssignTask />} />
+          <Route path="/projects/:projectId/kanban" element={<ProjectKanban />} />
+          <Route path="/projects/:projectId" element={<ProjectDetails />} />
+          {/* User routes */}
+          <Route path="/users/:userId" element={<UserProfile />} />
           {/* Chatbot route */}
           <Route path="/assistant" element={<ChatbotPage />} />
         </Route>
@@ -105,7 +119,10 @@ export default function App() {
               <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
               <Route path="/team-leader/team" element={<div />} />
               <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
+              <Route path="/team-leader/projects/:projectId" element={<TeamLeaderProjectDetails />} />
+              <Route path="/team-leader/projects/:projectId/kanban" element={<ProjectKanban />} />
               <Route path="/team-leader/tasks" element={<TeamLeaderTasks />} />
+              <Route path="/team-leader/tasks/kanban" element={<KanbanBoard />} />
               <Route path="/team-leader/tasks/edit/:taskId" element={<EditTask />} />
               <Route path="/team-leader/reports" element={<div />} />
               <Route path="/team-leader/assistant" element={<ChatbotPage />} />
@@ -118,7 +135,10 @@ export default function App() {
               <Route path="/member-dashboard" element={<MemberDashboard />} />
               <Route path="/member/profile" element={<MemberProfile />} />
               <Route path="/member/tasks" element={<MemberTasks />} />
+              <Route path="/member/tasks/kanban" element={<KanbanBoard />} />
               <Route path="/member/projects" element={<MemberProjects />} />
+              <Route path="/member/projects/:projectId" element={<MemberProjectDetails />} />
+              <Route path="/member/projects/:projectId/kanban" element={<ProjectKanban />} />
               <Route path="/member/time-tracking" element={<div />} />
               <Route path="/member/team-chat" element={<div />} />
               <Route path="/member/assistant" element={<ChatbotPage />} />

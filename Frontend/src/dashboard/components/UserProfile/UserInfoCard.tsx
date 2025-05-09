@@ -237,7 +237,7 @@ export default function UserInfoCard() {
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                Bio
+                Role
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
               {user ? user.role : "Loading..."}
@@ -370,16 +370,6 @@ export default function UserInfoCard() {
                       type="text"
                       name="phoneNumber"
                       value={formData?.phoneNumber || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Role</Label>
-                    <Input
-                      type="text"
-                      name="role"
-                      value={formData?.role || ""}
                       onChange={handleInputChange}
                     />
                   </div>

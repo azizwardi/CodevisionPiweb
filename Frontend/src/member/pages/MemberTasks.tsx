@@ -76,12 +76,12 @@ const MemberTasks: React.FC = () => {
     try {
       // Fetch all tasks
       const tasksResponse = await axios.get("http://localhost:5000/tasks");
-      
+
       // Filter tasks assigned to the current user
       const userTasks = tasksResponse.data.filter(
         (task: Task) => task.assignedTo?._id === userId
       );
-      
+
       setTasks(userTasks);
       setFilteredTasks(userTasks);
 
@@ -127,9 +127,9 @@ const MemberTasks: React.FC = () => {
         <div className="mb-6 flex flex-wrap gap-4">
           <div className="w-full md:w-auto">
             <label className="block mb-1 text-sm font-medium">Filter by Status</label>
-            <select 
-              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              value={statusFilter} 
+            <select
+              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All Statuses</option>
@@ -141,9 +141,9 @@ const MemberTasks: React.FC = () => {
 
           <div className="w-full md:w-auto">
             <label className="block mb-1 text-sm font-medium">Filter by Project</label>
-            <select 
-              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              value={projectFilter} 
+            <select
+              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
             >
               <option value="">All Projects</option>
@@ -165,6 +165,7 @@ const MemberTasks: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
                 </tr>
@@ -177,6 +178,36 @@ const MemberTasks: React.FC = () => {
                       <div className="text-sm text-gray-500 truncate max-w-xs">{task.description}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{task.projectId?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {task.assignedTo ? (
+                          <>
+                            <div className="h-8 w-8 rounded-full overflow-hidden mr-3">
+                              <img
+                                className="h-full w-full object-cover"
+                                src={task.assignedTo.avatarUrl ?
+                                  (task.assignedTo.avatarUrl.startsWith('http') ? task.assignedTo.avatarUrl :
+                                   task.assignedTo.avatarUrl.startsWith('/') ? `http://localhost:5000${task.assignedTo.avatarUrl}` :
+                                   `http://localhost:5000/${task.assignedTo.avatarUrl}`) :
+                                  "/images/user/owner.jpg"}
+                                alt={task.assignedTo.username}
+                                onError={(e) => {
+                                  // Fallback à l'image par défaut en cas d'erreur
+                                  e.currentTarget.src = "/images/user/owner.jpg";
+                                }}
+                              />
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {task.assignedTo.firstName && task.assignedTo.lastName
+                                ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+                                : task.assignedTo.username}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Non assigné</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(task.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</td>
                   </tr>

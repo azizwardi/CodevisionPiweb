@@ -100,7 +100,7 @@ const TaskList: React.FC = () => {
         throw new Error("Invalid task ID format");
       }
 
-      await axios.delete(`http://localhost:8000/tasks/${taskId}`);
+      await axios.delete(`http://localhost:5000/tasks/${taskId}`);
       console.log("Task deleted successfully via API");
 
       // Mettre à jour l'interface utilisateur

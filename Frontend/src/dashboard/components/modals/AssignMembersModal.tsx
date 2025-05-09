@@ -40,7 +40,7 @@ export default function AssignMembersModal({
 }: AssignMembersModalProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
-  const [searchEmail, setSearchEmail] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState("");
@@ -69,21 +69,21 @@ export default function AssignMembersModal({
     fetchMembers();
   }, [projectId]);
 
-  // Rechercher des utilisateurs par email
+  // Rechercher des utilisateurs par terme de recherche (email, nom d'utilisateur, prénom, nom)
   const searchUsers = async () => {
     try {
       setSearchLoading(true);
       setError("");
-      console.log("Recherche d'utilisateurs avec email:", searchEmail);
+      console.log("Recherche d'utilisateurs avec le terme:", searchTerm);
       const response = await axios.get(`http://localhost:5000/projects/users/all`, {
-        params: { email: searchEmail }
+        params: { searchTerm }
       });
       console.log("Utilisateurs trouvés:", response.data);
       setUsers(response.data);
 
       if (response.data.length === 0) {
         toastManager.addToast(
-          "Aucun utilisateur trouvé avec cet email",
+          "Aucun utilisateur trouvé avec ce terme de recherche",
           "info",
           5000
         );
@@ -216,10 +216,15 @@ export default function AssignMembersModal({
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="Rechercher par email"
-              value={searchEmail}
-              onChange={(e) => setSearchEmail(e.target.value)}
+              placeholder="Rechercher par nom, email ou username"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  searchUsers();
+                }
+              }}
             />
             <Button
               variant="primary"
@@ -229,6 +234,9 @@ export default function AssignMembersModal({
               {searchLoading ? "Recherche..." : "Rechercher"}
             </Button>
           </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Vous pouvez rechercher par nom, prénom, nom d'utilisateur ou adresse email
+          </p>
         </div>
 
         {/* Liste des utilisateurs trouvés */}

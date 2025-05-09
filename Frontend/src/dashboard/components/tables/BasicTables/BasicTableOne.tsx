@@ -30,6 +30,7 @@ interface User {
   twitter?: string;
   linkedin?: string;
   instagram?: string;
+  experienceLevel?: string;
 }
 
 export default function BasicTableOne() {
@@ -48,6 +49,29 @@ export default function BasicTableOne() {
       })));
     }
   }, [users]);
+
+  // Effet pour écouter l'événement de mise à jour de l'avatar
+  useEffect(() => {
+    const handleAvatarUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ avatarUrl: string, userId: string }>;
+      console.log('Avatar updated event received:', customEvent.detail);
+
+      // Mettre à jour la liste des utilisateurs avec le nouvel avatar
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user._id === customEvent.detail.userId
+            ? { ...user, avatarUrl: customEvent.detail.avatarUrl }
+            : user
+        )
+      );
+    };
+
+    window.addEventListener('avatar-updated', handleAvatarUpdate);
+
+    return () => {
+      window.removeEventListener('avatar-updated', handleAvatarUpdate);
+    };
+  }, []);
 
   // Fonction pour supprimer un utilisateur
   const handleDeleteUser = async (userId: string) => {
@@ -219,6 +243,12 @@ export default function BasicTableOne() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
+                    Niveau d'expérience
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
                     Statut
                   </TableCell>
                   <TableCell
@@ -241,16 +271,19 @@ export default function BasicTableOne() {
                             width={40}
                             height={40}
                             src={user.avatarUrl ?
-                              (user.avatarUrl.startsWith('http') ? user.avatarUrl :
-                               user.avatarUrl.startsWith('/') ? `http://localhost:5000${user.avatarUrl}` :
-                               `http://localhost:5000/${user.avatarUrl}`) :
+                              (user.avatarUrl.includes('?t=') ? user.avatarUrl :
+                               user.avatarUrl.startsWith('http') ? `${user.avatarUrl}?t=${new Date().getTime()}` :
+                               user.avatarUrl.startsWith('/') ? `http://localhost:5000${user.avatarUrl}?t=${new Date().getTime()}` :
+                               `http://localhost:5000/${user.avatarUrl}?t=${new Date().getTime()}`) :
                               "/images/user/owner.jpg"}
                             alt={user.username}
                             onError={(e) => {
                               // Fallback à l'image par défaut en cas d'erreur
+                              console.error("Erreur de chargement de l'image:", e);
                               e.currentTarget.src = "/images/user/owner.jpg";
                             }}
                             className="w-full h-full object-cover"
+                            key={user.avatarUrl} // Forcer le rechargement de l'image quand l'URL change
                           />
                         </div>
                         <div>
@@ -288,6 +321,36 @@ export default function BasicTableOne() {
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                       <Badge
                         size="sm"
+                        color={
+                          user.experienceLevel === "expert" || user.experienceLevel === "lead"
+                            ? "success"
+                            : user.experienceLevel === "senior"
+                            ? "info"
+                            : user.experienceLevel === "mid-level"
+                            ? "warning"
+                            : user.experienceLevel === "junior"
+                            ? "primary"
+                            : "error"
+                        }
+                      >
+                        {user.experienceLevel === "intern"
+                          ? "Stagiaire"
+                          : user.experienceLevel === "junior"
+                          ? "Junior"
+                          : user.experienceLevel === "mid-level"
+                          ? "Intermédiaire"
+                          : user.experienceLevel === "senior"
+                          ? "Senior"
+                          : user.experienceLevel === "expert"
+                          ? "Expert"
+                          : user.experienceLevel === "lead"
+                          ? "Lead"
+                          : "Non défini"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      <Badge
+                        size="sm"
                         color={user.isVerified ? "success" : "error"}
                       >
                         {user.isVerified ? "Vérifié" : "Non vérifié"}
@@ -301,6 +364,14 @@ export default function BasicTableOne() {
                           onClick={() => handleEditUser(user._id)}
                         >
                           Modifier
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-primary-500 hover:bg-primary-50 hover:text-primary-700"
+                          onClick={() => window.location.href = `/users/${user._id}`}
+                        >
+                          Profil
                         </Button>
                         <Button
                           size="sm"

@@ -33,7 +33,8 @@ exports.getProjectById = async (req, res) => {
 exports.createProject = async (req, res) => {
   try {
     console.log("Requête de création de projet reçue:", req.body);
-    const { name, description, category, startDate, deadline, userId } = req.body;
+    const { name, description, category, startDate, deadline, userId } =
+      req.body;
 
     if (!name || !description || !category || !startDate || !deadline) {
       console.log("Validation échouée - champs manquants:", {
@@ -60,7 +61,7 @@ exports.createProject = async (req, res) => {
       category,
       startDate,
       deadline,
-      creator: userId
+      creator: userId,
     });
     const project = new Project({
       name,
@@ -69,7 +70,7 @@ exports.createProject = async (req, res) => {
       startDate,
       deadline,
       projectId: uuidv4(),
-      creator: userId
+      creator: userId,
     });
 
     console.log("Sauvegarde du projet dans la base de données...");
@@ -88,7 +89,8 @@ exports.updateProject = async (req, res) => {
     console.log("Requête de modification de projet reçue:", req.body);
     console.log("ID du projet à modifier:", req.params.projectId);
 
-    const { name, description, category, startDate, deadline, userId } = req.body;
+    const { name, description, category, startDate, deadline, userId } =
+      req.body;
 
     // Vérification des champs requis
     if (!name || !description || !category || !startDate || !deadline) {
@@ -112,10 +114,14 @@ exports.updateProject = async (req, res) => {
     console.log("Projet trouvé:", project);
 
     // Vérifier si l'utilisateur est le créateur du projet
-    if (project.creator && userId && project.creator.toString() !== userId.toString()) {
+    if (
+      project.creator &&
+      userId &&
+      project.creator.toString() !== userId.toString()
+    ) {
       return res.status(403).json({
         message: "Vous n'êtes pas autorisé à modifier ce projet",
-        isCreator: false
+        isCreator: false,
       });
     }
 
@@ -160,10 +166,14 @@ exports.deleteProject = async (req, res) => {
     }
 
     // Vérifier si l'utilisateur est le créateur du projet
-    if (project.creator && userId && project.creator.toString() !== userId.toString()) {
+    if (
+      project.creator &&
+      userId &&
+      project.creator.toString() !== userId.toString()
+    ) {
       return res.status(403).json({
         message: "Vous n'êtes pas autorisé à supprimer ce projet",
-        isCreator: false
+        isCreator: false,
       });
     }
 
@@ -179,21 +189,31 @@ exports.deleteProject = async (req, res) => {
 // Récupérer tous les utilisateurs pour l'assignation
 exports.getAllUsers = async (req, res) => {
   try {
-    const { email } = req.query;
+    const { searchTerm } = req.query;
     let query = {};
 
-    // Filtrer par email si fourni
-    if (email) {
-      query.email = { $regex: email, $options: 'i' };
+    // Filtrer par terme de recherche si fourni
+    if (searchTerm) {
+      // Recherche par email, username, firstName ou lastName
+      query = {
+        $or: [
+          { email: { $regex: searchTerm, $options: "i" } },
+          { username: { $regex: searchTerm, $options: "i" } },
+          { firstName: { $regex: searchTerm, $options: "i" } },
+          { lastName: { $regex: searchTerm, $options: "i" } },
+        ],
+      };
     }
 
-    const users = await User.find(query).select('_id username email firstName lastName');
+    const users = await User.find(query).select(
+      "_id username email firstName lastName"
+    );
     res.status(200).json(users);
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs:", error);
     res.status(500).json({
       message: "Erreur lors de la récupération des utilisateurs",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -202,7 +222,7 @@ exports.getAllUsers = async (req, res) => {
 exports.addMemberToProject = async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { userId, role = 'member', email } = req.body;
+    const { userId, role = "member", email } = req.body;
 
     // Vérifier si le projet existe
     const project = await Project.findById(projectId);
@@ -217,16 +237,20 @@ exports.addMemberToProject = async (req, res) => {
     }
 
     // Vérifier si l'utilisateur est déjà membre du projet
-    const isMember = project.members.some(member => member.user.toString() === userId);
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId
+    );
     if (isMember) {
-      return res.status(400).json({ message: "L'utilisateur est déjà membre de ce projet" });
+      return res
+        .status(400)
+        .json({ message: "L'utilisateur est déjà membre de ce projet" });
     }
 
     // Ajouter l'utilisateur aux membres du projet
     project.members.push({
       user: userId,
       role,
-      addedAt: new Date()
+      addedAt: new Date(),
     });
 
     await project.save();
@@ -236,10 +260,12 @@ exports.addMemberToProject = async (req, res) => {
     // Essayer d'émettre des événements WebSocket en temps réel
     try {
       if (global.io) {
-        console.log(`Envoi de notifications en temps réel pour l'ajout de l'utilisateur ${userId} au projet ${project.name}`);
+        console.log(
+          `Envoi de notifications en temps réel pour l'ajout de l'utilisateur ${userId} au projet ${project.name}`
+        );
 
         // Récupérer l'ID de l'utilisateur qui fait la requête (l'administrateur)
-        const adminId = req.user ? req.user._id.toString() : 'unknown';
+        const adminId = req.user ? req.user._id.toString() : "unknown";
         console.log(`ID de l'administrateur qui fait l'ajout: ${adminId}`);
         console.log(`ID de l'utilisateur ajouté: ${userId}`);
 
@@ -252,11 +278,11 @@ exports.addMemberToProject = async (req, res) => {
           userId,
           projectName: project.name,
           userName: user.username || user.email,
-          targetUserId: userId,         // ID de l'utilisateur qui doit recevoir cette notification
-          forUserId: userId,            // Explicitement indiquer pour qui est cette notification
+          targetUserId: userId, // ID de l'utilisateur qui doit recevoir cette notification
+          forUserId: userId, // Explicitement indiquer pour qui est cette notification
           message: `Vous avez été ajouté au projet "${project.name}"`,
           timestamp: new Date().toISOString(),
-          realtime: true                // Indiquer que c'est une notification en temps réel
+          realtime: true, // Indiquer que c'est une notification en temps réel
         };
 
         // 2. Notification pour l'utilisateur qui a effectué l'ajout
@@ -266,11 +292,11 @@ exports.addMemberToProject = async (req, res) => {
           userId,
           projectName: project.name,
           userName: user.username || user.email,
-          adminId: adminId,             // ID de l'administrateur
-          forUserId: adminId,           // Explicitement indiquer pour qui est cette notification
+          adminId: adminId, // ID de l'administrateur
+          forUserId: adminId, // Explicitement indiquer pour qui est cette notification
           message: "affectation reussite",
           timestamp: new Date().toISOString(),
-          realtime: true                // Indiquer que c'est une notification en temps réel
+          realtime: true, // Indiquer que c'est une notification en temps réel
         };
 
         console.log("Envoi de notifications en temps réel:");
@@ -284,33 +310,42 @@ exports.addMemberToProject = async (req, res) => {
         if (userId) {
           const userRoom = `user_${userId}`;
           global.io.to(userRoom).emit("memberAdded", memberNotificationData);
-          console.log(`Notification membre envoyée à la room ${userRoom} (stratégie 2)`);
+          console.log(
+            `Notification membre envoyée à la room ${userRoom} (stratégie 2)`
+          );
         }
 
-        if (adminId && adminId !== 'unknown') {
+        if (adminId && adminId !== "unknown") {
           const adminRoom = `user_${adminId}`;
           global.io.to(adminRoom).emit("memberAdded", adminNotificationData);
-          console.log(`Notification admin envoyée à la room ${adminRoom} (stratégie 2)`);
+          console.log(
+            `Notification admin envoyée à la room ${adminRoom} (stratégie 2)`
+          );
         }
 
         // Stratégie 3: Envoi à toutes les sockets connectées
         const sockets = Array.from(global.io.sockets.sockets.values());
         console.log(`Nombre de sockets connectées: ${sockets.length}`);
 
-        sockets.forEach(socket => {
+        sockets.forEach((socket) => {
           if (socket.userId === userId) {
             socket.emit("memberAdded", memberNotificationData);
-            console.log(`Notification membre envoyée directement à la socket ${socket.id} (stratégie 3)`);
+            console.log(
+              `Notification membre envoyée directement à la socket ${socket.id} (stratégie 3)`
+            );
           }
 
           if (socket.userId === adminId) {
             socket.emit("memberAdded", adminNotificationData);
-            console.log(`Notification admin envoyée directement à la socket ${socket.id} (stratégie 3)`);
+            console.log(
+              `Notification admin envoyée directement à la socket ${socket.id} (stratégie 3)`
+            );
           }
         });
-
       } else {
-        console.log("Impossible d'émettre les notifications: global.io n'est pas défini");
+        console.log(
+          "Impossible d'émettre les notifications: global.io n'est pas défini"
+        );
       }
     } catch (wsError) {
       console.log(
@@ -327,17 +362,17 @@ exports.addMemberToProject = async (req, res) => {
           username: user.username,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
         },
         role,
-        addedAt: new Date()
-      }
+        addedAt: new Date(),
+      },
     });
   } catch (error) {
     console.error("Erreur lors de l'ajout d'un membre:", error);
     res.status(500).json({
       message: "Erreur lors de l'ajout d'un membre",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -354,9 +389,13 @@ exports.removeMemberFromProject = async (req, res) => {
     }
 
     // Vérifier si l'utilisateur est membre du projet
-    const memberIndex = project.members.findIndex(member => member.user.toString() === userId);
+    const memberIndex = project.members.findIndex(
+      (member) => member.user.toString() === userId
+    );
     if (memberIndex === -1) {
-      return res.status(404).json({ message: "L'utilisateur n'est pas membre de ce projet" });
+      return res
+        .status(404)
+        .json({ message: "L'utilisateur n'est pas membre de ce projet" });
     }
 
     // Supprimer l'utilisateur des membres du projet
@@ -368,7 +407,7 @@ exports.removeMemberFromProject = async (req, res) => {
     console.error("Erreur lors de la suppression d'un membre:", error);
     res.status(500).json({
       message: "Erreur lors de la suppression d'un membre",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -379,7 +418,10 @@ exports.getProjectMembers = async (req, res) => {
     const { projectId } = req.params;
 
     // Récupérer le projet avec les membres populés
-    const project = await Project.findById(projectId).populate('members.user', '_id username email firstName lastName');
+    const project = await Project.findById(projectId).populate(
+      "members.user",
+      "_id username email firstName lastName"
+    );
     if (!project) {
       return res.status(404).json({ message: "Projet non trouvé" });
     }
@@ -389,7 +431,7 @@ exports.getProjectMembers = async (req, res) => {
     console.error("Erreur lors de la récupération des membres:", error);
     res.status(500).json({
       message: "Erreur lors de la récupération des membres",
-      error: error.message
+      error: error.message,
     });
   }
 };

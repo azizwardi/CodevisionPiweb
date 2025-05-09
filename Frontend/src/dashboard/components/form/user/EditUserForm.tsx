@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Label from "../Label";
 import Input from "../input/InputField";
@@ -13,6 +13,7 @@ interface ValidationErrors {
   lastName?: string;
   role?: string;
   phoneNumber?: string;
+  experienceLevel?: string;
 }
 
 interface User {
@@ -26,6 +27,7 @@ interface User {
   isVerified: boolean;
   address?: string;
   avatarUrl?: string;
+  experienceLevel?: string;
 }
 
 interface EditUserFormProps {
@@ -42,7 +44,13 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
     lastName: "",
     role: "",
     phoneNumber: "",
+    experienceLevel: "",
   });
+
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -54,6 +62,15 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
     { value: "admin", label: "Administrateur" },
     { value: "TeamLeader", label: "Chef d'équipe" },
     { value: "user", label: "Utilisateur" },
+  ];
+
+  const experienceLevelOptions = [
+    { value: "intern", label: "Stagiaire" },
+    { value: "junior", label: "Junior" },
+    { value: "mid-level", label: "Intermédiaire" },
+    { value: "senior", label: "Senior" },
+    { value: "expert", label: "Expert" },
+    { value: "lead", label: "Lead" },
   ];
 
   // Charger les données de l'utilisateur
@@ -96,7 +113,20 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
           lastName: user.lastName || "",
           role: user.role || "",
           phoneNumber: user.phoneNumber || "",
+          experienceLevel: user.experienceLevel || "mid-level",
         });
+
+        // Définir l'URL de l'avatar
+        if (user.avatarUrl) {
+          const fullAvatarUrl = user.avatarUrl.startsWith('http')
+            ? user.avatarUrl
+            : user.avatarUrl.startsWith('/')
+              ? `http://localhost:5000${user.avatarUrl}`
+              : `http://localhost:5000/${user.avatarUrl}`;
+
+          setAvatarUrl(fullAvatarUrl);
+          setPreviewUrl(fullAvatarUrl);
+        }
       } catch (err: any) {
         console.error("Erreur lors du chargement de l'utilisateur:", err);
         setError(err.response?.data?.message || err.message || "Erreur lors du chargement de l'utilisateur");
@@ -130,6 +160,179 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
         ...prev,
         role: undefined
       }));
+    }
+  };
+
+  const handleExperienceLevelChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, experienceLevel: value }));
+
+    // Effacer l'erreur de validation pour le niveau d'expérience
+    if (validationErrors.experienceLevel) {
+      setValidationErrors(prev => ({
+        ...prev,
+        experienceLevel: undefined
+      }));
+    }
+  };
+
+  // Fonction pour gérer la sélection d'un fichier image
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Vérifier le type de fichier
+      if (!file.type.match('image.*')) {
+        toastManager.addToast("Veuillez sélectionner une image", "error");
+        return;
+      }
+
+      // Vérifier la taille du fichier (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toastManager.addToast("L'image ne doit pas dépasser 5MB", "error");
+        return;
+      }
+
+      console.log("Image sélectionnée:", file.name, "Type:", file.type, "Taille:", Math.round(file.size / 1024), "KB");
+
+      setSelectedFile(file);
+
+      // Créer une URL pour prévisualiser l'image
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        if (fileReader.result) {
+          setPreviewUrl(fileReader.result as string);
+          toastManager.addToast("Image sélectionnée. Cliquez sur 'Télécharger l'image' pour confirmer.", "info");
+        }
+      };
+      fileReader.readAsDataURL(file);
+    }
+  };
+
+  // Fonction pour déclencher le clic sur l'input file
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Fonction pour télécharger l'image
+  const uploadAvatar = async () => {
+    if (!selectedFile) {
+      toastManager.addToast("Veuillez d'abord sélectionner une image", "warning");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setSuccess("");
+      setError("");
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      console.log("Téléchargement de l'image en cours...");
+      console.log("Fichier sélectionné:", {
+        name: selectedFile.name,
+        type: selectedFile.type,
+        size: `${Math.round(selectedFile.size / 1024)} KB`
+      });
+
+      // Vérifier à nouveau le type de fichier
+      if (!selectedFile.type.match('image.*')) {
+        throw new Error("Le fichier sélectionné n'est pas une image");
+      }
+
+      // Vérifier à nouveau la taille du fichier
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        throw new Error("L'image ne doit pas dépasser 5MB");
+      }
+
+      const formData = new FormData();
+      formData.append('avatar', selectedFile);
+
+      // Afficher le contenu du FormData pour le débogage
+      console.log("FormData créé avec le fichier");
+
+      // Afficher les en-têtes de la requête
+      const headers = {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      };
+      console.log("En-têtes de la requête:", headers);
+
+      // Afficher l'URL de la requête
+      const url = `http://localhost:5000/api/user/upload-avatar/${userId}`;
+      console.log("URL de la requête:", url);
+
+      const response = await axios.post(url, formData, { headers });
+
+      console.log("Réponse du serveur:", response.data);
+
+      if (response.data.avatarUrl) {
+        // Ajouter un timestamp pour éviter la mise en cache
+        const timestamp = new Date().getTime();
+        const fullAvatarUrl = response.data.avatarUrl.startsWith('http')
+          ? `${response.data.avatarUrl}?t=${timestamp}`
+          : response.data.avatarUrl.startsWith('/')
+            ? `http://localhost:5000${response.data.avatarUrl}?t=${timestamp}`
+            : `http://localhost:5000/${response.data.avatarUrl}?t=${timestamp}`;
+
+        console.log("Nouvelle URL d'avatar:", fullAvatarUrl);
+
+        // Tester si l'image est accessible
+        const testImg = new Image();
+        testImg.onload = () => {
+          console.log("L'image est accessible");
+        };
+        testImg.onerror = () => {
+          console.warn("L'image n'est pas accessible, mais on continue quand même");
+        };
+        testImg.src = fullAvatarUrl;
+
+        setAvatarUrl(fullAvatarUrl);
+        setPreviewUrl(fullAvatarUrl);
+        setSuccess("Image de profil mise à jour avec succès");
+        toastManager.addToast("Image de profil mise à jour avec succès", "success");
+
+        // Émettre un événement personnalisé pour notifier les autres composants
+        const avatarUpdateEvent = new CustomEvent('avatar-updated', {
+          detail: { avatarUrl: fullAvatarUrl, userId }
+        });
+        window.dispatchEvent(avatarUpdateEvent);
+
+        // Réinitialiser le fichier sélectionné
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        // Forcer un rafraîchissement de l'interface
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error("La réponse du serveur ne contient pas d'URL d'avatar");
+      }
+    } catch (err: any) {
+      console.error("Erreur lors du téléchargement de l'image:", err);
+
+      // Afficher des informations détaillées sur l'erreur
+      if (err.response) {
+        console.error("Détails de l'erreur:", {
+          status: err.response.status,
+          statusText: err.response.statusText,
+          data: err.response.data
+        });
+      }
+
+      setError(err.response?.data?.message || err.message || "Erreur lors du téléchargement de l'image");
+      toastManager.addToast(
+        err.response?.data?.message || err.message || "Erreur lors du téléchargement de l'image",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -235,6 +438,60 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
         </div>
       )}
 
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+          Photo de profil
+        </h2>
+
+        <div className="flex items-center space-x-6 mb-6">
+          <div className="w-24 h-24 relative">
+            <img
+              src={previewUrl || avatarUrl || "/images/user/owner.jpg"}
+              alt="Avatar"
+              className="w-full h-full object-cover rounded-full border-2 border-gray-200"
+              onError={(e) => {
+                e.currentTarget.src = "/images/user/owner.jpg";
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={triggerFileInput}
+              className="px-4 py-2"
+            >
+              Choisir une image
+            </Button>
+
+            {selectedFile && (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={uploadAvatar}
+                className="px-4 py-2"
+                disabled={loading}
+              >
+                {loading ? "Téléchargement..." : "Télécharger l'image"}
+              </Button>
+            )}
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              JPG, PNG ou GIF. 5MB maximum.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="username">Nom d'utilisateur</Label>
@@ -323,6 +580,26 @@ export default function EditUserForm({ userId, onSuccess, onCancel }: EditUserFo
             error={!!validationErrors.phoneNumber}
             hint={validationErrors.phoneNumber}
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <Label>Niveau d'expérience</Label>
+          <div className="relative">
+            <Select
+              options={experienceLevelOptions}
+              placeholder="Sélectionnez un niveau d'expérience"
+              onChange={handleExperienceLevelChange}
+              value={formData.experienceLevel}
+              className={`dark:bg-dark-900 ${validationErrors.experienceLevel ? 'border-error-500' : ''}`}
+            />
+            {validationErrors.experienceLevel && (
+              <p className="mt-1.5 text-xs text-error-500">
+                {validationErrors.experienceLevel}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

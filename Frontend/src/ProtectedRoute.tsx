@@ -31,6 +31,20 @@ const isAuthenticated = (requiredRole?: string): boolean => {
     return true;
   }
 
+  // Special case for "admin" role - accept both "admin" and "Admin"
+  if ((normalizedRequiredRole === 'admin' || requiredRole === 'Admin') &&
+      (normalizedUserRole === 'admin' || userRole === 'Admin')) {
+    console.log(`User has required admin role`);
+    return true;
+  }
+
+  // Special case for "TeamLeader" role - accept both "teamleader" and "TeamLeader"
+  if ((normalizedRequiredRole === 'teamleader' || requiredRole === 'TeamLeader') &&
+      (normalizedUserRole === 'teamleader' || userRole === 'TeamLeader')) {
+    console.log(`User has required team leader role`);
+    return true;
+  }
+
   // General case for other roles
   if (normalizedUserRole === normalizedRequiredRole || userRole === requiredRole) {
     console.log(`User has required role: ${requiredRole}`);

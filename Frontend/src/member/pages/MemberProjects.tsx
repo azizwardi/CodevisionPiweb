@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 import { toastManager } from '../../dashboard/components/ui/toast/ToastContainer';
 
 interface User {
@@ -42,6 +43,7 @@ interface DecodedToken {
 }
 
 const MemberProjects: React.FC = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,24 +82,24 @@ const MemberProjects: React.FC = () => {
     try {
       // Fetch all projects
       const projectsResponse = await axios.get("http://localhost:5000/projects");
-      
+
       // Fetch all tasks to determine which projects the user is involved in
       const tasksResponse = await axios.get("http://localhost:5000/tasks");
       setTasks(tasksResponse.data);
-      
+
       // Get projects where the user is a team member or has tasks assigned
       const userProjects = projectsResponse.data.filter((project: Project) => {
         // Check if user is a team member
         const isTeamMember = project.teamMembers?.some(member => member._id === userId);
-        
+
         // Check if user has tasks in this project
         const hasTasksInProject = tasksResponse.data.some(
           (task: Task) => task.assignedTo?._id === userId && task.projectId?._id === project._id
         );
-        
+
         return isTeamMember || hasTasksInProject;
       });
-      
+
       setProjects(userProjects);
       setFilteredProjects(userProjects);
     } catch (err: any) {
@@ -130,15 +132,15 @@ const MemberProjects: React.FC = () => {
   };
 
   const getTaskCountForProject = (projectId: string) => {
-    return tasks.filter(task => 
-      task.projectId?._id === projectId && 
+    return tasks.filter(task =>
+      task.projectId?._id === projectId &&
       task.assignedTo?._id === userId
     ).length;
   };
 
   const getCompletedTaskCountForProject = (projectId: string) => {
-    return tasks.filter(task => 
-      task.projectId?._id === projectId && 
+    return tasks.filter(task =>
+      task.projectId?._id === projectId &&
       task.assignedTo?._id === userId &&
       task.status === 'completed'
     ).length;
@@ -147,7 +149,7 @@ const MemberProjects: React.FC = () => {
   const calculateProgress = (projectId: string) => {
     const totalTasks = getTaskCountForProject(projectId);
     if (totalTasks === 0) return 0;
-    
+
     const completedTasks = getCompletedTaskCountForProject(projectId);
     return Math.round((completedTasks / totalTasks) * 100);
   };
@@ -163,9 +165,9 @@ const MemberProjects: React.FC = () => {
         <div className="mb-6 flex flex-wrap gap-4">
           <div className="w-full md:w-auto">
             <label className="block mb-1 text-sm font-medium">Filter by Status</label>
-            <select 
-              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              value={statusFilter} 
+            <select
+              className="w-full md:w-48 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All Statuses</option>
@@ -189,22 +191,22 @@ const MemberProjects: React.FC = () => {
                   <h3 className="text-lg font-semibold">{project.name}</h3>
                   {getStatusBadge(project.status)}
                 </div>
-                
+
                 <p className="text-gray-600 mb-4 line-clamp-2">{project.description}</p>
-                
+
                 <div className="mb-4">
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium text-gray-700">My Progress</span>
                     <span className="text-sm font-medium text-gray-700">{calculateProgress(project._id)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-green-600 h-2.5 rounded-full" 
+                    <div
+                      className="bg-green-600 h-2.5 rounded-full"
                       style={{ width: `${calculateProgress(project._id)}%` }}
                     ></div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-between text-sm text-gray-500 mb-4">
                   <div>
                     <p>Start: {new Date(project.startDate).toLocaleDateString()}</p>
@@ -215,14 +217,23 @@ const MemberProjects: React.FC = () => {
                     <p>Completed: {getCompletedTaskCountForProject(project._id)}</p>
                   </div>
                 </div>
-                
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => navigate(`/member/projects/${project._id}`)}
+                    className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
+                  >
+                    Voir les tâches
+                  </button>
+                </div>
+
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <img 
-                        className="h-8 w-8 rounded-full" 
-                        src={project.teamLeader?.avatarUrl || "https://via.placeholder.com/40"} 
-                        alt={project.teamLeader?.username || "Team Leader"} 
+                      <img
+                        className="h-8 w-8 rounded-full"
+                        src={project.teamLeader?.avatarUrl || "https://via.placeholder.com/40"}
+                        alt={project.teamLeader?.username || "Team Leader"}
                       />
                     </div>
                     <div className="ml-3">

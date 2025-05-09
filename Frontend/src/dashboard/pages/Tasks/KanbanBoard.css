@@ -1,0 +1,55 @@
+.task-card {
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-menu {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.status-menu-trigger:hover .status-menu,
+.status-menu:hover {
+  opacity: 1;
+  visibility: visible;
+}
+
+.column-container {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.column-header {
+  margin-bottom: 12px;
+}
+
+.task-list {
+  flex-grow: 1;
+  min-height: 200px;
+}
+
+.task-count {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.empty-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  border: 2px dashed #e5e7eb;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}

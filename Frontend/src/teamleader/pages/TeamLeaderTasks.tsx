@@ -162,7 +162,36 @@ const TaskList: React.FC = () => {
                       <div className="text-sm text-gray-500 truncate max-w-xs">{task.description}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{task.projectId?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{task.assignedTo?.username || 'Unknown'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {task.assignedTo ? (
+                          <>
+                            <div className="h-8 w-8 rounded-full overflow-hidden mr-3">
+                              <img
+                                className="h-full w-full object-cover"
+                                src={task.assignedTo.avatarUrl ?
+                                  (task.assignedTo.avatarUrl.startsWith('http') ? task.assignedTo.avatarUrl :
+                                   task.assignedTo.avatarUrl.startsWith('/') ? `http://localhost:5000${task.assignedTo.avatarUrl}` :
+                                   `http://localhost:5000/${task.assignedTo.avatarUrl}`) :
+                                  "/images/user/owner.jpg"}
+                                alt={task.assignedTo.username}
+                                onError={(e) => {
+                                  // Fallback à l'image par défaut en cas d'erreur
+                                  e.currentTarget.src = "/images/user/owner.jpg";
+                                }}
+                              />
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {task.assignedTo.firstName && task.assignedTo.lastName
+                                ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}`
+                                : task.assignedTo.username}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Non assigné</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(task.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

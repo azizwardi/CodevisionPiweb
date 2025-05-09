@@ -10,7 +10,10 @@ exports.getAllEvents = async (req, res) => {
     console.error("Erreur lors de la récupération des événements:", error);
     res
       .status(500)
-      .json({ message: "Erreur lors de la récupération des événements", error: error.message });
+      .json({
+        message: "Erreur lors de la récupération des événements",
+        error: error.message,
+      });
   }
 };
 
@@ -27,7 +30,10 @@ exports.getEventById = async (req, res) => {
     console.error("Erreur lors de la récupération de l'événement:", error);
     res
       .status(500)
-      .json({ message: "Erreur lors de la récupération de l'événement", error: error.message });
+      .json({
+        message: "Erreur lors de la récupération de l'événement",
+        error: error.message,
+      });
   }
 };
 
@@ -42,7 +48,9 @@ exports.createEvent = async (req, res) => {
         title,
         start,
       });
-      return res.status(400).json({ message: "Le titre et la date de début sont requis" });
+      return res
+        .status(400)
+        .json({ message: "Le titre et la date de début sont requis" });
     }
 
     console.log("Création d'un nouvel événement avec les données:", {
@@ -52,7 +60,7 @@ exports.createEvent = async (req, res) => {
       allDay,
       calendar,
     });
-    
+
     const event = new Event({
       title,
       start,
@@ -77,39 +85,43 @@ exports.updateEvent = async (req, res) => {
   try {
     console.log("Requête de modification d'événement reçue:", req.body);
     console.log("ID de l'événement à modifier:", req.params.eventId);
-    
+
     const { title, start, end, allDay, calendar } = req.body;
-    
+
     // Vérification des champs requis
     if (!title || !start) {
       console.log("Validation échouée - champs manquants:", {
         title,
         start,
       });
-      return res.status(400).json({ message: "Le titre et la date de début sont requis" });
+      return res
+        .status(400)
+        .json({ message: "Le titre et la date de début sont requis" });
     }
-    
+
     // Recherche de l'événement
     const event = await Event.findById(req.params.eventId);
     if (!event) {
       console.log("Événement non trouvé avec l'ID:", req.params.eventId);
       return res.status(404).json({ message: "Événement non trouvé" });
     }
-    
+
     console.log("Événement trouvé:", event);
-    
+
     // Mise à jour des champs
     event.title = title;
     event.start = start;
     event.end = end;
     event.allDay = allDay !== undefined ? allDay : event.allDay;
     event.calendar = calendar || event.calendar;
-    
+
     console.log("Sauvegarde des modifications...");
     await event.save();
     console.log("Événement mis à jour avec succès");
-    
-    res.status(200).json({ message: "Événement mis à jour avec succès", event });
+
+    res
+      .status(200)
+      .json({ message: "Événement mis à jour avec succès", event });
   } catch (error) {
     console.error("Erreur lors de la modification de l'événement:", error);
     res.status(500).json({ message: "Erreur serveur", error: error.message });
@@ -124,7 +136,7 @@ exports.deleteEvent = async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: "Événement non trouvé" });
     }
-    
+
     await Event.findByIdAndDelete(req.params.eventId);
     console.log("Événement supprimé avec succès");
     res.status(200).json({ message: "Événement supprimé avec succès" });

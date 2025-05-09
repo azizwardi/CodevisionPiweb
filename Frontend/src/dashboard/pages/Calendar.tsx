@@ -38,7 +38,7 @@ const Calendar: React.FC = () => {
   // Fonction pour charger les événements depuis l'API
   const fetchEvents = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/events");
+      const response = await axios.get("http://localhost:5000/events");
       console.log("Événements récupérés:", response.data);
 
       // Transformer les données pour FullCalendar
@@ -89,8 +89,8 @@ const Calendar: React.FC = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:8000/events/${selectedEvent.id}`);
-      toastManager.addToast("Événement supprimé avec succès", "success", 5000);
+      await axios.delete(`http://localhost:5000/events/${selectedEvent.id}`);
+      toastManager.addToast("Événement supprimé avec succès", "success", 200);
       fetchEvents();
       closeModal();
       resetModalFields();
@@ -111,7 +111,7 @@ const Calendar: React.FC = () => {
         // Mettre à jour un événement existant
         console.log("Mise à jour de l'événement:", selectedEvent.id);
 
-        await axios.put(`http://localhost:8000/events/${selectedEvent.id}`, {
+        await axios.put(`http://localhost:5000/events/${selectedEvent.id}`, {
           title: eventTitle,
           start: eventStartDate,
           end: eventEndDate || eventStartDate,
@@ -124,7 +124,7 @@ const Calendar: React.FC = () => {
         // Ajouter un nouvel événement
         console.log("Création d'un nouvel événement");
 
-        await axios.post("http://localhost:8000/events", {
+        await axios.post("http://localhost:5000/events", {
           title: eventTitle,
           start: eventStartDate,
           end: eventEndDate || eventStartDate,

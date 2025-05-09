@@ -39,6 +39,7 @@ const EditTask: React.FC = () => {
     title: "",
     description: "",
     status: "pending",
+    taskType: "development",
     assignedTo: "",
     projectId: "",
     dueDate: "",
@@ -92,6 +93,7 @@ const EditTask: React.FC = () => {
             title: task.title || "",
             description: task.description || "",
             status: task.status || "pending",
+            taskType: task.taskType || "development",
             assignedTo: task.assignedTo?._id || "",
             projectId: task.projectId?._id || "",
             dueDate: formattedDate,
@@ -211,6 +213,7 @@ const EditTask: React.FC = () => {
         title: formData.title,
         description: formData.description,
         status: formData.status,
+        taskType: formData.taskType,
         // S'assurer que les IDs sont au bon format pour MongoDB
         assignedTo: formData.assignedTo,
         projectId: formData.projectId,
@@ -253,6 +256,20 @@ const EditTask: React.FC = () => {
     { value: "pending", label: "Pending" },
     { value: "in-progress", label: "In Progress" },
     { value: "completed", label: "Completed" },
+  ];
+
+  const taskTypeOptions = [
+    { value: "development", label: "Development" },
+    { value: "design", label: "Design" },
+    { value: "testing", label: "Testing" },
+    { value: "documentation", label: "Documentation" },
+    { value: "bug-fix", label: "Bug Fix" },
+    { value: "feature", label: "Feature" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "JAVA", label: "Java" },
+    { value: "DEVOPS", label: "DevOps" },
+    { value: "JS", label: "JavaScript" },
+    { value: "other", label: "Other" },
   ];
 
   const userOptions = users.map(user => ({
@@ -358,6 +375,20 @@ const EditTask: React.FC = () => {
               />
             </div>
 
+            <div>
+              <Label htmlFor="taskType">Task Type</Label>
+              <Select
+                id="taskType"
+                name="taskType"
+                options={taskTypeOptions}
+                placeholder="Select task type"
+                onChange={(value) => handleChange("taskType", value)}
+                value={formData.taskType}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <Label htmlFor="dueDate">Due Date <span className="text-red-500">*</span></Label>
               <Input

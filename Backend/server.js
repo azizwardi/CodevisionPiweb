@@ -17,6 +17,7 @@ const projectRouter = require("./routes/projectRoutes");
 const eventRouter = require("./routes/eventRoutes");
 const commentRouter = require("./routes/commentRoutes");
 const chatbotRouter = require("./routes/chatbotRoutes");
+const skillRouter = require("./routes/skillRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -29,6 +30,12 @@ const PORT = process.env.PORT || 8000; // Utilise 8000 comme fallback si PORT n'
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Middleware de journalisation des requêtes
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
 // Configuration CORS pour permettre l'accès aux images
 app.use(
@@ -53,11 +60,9 @@ app.use(cookieParser());
 // Servir les fichiers statiques
 app.use(express.static(path.join(__dirname, "public")));
 
-// Créer le dossier uploads s'il n'existe pas
-const uploadsDir = path.join(__dirname, "public", "uploads", "avatars");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Vérifier et créer les répertoires nécessaires
+const ensureDirectories = require("./utils/ensureDirectories");
+ensureDirectories();
 
 const jwt = require("jsonwebtoken");
 
@@ -76,7 +81,7 @@ app.use(limiter);
 // Session configuration - MUST be before Passport initialization
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 180 * 60 * 1000 }, // 3 hours
@@ -116,7 +121,7 @@ app.get(
 
     try {
       let user = await User.findOne({
-        $or: [{ googleId: req.user.id }, { email: req.user.email }]
+        $or: [{ googleId: req.user.id }, { email: req.user.email }],
       });
 
       if (!user) {
@@ -127,10 +132,10 @@ app.get(
           email: req.user.email,
           firstName: req.user.name.givenName,
           lastName: req.user.name.familyName,
-          role: '',  // Leave role empty to trigger role selection
-          username: req.user.email.split('@')[0],
-          password: 'default',
-          isVerified: true  // Keep Google users verified
+          role: "", // Leave role empty to trigger role selection
+          username: req.user.email.split("@")[0],
+          password: "default",
+          isVerified: true, // Keep Google users verified
         });
       } else {
         // Ensure the user is marked as verified since they authenticated with Google
@@ -163,13 +168,15 @@ app.get(
           role: user.role,
           isVerified: user.isVerified,
           // Add a flag to indicate this is a Google auth user
-          googleAuth: true
+          googleAuth: true,
         },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
       );
 
-      res.redirect(`http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`);
+      res.redirect(
+        `http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`
+      );
     } catch (error) {
       console.error("Error handling Google authentication:", error);
       res.redirect("http://localhost:5173/signin?error=server-error");
@@ -209,6 +216,19 @@ app.use("/projects", projectRouter);
 app.use("/events", eventRouter);
 app.use("/comments", commentRouter);
 app.use("/chatbot", chatbotRouter);
+// Log des routes pour le débogage
+console.log("Routes des compétences:");
+skillRouter.stack.forEach((r) => {
+  if (r.route && r.route.path) {
+    console.log(
+      `${Object.keys(r.route.methods)[0].toUpperCase()} /api/skills${
+        r.route.path
+      }`
+    );
+  }
+});
+
+app.use("/api/skills", skillRouter);
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -219,7 +239,7 @@ const io = new Server(server, {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   },
-  transports: ['websocket', 'polling'],
+  transports: ["websocket", "polling"],
   pingTimeout: 60000,
 });
 
@@ -231,10 +251,10 @@ io.on("connection", (socket) => {
   console.log("Socket.IO: Nouvelle connexion établie avec ID:", socket.id);
 
   // Envoyer immédiatement un message de test pour confirmer que la connexion fonctionne
-  socket.emit('connectionTest', {
-    message: 'Connexion Socket.IO établie avec succès',
+  socket.emit("connectionTest", {
+    message: "Connexion Socket.IO établie avec succès",
     timestamp: new Date().toISOString(),
-    socketId: socket.id
+    socketId: socket.id,
   });
 
   // Listen for notifications
@@ -245,29 +265,36 @@ io.on("connection", (socket) => {
 
       // Rejoindre la room personnelle de l'utilisateur
       socket.join(`user_${userId}`);
-      console.log(`Socket.IO: User ${userId} joined their personal room: user_${userId}`);
+      console.log(
+        `Socket.IO: User ${userId} joined their personal room: user_${userId}`
+      );
 
       // Envoyer un message de confirmation
-      socket.emit('connectionTest', {
+      socket.emit("connectionTest", {
         message: `Room utilisateur rejointe avec succès: user_${userId}`,
         timestamp: new Date().toISOString(),
-        userId: userId
+        userId: userId,
       });
 
       // Envoyer une notification de test pour vérifier que tout fonctionne
       setTimeout(() => {
         socket.emit("memberAdded", {
           type: "test_notification",
-          message: "Notification de test - Si vous voyez ceci, les notifications fonctionnent!",
+          message:
+            "Notification de test - Si vous voyez ceci, les notifications fonctionnent!",
           timestamp: new Date().toISOString(),
           userId: userId,
           targetUserId: userId,
-          forUserId: userId
+          forUserId: userId,
         });
-        console.log(`Socket.IO: Notification de test envoyée à l'utilisateur ${userId}`);
+        console.log(
+          `Socket.IO: Notification de test envoyée à l'utilisateur ${userId}`
+        );
       }, 2000);
     } else {
-      console.log("Socket.IO: User tried to join a room without providing a userId");
+      console.log(
+        "Socket.IO: User tried to join a room without providing a userId"
+      );
     }
   });
 
@@ -279,12 +306,16 @@ io.on("connection", (socket) => {
       receivedData: data,
       timestamp: new Date().toISOString(),
       socketId: socket.id,
-      userId: socket.userId || 'non défini'
+      userId: socket.userId || "non défini",
     });
   });
 
   socket.on("disconnect", () => {
-    console.log("Socket.IO: User disconnected:", socket.id, socket.userId ? `(userId: ${socket.userId})` : '');
+    console.log(
+      "Socket.IO: User disconnected:",
+      socket.id,
+      socket.userId ? `(userId: ${socket.userId})` : ""
+    );
   });
 
   socket.on("error", (error) => {
@@ -294,7 +325,13 @@ io.on("connection", (socket) => {
 
 // Log when Socket.IO server is ready
 io.engine.on("connection_error", (err) => {
-  console.error("Socket.IO: Connection error:", err.req, err.code, err.message, err.context);
+  console.error(
+    "Socket.IO: Connection error:",
+    err.req,
+    err.code,
+    err.message,
+    err.context
+  );
 });
 
 console.log("Socket.IO server initialized and waiting for connections");
@@ -306,8 +343,9 @@ server.listen(PORT, () => {
 });
 
 // Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/codevisionpiweb';
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://localhost:27017/codevisionpiweb";
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
-  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));

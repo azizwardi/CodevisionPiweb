@@ -1,5 +1,7 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const path = require("path");
+const fs = require("fs");
 
 async function showuser(req, res) {
   try {
@@ -15,9 +17,15 @@ async function showuser(req, res) {
 async function showByid(req, res) {
   try {
     const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
     res.status(200).json(user);
   } catch (err) {
-    console.log(err);
+    console.error("Erreur lors de la récupération de l'utilisateur:", err);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la récupération de l'utilisateur" });
   }
 }
 async function update(req, res) {
@@ -117,40 +125,73 @@ async function add(req, res) {
 // Fonction pour télécharger une image de profil
 async function uploadAvatar(req, res) {
   try {
+    console.log("Début de la fonction uploadAvatar");
+    console.log("Requête reçue:", {
+      params: req.params,
+      file: req.file
+        ? {
+            filename: req.file.filename,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+          }
+        : null,
+    });
+
     if (!req.file) {
+      console.error("Aucun fichier n'a été téléchargé");
       return res
         .status(400)
         .json({ message: "Aucun fichier n'a été téléchargé" });
     }
 
     const userId = req.params.id;
-    const user = await User.findById(userId);
+    console.log("ID utilisateur:", userId);
 
+    const user = await User.findById(userId);
     if (!user) {
+      console.error(`Utilisateur avec ID ${userId} non trouvé`);
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    // Construire l'URL de l'image
-    // Assurez-vous que l'URL commence par un slash
-    const avatarUrl = req.file.filename.startsWith("/")
-      ? `/uploads/avatars/${req.file.filename.substring(1)}`
-      : `/uploads/avatars/${req.file.filename}`;
+    console.log("Utilisateur trouvé:", {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    });
 
-    console.log("Uploaded avatar URL:", avatarUrl);
+    // Construire l'URL de l'image
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    console.log("URL de l'avatar générée:", avatarUrl);
 
     // Mettre à jour l'URL de l'avatar de l'utilisateur
     user.avatarUrl = avatarUrl;
     await user.save();
+    console.log("URL de l'avatar enregistrée dans la base de données");
+
+    // Vérifier que le fichier existe bien sur le disque
+    const filePath = path.join(__dirname, "../public", avatarUrl);
+    try {
+      fs.accessSync(filePath, fs.constants.F_OK);
+      console.log(`Le fichier existe sur le disque: ${filePath}`);
+    } catch (err) {
+      console.warn(
+        `Avertissement: Le fichier n'existe pas sur le disque: ${filePath}`
+      );
+      // On continue quand même car le problème pourrait être ailleurs
+    }
 
     res.status(200).json({
       message: "Image de profil mise à jour avec succès",
       avatarUrl: avatarUrl,
+      userId: user._id,
     });
+    console.log("Réponse envoyée avec succès");
   } catch (err) {
     console.error("Erreur lors du téléchargement de l'avatar:", err);
-    res
-      .status(500)
-      .json({ message: "Erreur lors du téléchargement de l'image de profil" });
+    res.status(500).json({
+      message: "Erreur lors du téléchargement de l'image de profil",
+      error: err.message,
+    });
   }
 }
 
