@@ -26,6 +26,7 @@ export default function SignUpForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const navigate = useNavigate();
 
@@ -52,6 +53,7 @@ export default function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted!");
     setLoading(true);
     setErrorMessage("");
     setEmailError("");
@@ -98,7 +100,6 @@ export default function SignUpForm() {
     }
 
     try {
-      console.log("Sending registration request with data:", { email, password, firstName, lastName, username, phoneNumber, role });
       const response = await axios.post("http://localhost:5000/api/auth/register", {
         email,
         password,
@@ -108,47 +109,32 @@ export default function SignUpForm() {
         phoneNumber,
         role
       });
-      console.log("Registration response:", response.data);
+      console.log(response.data);
 
-      // Set registration success and show popup
+      // Set registration success and show popup with verification message
       setRegistrationSuccess(true);
+      setPopupMessage("Account created successfully! Please check your email to verify your account.");
       setShowPopup(true);
 
-      // Store the token if available
-      if (response.data && response.data.token) {
-        localStorage.setItem("authToken", response.data.token);
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
+      // Automatically close popup and redirect after 3 seconds
+      setTimeout(() => {
+        setShowPopup(false);
+        navigate("/signin");
+      }, 3000);
+    } catch (error: any) {
+      // Handle specific error messages from the server
+      const errorMsg = error.response?.data?.message || "Failed to register. Please try again.";
+      setErrorMessage(errorMsg);
+      console.error(error);
 
-      // More detailed error handling
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error("Error response data:", error.response.data);
-          console.error("Error response status:", error.response.status);
-
-          if (error.response.data && error.response.data.message) {
-            setErrorMessage(error.response.data.message);
-          } else if (error.response.data && error.response.data.errors) {
-            // Handle validation errors
-            const validationErrors = error.response.data.errors;
-            const firstError = validationErrors[0];
-            setErrorMessage(firstError.msg || "Validation error");
-          } else {
-            setErrorMessage(`Registration failed (${error.response.status})`);
-          }
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error("No response received:", error.request);
-          setErrorMessage("No response from server. Please check your connection.");
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          setErrorMessage("Failed to send request: " + error.message);
-        }
-      } else {
-        setErrorMessage("An unexpected error occurred");
+      // Show error in popup for better visibility
+      if (errorMsg === "User already exists") {
+        setPopupMessage("An account with this email already exists. Please sign in instead.");
+        setShowPopup(true);
+        setTimeout(() => {
+          setShowPopup(false);
+          navigate("/signin");
+        }, 3000);
       }
     } finally {
       setLoading(false);
@@ -158,13 +144,9 @@ export default function SignUpForm() {
   const handleClosePopup = () => {
     setShowPopup(false);
 
-    // If registration was successful, redirect to role selection
+    // If registration was successful, redirect to signin page
     if (registrationSuccess) {
-      console.log('Registration successful, redirecting to role selection');
-      navigate("/role-select");
-    } else {
-      // Otherwise, redirect to signin
-      console.log('Registration not successful, redirecting to signin');
+      console.log('Registration successful, redirecting to signin');
       navigate("/signin");
     }
   };
@@ -192,7 +174,9 @@ export default function SignUpForm() {
           </div>
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-1 sm:gap-5">
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
                   width="20"
                   height="20"
@@ -230,7 +214,7 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {/* Username */}
@@ -378,9 +362,17 @@ export default function SignUpForm() {
                     size="sm"
                     disabled={loading}
                     type="submit"
+                    onClick={() => {
+                      console.log("Button clicked!");
+                      if (!loading) {
+                        const event = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+                        handleSubmit(event);
+                      }
+                    }}
                   >
                     {loading ? 'Signing up...' : 'Sign Up'}
                   </Button>
+
                   {errorMessage && <p className="text-red-500 text-xs italic mt-2">{errorMessage}</p>}
                 </div>
               </div>
@@ -402,7 +394,7 @@ export default function SignUpForm() {
       </div>
       {showPopup && (
         <Popup
-          message="Account created successfully! You will now be redirected to select your role."
+          message={popupMessage || "Account created successfully! Please check your email to verify your account."}
           onClose={handleClosePopup}
         />
       )}

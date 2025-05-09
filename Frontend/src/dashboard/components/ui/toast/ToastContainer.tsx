@@ -21,7 +21,7 @@ interface ToastItem {
 // Créer un gestionnaire global de toasts
 export const toastManager = {
   // Référence à la fonction d'ajout de toast (sera définie par le composant)
-  addToast: (params: ToastParams) => {},
+  addToast: (p0: string, p1: string, p2: number, params: ToastParams) => {},
 };
 
 const ToastContainer: React.FC = () => {

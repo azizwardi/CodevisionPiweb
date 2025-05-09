@@ -228,7 +228,7 @@ global.io = io;
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("Socket.IO: Nouvelle connexion établie avec ID:", socket.id);
+
 
   // Envoyer immédiatement un message de test pour confirmer que la connexion fonctionne
   socket.emit('connectionTest', {
@@ -273,7 +273,6 @@ io.on("connection", (socket) => {
 
   // Ajouter un gestionnaire d'événements pour tester la connexion
   socket.on("testConnection", (data) => {
-    console.log("Socket.IO: Test de connexion reçu:", data);
     socket.emit("testConnectionResponse", {
       message: "Test de connexion réussi",
       receivedData: data,
