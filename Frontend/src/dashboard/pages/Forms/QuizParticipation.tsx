@@ -14,10 +14,18 @@ export default function QuizParticipation() {
   const [score, setScore] = useState<number | null>(null);
   const [maxScore, setMaxScore] = useState<number | null>(null);
 
-  // Fonction pour gérer le clic sur "Répondre au quiz"
-  const handleTakeQuiz = (quizId: string) => {
+  // Fonction pour gérer le clic sur "Répondre au quiz" ou "Voir les détails"
+  const handleTakeQuiz = (quizId: string, attemptId?: string) => {
     setSelectedQuizId(quizId);
-    setActiveTab('take');
+
+    // Si un ID de tentative est fourni, cela signifie que l'utilisateur veut voir les résultats d'un quiz déjà complété
+    if (attemptId) {
+      setAttemptId(attemptId);
+      setActiveTab('results');
+    } else {
+      // Sinon, l'utilisateur veut répondre à un nouveau quiz
+      setActiveTab('take');
+    }
   };
 
   // État pour stocker les informations du certificat

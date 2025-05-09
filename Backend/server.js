@@ -18,6 +18,7 @@ const eventRouter = require("./routes/eventRoutes");
 const commentRouter = require("./routes/commentRoutes");
 const chatbotRouter = require("./routes/chatbotRoutes");
 const quizRouter = require("./routes/quizRoutes");
+const courseRecommendationRouter = require("./routes/courseRecommendationRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -209,6 +210,7 @@ app.use("/chatbot", chatbotRouter);
 app.use("/quizzes", quizRouter);
 app.use("/quiz-attempts", require("./routes/quizAttemptRoutes"));
 app.use("/certificates", require("./routes/certificateRoutes"));
+app.use("/course-recommendations", courseRecommendationRouter);
 
 // Create HTTP server
 const server = http.createServer(app);
