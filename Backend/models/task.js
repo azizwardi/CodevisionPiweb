@@ -11,7 +11,7 @@ const taskSchema = new Schema({
       "in-progress",
       "completed",
       "in-review",
-      "to-do",
+      "todo",
       "backlog",
       "no-status",
     ],
