@@ -42,13 +42,8 @@ interface ProjectTableProps {
   isAdmin?: boolean;
 }
 
-<<<<<<< HEAD
-export default function ProjectTable({ onEdit, refreshTrigger }: ProjectTableProps) {
-  const navigate = useNavigate();
-
-=======
 export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }: ProjectTableProps) {
->>>>>>> 62b72e019b9a355c8fcb3981230bba802e55de80
+  const navigate = useNavigate();
   // État pour stocker les données des projets
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
