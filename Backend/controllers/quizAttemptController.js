@@ -2,6 +2,7 @@ const QuizAttempt = require("../models/quizAttempt");
 const Quiz = require("../models/quiz");
 const QuizQuestion = require("../models/quizQuestion");
 const certificateController = require("./certificateController");
+const courseRecommendationController = require("./courseRecommendationController");
 
 // Démarrer une tentative de quiz
 exports.startQuizAttempt = async (req, res) => {
@@ -166,6 +167,8 @@ exports.completeQuizAttempt = async (req, res) => {
 
     // Vérifier si l'utilisateur a obtenu un score parfait (100%)
     let certificateInfo = null;
+    let courseRecommendations = null;
+
     if (score === maxScore && maxScore > 0) {
       try {
         console.log("Score parfait détecté, génération d'un certificat...");
@@ -209,6 +212,23 @@ exports.completeQuizAttempt = async (req, res) => {
         console.error("Erreur lors de la génération du certificat:", certError);
         // Ne pas bloquer la complétion du quiz si la génération du certificat échoue
       }
+    } else {
+      // Si le score n'est pas parfait, générer des recommandations de cours
+      try {
+        console.log("Score non parfait, génération de recommandations de cours...");
+        courseRecommendations = await courseRecommendationController.generateRecommendations(
+          attempt.user,
+          attempt.quiz,
+          attempt._id
+        );
+
+        if (courseRecommendations) {
+          console.log("Recommandations de cours générées avec succès");
+        }
+      } catch (recError) {
+        console.error("Erreur lors de la génération des recommandations de cours:", recError);
+        // Ne pas bloquer la complétion du quiz si la génération des recommandations échoue
+      }
     }
 
     res.status(200).json({
@@ -217,7 +237,8 @@ exports.completeQuizAttempt = async (req, res) => {
       score,
       maxScore,
       percentage,
-      certificateInfo
+      certificateInfo,
+      courseRecommendations
     });
   } catch (error) {
     console.error("Error completing quiz attempt:", error);

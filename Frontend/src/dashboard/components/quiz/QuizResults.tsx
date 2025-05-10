@@ -4,6 +4,7 @@ import { toastManager } from "../ui/toast/ToastContainer";
 import Button from "../ui/button/Button";
 import Badge from "../ui/badge/Badge";
 import Certificate from "./Certificate";
+import CourseRecommendations from "./CourseRecommendations";
 
 interface QuizResultsProps {
   attemptId: string;
@@ -76,7 +77,9 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCertificate, setShowCertificate] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const [localCertificateInfo, setLocalCertificateInfo] = useState(certificateInfo);
+  const [hasRecommendations, setHasRecommendations] = useState(false);
 
   // Récupérer les détails de la tentative de quiz
   useEffect(() => {
@@ -86,6 +89,42 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
         const response = await axios.get(`http://localhost:5000/quiz-attempts/${attemptId}`);
         setAttempt(response.data);
         setError(null);
+
+        // Vérifier si des recommandations existent pour cette tentative
+        try {
+          const recResponse = await axios.get(`http://localhost:5000/course-recommendations/attempt/${attemptId}`);
+          if (recResponse.data && recResponse.data.recommendedCourses && recResponse.data.recommendedCourses.length > 0) {
+            setHasRecommendations(true);
+          }
+        } catch (recError) {
+          console.log("Pas de recommandations disponibles pour cette tentative");
+          setHasRecommendations(false);
+        }
+
+        // Si nous n'avons pas déjà les informations du certificat et que le score est parfait,
+        // vérifier si un certificat existe pour cette tentative
+        if (!localCertificateInfo && response.data.score === response.data.maxScore) {
+          try {
+            // Rechercher un certificat pour ce quiz et cet utilisateur
+            const certResponse = await axios.get(`http://localhost:5000/certificates/user/${response.data.user._id}`);
+
+            if (certResponse.data && certResponse.data.length > 0) {
+              // Trouver le certificat correspondant à ce quiz
+              const cert = certResponse.data.find((c: any) => c.quiz._id === response.data.quiz._id);
+
+              if (cert) {
+                setLocalCertificateInfo({
+                  certificate: cert,
+                  newGrade: cert.user.grade || 'Débutant',
+                  oldGrade: null,
+                  gradeUpgraded: false
+                });
+              }
+            }
+          } catch (certError) {
+            console.log("Pas de certificat trouvé pour cette tentative");
+          }
+        }
       } catch (error) {
         console.error("Erreur lors de la récupération des détails de la tentative:", error);
         setError("Impossible de charger les résultats du quiz");
@@ -100,7 +139,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
     };
 
     fetchAttemptDetails();
-  }, [attemptId]);
+  }, [attemptId, localCertificateInfo]);
 
   // Fonction pour obtenir le libellé du type de question
   const getQuestionTypeLabel = (type: string) => {
@@ -236,6 +275,16 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
     );
   }
 
+  // Afficher les recommandations de cours si disponibles
+  if (showRecommendations) {
+    return (
+      <CourseRecommendations
+        attemptId={attemptId}
+        onClose={() => setShowRecommendations(false)}
+      />
+    );
+  }
+
   const percentage = Math.round((attempt.score / attempt.maxScore) * 100);
   const isPerfectScore = hasPerfectScore();
 
@@ -278,6 +327,25 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
                 Générer un certificat
               </Button>
             )}
+          </div>
+        )}
+
+        {/* Message de recommandation pour un score non parfait */}
+        {!isPerfectScore && hasRecommendations && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+              Continuez à progresser !
+            </h3>
+            <p className="text-blue-700 dark:text-blue-300 mb-4">
+              Nous avons des recommandations de cours personnalisées pour vous aider à améliorer vos compétences dans ce domaine.
+            </p>
+            <Button
+              variant="primary"
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setShowRecommendations(true)}
+            >
+              Voir les cours recommandés
+            </Button>
           </div>
         )}
 

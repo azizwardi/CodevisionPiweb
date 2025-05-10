@@ -45,19 +45,25 @@ export default function AuthSuccess() {
             // Navigate to the appropriate dashboard based on user role
             const userRoleLower = userRole.toLowerCase();
 
-            if (userRole === 'admin' || userRoleLower === 'admin') {
+            if (userRoleLower === 'admin') {
               // Admin goes to the admin dashboard
+              localStorage.setItem("userRole", "admin"); // Ensure consistent casing
+              console.log('Redirecting admin to /dashboard');
               navigate("/dashboard");
-            } else if (userRole === 'TeamLeader' || userRoleLower === 'teamleader') {
+            } else if (userRoleLower === 'teamleader') {
               // Team Leader goes to the team leader dashboard
+              localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
+              console.log('Redirecting team leader to /team-leader-dashboard');
               navigate("/team-leader-dashboard");
-            } else if (userRole === 'Member' || userRoleLower === 'member') {
+            } else if (userRoleLower === 'member') {
               // Member goes to the member dashboard
+              localStorage.setItem("userRole", "Member"); // Ensure consistent casing
+              console.log('Redirecting member to /member-dashboard');
               navigate("/member-dashboard");
             } else {
               // Default fallback
-              console.log('No matching role found, defaulting to dashboard');
-              navigate("/dashboard");
+              console.log('No matching role found, redirecting to role selection');
+              navigate("/role-select");
             }
           } else {
             // If no role, redirect to role selection
@@ -77,19 +83,25 @@ export default function AuthSuccess() {
               // Navigate to the appropriate dashboard based on user role
               const userRoleLower = userRole.toLowerCase();
 
-              if (userRole === 'admin' || userRoleLower === 'admin') {
+              if (userRoleLower === 'admin') {
                 // Admin goes to the admin dashboard
+                localStorage.setItem("userRole", "admin"); // Ensure consistent casing
+                console.log('Redirecting admin to /dashboard');
                 navigate("/dashboard");
-              } else if (userRole === 'TeamLeader' || userRoleLower === 'teamleader') {
+              } else if (userRoleLower === 'teamleader') {
                 // Team Leader goes to the team leader dashboard
+                localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
+                console.log('Redirecting team leader to /team-leader-dashboard');
                 navigate("/team-leader-dashboard");
-              } else if (userRole === 'Member' || userRoleLower === 'member') {
+              } else if (userRoleLower === 'member') {
                 // Member goes to the member dashboard
+                localStorage.setItem("userRole", "Member"); // Ensure consistent casing
+                console.log('Redirecting member to /member-dashboard');
                 navigate("/member-dashboard");
               } else {
                 // Default fallback
-                console.log('No matching role found, defaulting to dashboard');
-                navigate("/dashboard");
+                console.log('No matching role found, redirecting to role selection');
+                navigate("/role-select");
               }
             } else {
               // If no role, redirect to role selection

@@ -31,7 +31,7 @@ interface Quiz {
 }
 
 interface AvailableQuizzesProps {
-  onTakeQuiz: (quizId: string) => void;
+  onTakeQuiz: (quizId: string, attemptId?: string) => void;
 }
 
 export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) {
@@ -206,10 +206,9 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => onTakeQuiz(quiz._id)}
-                        disabled
+                        onClick={() => onTakeQuiz(quiz._id, quiz.score?.attemptId)}
                       >
-                        Déjà complété
+                        Voir les détails
                       </Button>
                     </div>
                   ) : (

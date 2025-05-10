@@ -19,6 +19,7 @@ const commentRouter = require("./routes/commentRoutes");
 const chatbotRouter = require("./routes/chatbotRoutes");
 const quizRouter = require("./routes/quizRoutes");
 const skillRouter = require("./routes/skillRoutes");
+const courseRecommendationRouter = require("./routes/courseRecommendationRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -208,7 +209,6 @@ app.get("/logout", (req, res, next) => {
   });
 });
 
-
 app.use("/projects", projectRouter);
 app.use("/events", eventRouter);
 app.use("/comments", commentRouter);
@@ -229,6 +229,7 @@ skillRouter.stack.forEach((r) => {
 });
 
 app.use("/api/skills", skillRouter);
+app.use("/course-recommendations", courseRecommendationRouter);
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -248,8 +249,6 @@ global.io = io;
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("Socket.IO: Nouvelle connexion établie avec ID:", socket.id);
-
   // Envoyer immédiatement un message de test pour confirmer que la connexion fonctionne
   socket.emit("connectionTest", {
     message: "Connexion Socket.IO établie avec succès",
@@ -300,7 +299,6 @@ io.on("connection", (socket) => {
 
   // Ajouter un gestionnaire d'événements pour tester la connexion
   socket.on("testConnection", (data) => {
-    console.log("Socket.IO: Test de connexion reçu:", data);
     socket.emit("testConnectionResponse", {
       message: "Test de connexion réussi",
       receivedData: data,

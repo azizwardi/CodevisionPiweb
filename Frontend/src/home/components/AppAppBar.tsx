@@ -188,13 +188,57 @@ export default function AppAppBar() {
 
                 {isAuthenticated ? (
                   <>
-                    <MenuItem component={Link} to="/profile">
-                      <Button color="primary" variant="outlined" fullWidth size="medium">
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        fullWidth
+                        size="medium"
+                        onClick={() => {
+                          const user = JSON.parse(localStorage.getItem('user') || '{}');
+                          const normalizedRole = user?.role ? user.role.toLowerCase() : '';
+                          console.log('Mobile menu - Profile - User role:', user?.role, 'Normalized role:', normalizedRole);
+
+                          // Navigate to the appropriate profile page based on user role
+                          if (normalizedRole === 'admin') {
+                            window.location.href = "/profile";
+                          } else if (normalizedRole === 'teamleader') {
+                            window.location.href = "/team-leader/profile";
+                          } else if (normalizedRole === 'member') {
+                            window.location.href = "/member/profile";
+                          } else {
+                            window.location.href = "/role-select";
+                          }
+                          setOpen(false);
+                        }}
+                      >
                         Profile
                       </Button>
                     </MenuItem>
-                    <MenuItem component={Link} to="/dashboard">
-                      <Button color="primary" variant="contained" fullWidth size="medium">
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        size="medium"
+                        onClick={() => {
+                          const user = JSON.parse(localStorage.getItem('user') || '{}');
+                          const normalizedRole = user?.role ? user.role.toLowerCase() : '';
+                          console.log('Mobile menu - Dashboard - User role:', user?.role, 'Normalized role:', normalizedRole);
+
+                          // Navigate to the appropriate dashboard based on user role
+                          if (normalizedRole === 'admin') {
+                            window.location.href = "/dashboard";
+                          } else if (normalizedRole === 'teamleader') {
+                            window.location.href = "/team-leader-dashboard";
+                          } else if (normalizedRole === 'member') {
+                            window.location.href = "/member-dashboard";
+                          } else {
+                            window.location.href = "/role-select";
+                          }
+                          setOpen(false);
+                        }}
+                      >
                         Dashboard
                       </Button>
                     </MenuItem>

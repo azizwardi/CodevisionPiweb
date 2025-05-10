@@ -44,15 +44,27 @@ export default function UserRoleSelector() {
       // Only redirect if the user already has a role
       if (userRole && userRole !== '') {
         console.log('User already has role:', userRole);
+
+        // Normalize the role for consistent comparison
+        const normalizedRole = userRole.toLowerCase();
+        console.log('Normalized role:', normalizedRole);
+
         // User already has a role, redirect to appropriate dashboard
-        if (userRole === 'admin') {
+        if (normalizedRole === 'admin') {
+          localStorage.setItem("userRole", "admin"); // Ensure consistent casing
+          console.log('Redirecting admin to /dashboard');
           navigate('/dashboard');
-        } else if (userRole === 'TeamLeader') {
+        } else if (normalizedRole === 'teamleader') {
+          localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
+          console.log('Redirecting team leader to /team-leader-dashboard');
           navigate('/team-leader-dashboard');
-        } else if (userRole === 'Member') {
+        } else if (normalizedRole === 'member') {
+          localStorage.setItem("userRole", "Member"); // Ensure consistent casing
+          console.log('Redirecting member to /member-dashboard');
           navigate('/member-dashboard');
         } else {
-          navigate('/dashboard');
+          console.log('No matching role found, redirecting to role selection');
+          // Stay on role selection page
         }
       } else {
         console.log('User does not have a role, staying on role selection page');
@@ -106,18 +118,29 @@ export default function UserRoleSelector() {
         // Navigate to the appropriate dashboard based on user role and verification status
         if (decoded.googleAuth || decoded.isVerified) {
           // User is verified (either Google auth or manually verified)
-          if (decoded.role === 'admin') {
+          // Normalize the role for consistent comparison
+          const normalizedRole = decoded.role ? decoded.role.toLowerCase() : '';
+          console.log('Normalized role after update:', normalizedRole);
+
+          if (normalizedRole === 'admin') {
             // Admin goes to the admin dashboard
+            localStorage.setItem("userRole", "admin"); // Ensure consistent casing
+            console.log('Redirecting admin to /dashboard');
             navigate('/dashboard');
-          } else if (decoded.role === 'TeamLeader') {
+          } else if (normalizedRole === 'teamleader') {
             // Team Leader goes to the team leader dashboard
+            localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
+            console.log('Redirecting team leader to /team-leader-dashboard');
             navigate('/team-leader-dashboard');
-          } else if (decoded.role === 'Member') {
+          } else if (normalizedRole === 'member') {
             // Member goes to the member dashboard
+            localStorage.setItem("userRole", "Member"); // Ensure consistent casing
+            console.log('Redirecting member to /member-dashboard');
             navigate('/member-dashboard');
           } else {
             // Default fallback
-            navigate('/dashboard');
+            console.log('No matching role found, redirecting to role selection');
+            navigate('/role-select');
           }
         } else {
           // For unverified users, show verification popup and then redirect to signin

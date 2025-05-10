@@ -70,29 +70,39 @@ export default function UserDropdown() {
   };
 
   const handleProfile = () => {
+    // Normalize the role for consistent comparison
+    const normalizedRole = user?.role ? user.role.toLowerCase() : '';
+    console.log('UserDropdown - Profile - User role:', user?.role, 'Normalized role:', normalizedRole);
+
     // Navigate to the appropriate profile page based on user role
-    if (user?.role === 'admin') {
+    if (normalizedRole === 'admin') {
       navigate("/profile");
-    } else if (user?.role === 'TeamLeader') {
+    } else if (normalizedRole === 'teamleader') {
       navigate("/team-leader/profile");
-    } else if (user?.role === 'member') {
+    } else if (normalizedRole === 'member') {
       navigate("/member/profile");
     } else {
-      navigate("/profile");
+      // Default fallback - redirect to role selection
+      navigate("/role-select");
     }
     handleClose();
   };
 
   const handleDashboard = () => {
+    // Normalize the role for consistent comparison
+    const normalizedRole = user?.role ? user.role.toLowerCase() : '';
+    console.log('UserDropdown - Dashboard - User role:', user?.role, 'Normalized role:', normalizedRole);
+
     // Navigate to the appropriate dashboard based on user role
-    if (user?.role === 'admin') {
+    if (normalizedRole === 'admin') {
       navigate("/dashboard");
-    } else if (user?.role === 'TeamLeader') {
+    } else if (normalizedRole === 'teamleader') {
       navigate("/team-leader-dashboard");
-    } else if (user?.role === 'member') {
+    } else if (normalizedRole === 'member') {
       navigate("/member-dashboard");
     } else {
-      navigate("/dashboard");
+      // Default fallback - redirect to role selection
+      navigate("/role-select");
     }
     handleClose();
   };

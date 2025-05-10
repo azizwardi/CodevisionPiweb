@@ -138,25 +138,32 @@ export default function SignInForm() {
       // Navigate to the appropriate dashboard based on user role
       console.log('SignInForm: User role from login response:', role);
 
-      if (!role || role === '') {
+      // Normalize the role for consistent comparison
+      const normalizedRole = role ? role.toLowerCase() : '';
+      console.log('Normalized role:', normalizedRole);
+
+      if (!normalizedRole || normalizedRole === '') {
         // If no role, redirect to role selection
         console.log('User has no role, redirecting to role selection');
         navigate("/role-select");
         return; // Exit early
-      } else if (role === 'admin' || role.toLowerCase() === 'admin') {
+      } else if (normalizedRole === 'admin') {
         // Admin goes to the admin dashboard
         // Ensure we always store the role as "admin" for consistency
         localStorage.setItem("userRole", "admin");
+        console.log('Redirecting admin to /dashboard');
         navigate("/dashboard");
-      } else if (role === 'TeamLeader' || role.toLowerCase() === 'teamleader') {
+      } else if (normalizedRole === 'teamleader') {
         // Team Leader goes to the team leader dashboard
         // Ensure we always store the role as "TeamLeader" for consistency
         localStorage.setItem("userRole", "TeamLeader");
+        console.log('Redirecting team leader to /team-leader-dashboard');
         navigate("/team-leader-dashboard");
-      } else if (role === 'Member' || role.toLowerCase() === 'member') {
+      } else if (normalizedRole === 'member') {
         // Member goes to the member dashboard
         // Ensure we always store the role as "Member" for consistency
         localStorage.setItem("userRole", "Member");
+        console.log('Redirecting member to /member-dashboard');
         navigate("/member-dashboard");
       } else {
         // Default fallback

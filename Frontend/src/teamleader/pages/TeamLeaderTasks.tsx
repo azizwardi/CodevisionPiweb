@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import { toastManager } from "../../dashboard/components/ui/toast/ToastContainer";
 import Button from "../../dashboard/components/ui/button/Button";
 import Badge from "../../dashboard/components/ui/badge/Badge";
@@ -45,60 +47,33 @@ const TaskList: React.FC = () => {
   const [projectFilter, setProjectFilter] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [showCreatePopup, setShowCreatePopup] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  // Récupérer l'ID de l'utilisateur depuis le token
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      try {
-        const decoded = jwtDecode<{ id: string; user?: { id: string } }>(token);
-        const id = decoded.user?.id || decoded.id;
-        if (id) {
-          setUserId(id);
-        }
-      } catch (error) {
-        console.error("Erreur lors du décodage du token:", error);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!userId) return;
-
       setLoading(true);
       setError("");
 
       try {
-        // Récupérer tous les projets créés par ce TeamLeader
-        const projectsResponse = await axios.get("http://localhost:5000/projects");
-        const teamLeaderProjects = projectsResponse.data.filter(
-          (project: any) => project.creator === userId
-        );
-        setProjects(teamLeaderProjects);
-
-        // Récupérer toutes les tâches
         const tasksResponse = await axios.get("http://localhost:5000/tasks");
+        setTasks(tasksResponse.data);
+        setFilteredTasks(tasksResponse.data);
 
-        // Filtrer les tâches pour n'inclure que celles associées aux projets du TeamLeader
-        const teamLeaderProjectIds = teamLeaderProjects.map((project: Project) => project._id);
-        const teamLeaderTasks = tasksResponse.data.filter(
-          (task: Task) => teamLeaderProjectIds.includes(task.projectId._id)
-        );
-
-        setTasks(teamLeaderTasks);
-        setFilteredTasks(teamLeaderTasks);
+        const projectsResponse = await axios.get("http://localhost:5000/projects");
+        setProjects(projectsResponse.data);
       } catch (err: any) {
         setError(err.message || "Failed to fetch data");
-        toastManager.addToast("Error loading tasks", "error", 5000);
+        toastManager.addToast("Error loading tasks", "error", 5000, {
+          title: "Success",
+          description: "The task was successfully deleted.",
+          type: "success"
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     let result = [...tasks];
@@ -115,9 +90,17 @@ const TaskList: React.FC = () => {
       await axios.delete(`http://localhost:5000/tasks/${taskId}`);
       setTasks(tasks.filter(task => task._id !== taskId));
       setFilteredTasks(filteredTasks.filter(task => task._id !== taskId));
-      toastManager.addToast("Task deleted successfully", "success", 5000);
+      toastManager.addToast("Task deleted successfully", "success", 5000, {
+        title: "Success",
+        description: "The task was deleted.",
+        type: "success"
+      });
     } catch (err: any) {
-      toastManager.addToast("Error deleting task", "error", 5000);
+      toastManager.addToast("Error deleting task", "error", 5000, {
+        title: "Error",
+        description: err.message || "An error occurred while deleting the task.",
+        type: "error"
+      });
     }
   };
 

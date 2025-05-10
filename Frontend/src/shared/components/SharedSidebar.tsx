@@ -52,66 +52,36 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
 
   // Get navigation items based on user role
   const getNavItems = (): NavItem[] => {
-    // Base items for all roles
-    const baseItems: NavItem[] = [
-      {
-        icon: <GridIcon />,
-        name: "Dashboard",
-        path: role === "admin"
-          ? "/dashboard"
-          : role === "TeamLeader"
-            ? "/team-leader-dashboard"
-            : "/member-dashboard",
-      },
-      {
-        icon: <CalenderIcon />,
-        name: "Calendar",
-        path: role === "admin"
-          ? "/calendar"
-          : role === "TeamLeader"
-            ? "/team-leader/calendar"
-            : "/member/calendar",
-      },
-      {
-        icon: <UserCircleIcon />,
-        name: "User Profile",
-        path: role === "admin"
-          ? "/profile"
-          : role === "TeamLeader"
-            ? "/team-leader/profile"
-            : "/member/profile",
-      },
-      {
-        name: "Project Management",
-        icon: <ListIcon />,
-        path: role === "admin"
-          ? "/form-elements"
-          : role === "TeamLeader"
-            ? "/team-leader/projects"
-            : "/member/projects",
-      },
-    ];
+    console.log("Generating navigation items for role:", role);
 
-    // Task Management with conditional subItems
-    const taskManagement: NavItem = {
-      name: "Task Management",
-      icon: <ListIcon />,
-      subItems: role === "admin"
-        ? [{ name: "Task List", path: "/tasks" }]
-        : role === "TeamLeader"
-          ? [
-              { name: "Task List", path: "/team-leader/tasks" },
-            ]
-          : [
-              { name: "Task List", path: "/member/tasks" },
-            ],
-    };
-
-    // Add role-specific items
+    // Different base items for each role
     if (role === "admin") {
       return [
-        ...baseItems,
-        taskManagement,
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          path: "/dashboard",
+        },
+        {
+          icon: <CalenderIcon />,
+          name: "Calendar",
+          path: "/calendar",
+        },
+        {
+          icon: <UserCircleIcon />,
+          name: "User Profile",
+          path: "/profile",
+        },
+        {
+          name: "Project Management",
+          icon: <ListIcon />,
+          path: "/form-elements",
+        },
+        {
+          name: "Task Management",
+          icon: <ListIcon />,
+          subItems: [{ name: "Task List", path: "/tasks" }],
+        },
         {
           name: "User Management",
           icon: <UserCircleIcon />,
@@ -125,8 +95,31 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
       ];
     } else if (role === "TeamLeader") {
       return [
-        ...baseItems,
-        taskManagement,
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          path: "/team-leader-dashboard",
+        },
+        {
+          icon: <CalenderIcon />,
+          name: "Calendar",
+          path: "/team-leader/calendar",
+        },
+        {
+          icon: <UserCircleIcon />,
+          name: "User Profile",
+          path: "/team-leader/profile",
+        },
+        {
+          name: "Project Management",
+          icon: <ListIcon />,
+          path: "/team-leader/projects",
+        },
+        {
+          name: "Task Management",
+          icon: <ListIcon />,
+          subItems: [{ name: "Task List", path: "/team-leader/tasks" }],
+        },
         {
           name: "My Team",
           icon: <UserCircleIcon />,
@@ -145,8 +138,31 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
       ];
     } else { // Member
       return [
-        ...baseItems,
-        taskManagement,
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          path: "/member-dashboard",
+        },
+        {
+          icon: <CalenderIcon />,
+          name: "Calendar",
+          path: "/member/calendar",
+        },
+        {
+          icon: <UserCircleIcon />,
+          name: "User Profile",
+          path: "/member/profile",
+        },
+        {
+          name: "Project Management",
+          icon: <ListIcon />,
+          path: "/member/projects",
+        },
+        {
+          name: "Task Management",
+          icon: <ListIcon />,
+          subItems: [{ name: "Task List", path: "/member/tasks" }],
+        },
         {
           name: "Time Tracking",
           icon: <ListIcon />,
@@ -161,6 +177,11 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
           name: "Assistant IA",
           icon: <ChatIcon />,
           path: "/member/assistant",
+        },
+        {
+          name: "Quiz Participation",
+          icon: <ListIcon />,
+          path: "/member/quiz-participation",
         },
       ];
     }
