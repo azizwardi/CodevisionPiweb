@@ -135,6 +135,11 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
           icon: <ChatIcon />,
           path: "/team-leader/assistant",
         },
+        {
+          name: "Quiz Participation",
+          icon: <ListIcon />,
+          path: "/team-leader/quiz-participation",
+        },
       ];
     } else { // Member
       return [

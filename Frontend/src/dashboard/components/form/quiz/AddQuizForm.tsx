@@ -12,6 +12,7 @@ interface ValidationErrors {
   title?: string;
   description?: string;
   category?: string;
+  formError?: string;
 }
 
 interface AddQuizFormProps {
@@ -91,13 +92,37 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
       [name]: value
     });
 
-    // Effacer l'erreur de validation pour ce champ
-    if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors({
-        ...validationErrors,
-        [name]: undefined
-      });
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+
+    if (name === "title") {
+      // Effacer l'erreur existante
+      delete errors.title;
+
+      // Validation du titre en temps réel
+      if (value.length > 0 && value.length < 3) {
+        errors.title = "Le titre doit contenir au moins 3 caractères";
+      } else if (value.length > 100) {
+        errors.title = "Le titre ne doit pas dépasser 100 caractères";
+      } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,?!()]+$/.test(value)) {
+        errors.title = "Le titre contient des caractères non autorisés";
+      }
+    } else if (name === "description") {
+      // Effacer l'erreur existante
+      delete errors.description;
+
+      // Validation de la description en temps réel
+      if (value.length > 0 && value.length < 10) {
+        errors.description = "La description doit contenir au moins 10 caractères";
+      } else if (value.length > 500) {
+        errors.description = "La description ne doit pas dépasser 500 caractères";
+      }
+    } else if (validationErrors[name as keyof ValidationErrors]) {
+      // Pour les autres champs, effacer simplement l'erreur
+      delete errors[name as keyof ValidationErrors];
     }
+
+    setValidationErrors(errors);
   };
 
   const handleSelectChange = (value: string) => {
@@ -130,6 +155,10 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
     } else if (formData.title.length > 100) {
       errors.title = "Le titre ne doit pas dépasser 100 caractères";
       isValid = false;
+    } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,?!()]+$/.test(formData.title)) {
+      // Permet les lettres, chiffres, espaces, accents, tirets, underscores et ponctuation de base
+      errors.title = "Le titre contient des caractères non autorisés";
+      isValid = false;
     }
 
     // Validation de la description
@@ -139,11 +168,20 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
     } else if (formData.description.length < 10) {
       errors.description = "La description doit contenir au moins 10 caractères";
       isValid = false;
+    } else if (formData.description.length > 500) {
+      errors.description = "La description ne doit pas dépasser 500 caractères";
+      isValid = false;
     }
 
     // Validation de la catégorie
     if (!formData.category) {
       errors.category = "Veuillez sélectionner une catégorie";
+      isValid = false;
+    }
+
+    // Vérification globale
+    if (!formData.creator) {
+      errors.formError = "Erreur d'identification de l'utilisateur. Veuillez vous reconnecter.";
       isValid = false;
     }
 
@@ -241,8 +279,14 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {validationErrors.formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <p className="text-sm">{validationErrors.formError}</p>
+        </div>
+      )}
+
       <div>
-        <Label htmlFor="title">Titre du Quiz</Label>
+        <Label htmlFor="title">Titre du Quiz <span className="text-red-500">*</span></Label>
         <Input
           type="text"
           id="title"
@@ -252,11 +296,12 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
           placeholder="Entrez le titre du quiz"
           error={!!validationErrors.title}
           hint={validationErrors.title}
+          required
         />
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
         <TextArea
           id="description"
           name="description"
@@ -266,11 +311,15 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
           error={!!validationErrors.description}
           hint={validationErrors.description}
           rows={4}
+          required
         />
+        {!validationErrors.description && (
+          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/500 caractères</p>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="category">Catégorie</Label>
+        <Label htmlFor="category">Catégorie <span className="text-red-500">*</span></Label>
         <Select
           id="category"
           options={categories}
@@ -278,6 +327,7 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
           onChange={handleSelectChange}
           value={formData.category}
           className={validationErrors.category ? "border-red-500" : ""}
+          required
         />
         {validationErrors.category && (
           <p className="mt-1 text-sm text-red-500">{validationErrors.category}</p>

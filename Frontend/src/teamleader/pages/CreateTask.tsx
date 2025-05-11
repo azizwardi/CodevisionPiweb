@@ -33,6 +33,9 @@ interface ValidationErrors {
   description?: string;
   projectId?: string;
   dueDate?: string;
+  status?: string;
+  taskType?: string;
+  formError?: string;
 }
 
 interface DecodedToken {
@@ -112,28 +115,105 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
       [field]: value,
     });
 
-    if (validationErrors[field as keyof ValidationErrors]) {
-      setValidationErrors({
-        ...validationErrors,
-        [field]: undefined,
-      });
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+
+    if (field === "title") {
+      // Effacer l'erreur existante
+      delete errors.title;
+
+      // Validation du titre en temps réel
+      if (value.length > 0 && value.length < 3) {
+        errors.title = "Title must be at least 3 characters";
+      } else if (value.length > 100) {
+        errors.title = "Title cannot exceed 100 characters";
+      } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()[\]{}#@!?]+$/.test(value)) {
+        errors.title = "Title contains invalid characters";
+      }
+    } else if (field === "description") {
+      // Effacer l'erreur existante
+      delete errors.description;
+
+      // Validation de la description en temps réel
+      if (value.length > 0 && value.length < 10) {
+        errors.description = "Description must be at least 10 characters";
+      } else if (value.length > 1000) {
+        errors.description = "Description cannot exceed 1000 characters";
+      }
+    } else if (field === "dueDate") {
+      // Effacer l'erreur existante
+      delete errors.dueDate;
+
+      // Validation de la date d'échéance en temps réel
+      if (value) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+        const dueDate = new Date(value);
+
+        if (dueDate < today) {
+          errors.dueDate = "Due date cannot be in the past";
+        }
+      }
+    } else if (validationErrors[field as keyof ValidationErrors]) {
+      // Pour les autres champs, effacer simplement l'erreur
+      delete errors[field as keyof ValidationErrors];
     }
+
+    setValidationErrors(errors);
   };
 
   const validateForm = () => {
     const errors: ValidationErrors = {};
 
+    // Validation du titre
     if (!formData.title.trim()) {
       errors.title = "Title is required";
+    } else if (formData.title.length < 3) {
+      errors.title = "Title must be at least 3 characters";
+    } else if (formData.title.length > 100) {
+      errors.title = "Title cannot exceed 100 characters";
+    } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()[\]{}#@!?]+$/.test(formData.title)) {
+      // Permet les lettres, chiffres, espaces, accents, tirets, underscores, points, virgules, parenthèses, crochets, accolades, dièse, arobase, point d'exclamation et point d'interrogation
+      errors.title = "Title contains invalid characters";
     }
+
+    // Validation de la description
     if (!formData.description.trim()) {
       errors.description = "Description is required";
+    } else if (formData.description.length < 10) {
+      errors.description = "Description must be at least 10 characters";
+    } else if (formData.description.length > 1000) {
+      errors.description = "Description cannot exceed 1000 characters";
     }
+
+    // Validation du projet
     if (!formData.projectId) {
       errors.projectId = "Please select a project";
+    } else if (!/^[0-9a-fA-F]{24}$/.test(formData.projectId)) {
+      errors.projectId = "Invalid project ID format";
     }
+
+    // Validation de la date d'échéance
     if (!formData.dueDate) {
       errors.dueDate = "Due date is required";
+    } else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+      const dueDate = new Date(formData.dueDate);
+
+      if (dueDate < today) {
+        errors.dueDate = "Due date cannot be in the past";
+      }
+    }
+
+    // Validation du statut
+    if (!formData.status) {
+      errors.status = "Status is required";
+    }
+
+    // Validation du type de tâche
+    if (!formData.taskType) {
+      errors.taskType = "Task type is required";
     }
 
     setValidationErrors(errors);
@@ -239,6 +319,19 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {validationErrors.formError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <p className="text-sm">{validationErrors.formError}</p>
+            </div>
+          )}
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+            <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Create a New Task</h4>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+              Fill in all required fields (marked with *) to create a new task. The task will be automatically assigned to a project member.
+            </p>
+          </div>
+
           <div>
             <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
             <Input
@@ -249,7 +342,12 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
               onChange={(e) => handleChange("title", e.target.value)}
               error={!!validationErrors.title}
               hint={validationErrors.title}
+              placeholder="Enter a clear and concise task title"
+              required
             />
+            {!validationErrors.title && (
+              <p className="mt-1 text-xs text-gray-500">{formData.title.length}/100 characters</p>
+            )}
           </div>
 
           <div>
@@ -262,7 +360,12 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
               rows={4}
               error={!!validationErrors.description}
               hint={validationErrors.description}
+              placeholder="Describe the task in detail, including requirements and expected outcomes"
+              required
             />
+            {!validationErrors.description && (
+              <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 characters</p>
+            )}
           </div>
 
           <div>
@@ -274,18 +377,27 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
               placeholder="Select a project"
               onChange={(value) => handleChange("projectId", value)}
               value={formData.projectId}
+              error={!!validationErrors.projectId}
+              required
             />
             {validationErrors.projectId && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.projectId}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Note: La tâche sera automatiquement assignée à un membre du projet.
+              Note: The task will be automatically assigned to a project member.
             </p>
+            {projects.length === 0 && (
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-700">
+                  <span className="font-semibold">Warning:</span> You don't have any projects yet. Please create a project first.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
               <Select
                 id="status"
                 name="status"
@@ -293,11 +405,19 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
                 placeholder="Select status"
                 onChange={(value) => handleChange("status", value)}
                 value={formData.status}
+                error={!!validationErrors.status}
+                required
               />
+              {validationErrors.status && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.status}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                The initial status of the task.
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="taskType">Task Type</Label>
+              <Label htmlFor="taskType">Task Type <span className="text-red-500">*</span></Label>
               <Select
                 id="taskType"
                 name="taskType"
@@ -305,7 +425,15 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
                 placeholder="Select task type"
                 onChange={(value) => handleChange("taskType", value)}
                 value={formData.taskType}
+                error={!!validationErrors.taskType}
+                required
               />
+              {validationErrors.taskType && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.taskType}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                The type of work required for this task.
+              </p>
             </div>
           </div>
 
@@ -320,22 +448,39 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
                 onChange={(e) => handleChange("dueDate", e.target.value)}
                 error={!!validationErrors.dueDate}
                 hint={validationErrors.dueDate}
+                min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
+                required
               />
+              <p className="mt-1 text-xs text-gray-500">
+                The deadline for completing this task. Must be a future date.
+              </p>
             </div>
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} type="button">
               Cancel
             </Button>
-            <button
+            <Button
+              variant="primary"
               type="submit"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-3.5 text-sm text-white shadow-theme-xs transition hover:bg-brand-600 disabled:bg-brand-300 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={loading}
+              disabled={loading || projects.length === 0}
+              className="inline-flex items-center justify-center gap-2"
             >
               {loading ? "Creating..." : "Create Task"}
-            </button>
+            </Button>
           </div>
+
+          {projects.length === 0 && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+              <p className="text-sm text-yellow-700 font-medium">
+                You need to create a project before you can create tasks.
+              </p>
+              <p className="text-xs text-yellow-600 mt-1">
+                Go to the Projects section to create a new project first.
+              </p>
+            </div>
+          )}
         </form>
       </div>
     </div>

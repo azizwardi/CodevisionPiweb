@@ -32,7 +32,7 @@ import QuizParticipation from "./dashboard/pages/Forms/QuizParticipation";
 import Blank from "./dashboard/pages/Blank";
 import AppLayout from "./dashboard/layout/AppLayout";
 import { ScrollToTop } from "./dashboard/components/common/ScrollToTop";
-import Home from "./dashboard/pages/Dashboard/Home";
+import AdminDashboard from "./dashboard/pages/Dashboard/AdminDashboard";
 import RequestReset from './dashboard/pages/AuthPages/RequestReset';
 import ResetPassword from './dashboard/pages/AuthPages/ResetPassword';
 // import VerifyEmail from './dashboard/pages/AuthPages/VerifyEmail';
@@ -89,15 +89,21 @@ export default function App() {
             <Route path="/profile" element={<UserProfiles />} />
           </Route>
 
+          {/* Routes accessibles aux TeamLeader et Member mais pas aux admin */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/quiz-participation" element={<QuizParticipation />} />
+            </Route>
+          </Route>
+
           {/* Protected Routes */}
           <Route element={<ProtectedRoute requiredRole="admin" />}>
             <Route element={<AppLayout />}>
-              <Route index path="/dashboard" element={ <Home />} />
+              <Route index path="/dashboard" element={ <AdminDashboard />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
               <Route path="/form-elements" element={<FormElements />} />
               <Route path="/quiz-management" element={<QuizManagement />} />
-              <Route path="/quiz-participation" element={<QuizParticipation />} />
           <Route path="/basic-tables" element={<BasicTables />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/avatars" element={<Avatars />} />
@@ -137,6 +143,7 @@ export default function App() {
               <Route path="/team-leader/calendar" element={<TeamLeaderCalendar />} />
               <Route path="/team-leader/reports" element={<div />} />
               <Route path="/team-leader/assistant" element={<ChatbotPage />} />
+              <Route path="/team-leader/quiz-participation" element={<QuizParticipation />} />
             </Route>
           </Route>
 

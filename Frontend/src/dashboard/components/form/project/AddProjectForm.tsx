@@ -14,6 +14,7 @@ interface ValidationErrors {
   category?: string;
   startDate?: string;
   deadline?: string;
+  formError?: string;
 }
 
 interface AddProjectFormProps {
@@ -71,25 +72,55 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Effacer l'erreur de validation pour ce champ
-    if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+
+    if (name === "name") {
+      // Effacer l'erreur existante
+      delete errors.name;
+
+      // Validation du nom en temps réel
+      if (value.length > 0 && value.length < 3) {
+        errors.name = "Le nom doit contenir au moins 3 caractères";
+      } else if (value.length > 50) {
+        errors.name = "Le nom ne doit pas dépasser 50 caractères";
+      } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()]+$/.test(value)) {
+        errors.name = "Le nom contient des caractères non autorisés";
+      }
+    } else if (name === "startDate" || name === "deadline") {
+      // Effacer les erreurs existantes
+      delete errors.startDate;
+      delete errors.deadline;
+
+      // Validation des dates en temps réel
+      const startDate = name === "startDate" ? new Date(value) : new Date(formData.startDate);
+      const deadline = name === "deadline" ? new Date(value) : new Date(formData.deadline);
+
+      if (deadline < startDate) {
+        errors.deadline = "La date limite doit être postérieure à la date de début";
+      }
+    } else if (validationErrors[name as keyof ValidationErrors]) {
+      // Pour les autres champs, effacer simplement l'erreur
+      delete errors[name as keyof ValidationErrors];
     }
+
+    setValidationErrors(errors);
   };
 
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
 
-    // Effacer l'erreur de validation pour la description
-    if (validationErrors.description) {
-      setValidationErrors(prev => ({
-        ...prev,
-        description: undefined
-      }));
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+    delete errors.description;
+
+    if (value.length > 0 && value.length < 10) {
+      errors.description = "La description doit contenir au moins 10 caractères";
+    } else if (value.length > 1000) {
+      errors.description = "La description ne doit pas dépasser 1000 caractères";
     }
+
+    setValidationErrors(errors);
   };
 
   const handleCategoryChange = (value: string) => {
@@ -109,8 +140,6 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     const errors: ValidationErrors = {};
     let isValid = true;
 
-    console.log("Validation des champs:", formData);
-
     // Validation du nom
     if (!formData.name.trim()) {
       errors.name = "Le nom du projet est requis";
@@ -121,6 +150,10 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     } else if (formData.name.length > 50) {
       errors.name = "Le nom ne doit pas dépasser 50 caractères";
       isValid = false;
+    } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()]+$/.test(formData.name)) {
+      // Permet les lettres, chiffres, espaces, accents, tirets, underscores, points, virgules et parenthèses
+      errors.name = "Le nom contient des caractères non autorisés";
+      isValid = false;
     }
 
     // Validation de la description
@@ -130,34 +163,47 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     } else if (formData.description.length < 10) {
       errors.description = "La description doit contenir au moins 10 caractères";
       isValid = false;
+    } else if (formData.description.length > 1000) {
+      errors.description = "La description ne doit pas dépasser 1000 caractères";
+      isValid = false;
     }
 
     // Validation de la catégorie
     if (!formData.category) {
       errors.category = "Veuillez sélectionner une catégorie";
       isValid = false;
-      console.log("Erreur de catégorie: catégorie non sélectionnée");
     }
 
     // Validation de la date de début
     if (!formData.startDate) {
       errors.startDate = "La date de début est requise";
       isValid = false;
-      console.log("Erreur de date de début: date non spécifiée");
+    } else {
+      // Vérifier que la date n'est pas dans le passé (avant aujourd'hui)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+      const startDate = new Date(formData.startDate);
+
+      if (startDate < today) {
+        errors.startDate = "La date de début ne peut pas être dans le passé";
+        isValid = false;
+      }
     }
 
     // Validation de la date limite
     if (!formData.deadline) {
       errors.deadline = "La date limite est requise";
       isValid = false;
-      console.log("Erreur de date limite: date non spécifiée");
     } else if (formData.startDate && new Date(formData.deadline) < new Date(formData.startDate)) {
       errors.deadline = "La date limite doit être postérieure à la date de début";
       isValid = false;
-      console.log("Erreur de date limite: date antérieure à la date de début");
     }
 
-    console.log("Résultat de la validation:", { isValid, errors });
+    // Vérification de l'ID utilisateur
+    if (!formData.userId) {
+      errors.formError = "Erreur d'identification de l'utilisateur. Veuillez vous reconnecter.";
+      isValid = false;
+    }
 
     setValidationErrors(errors);
     return isValid;
@@ -260,6 +306,12 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {validationErrors.formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <p className="text-sm">{validationErrors.formError}</p>
+        </div>
+      )}
+
       {error && (
         <div className="p-3 mb-4 text-sm text-white bg-error-500 rounded-lg">
           {error}
@@ -271,8 +323,15 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         </div>
       )}
 
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+        <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Création d'un nouveau projet</h4>
+        <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+          Remplissez tous les champs obligatoires (marqués d'un *) pour créer un nouveau projet.
+        </p>
+      </div>
+
       <div>
-        <Label htmlFor="name">Nom du projet</Label>
+        <Label htmlFor="name">Nom du projet <span className="text-red-500">*</span></Label>
         <Input
           type="text"
           id="name"
@@ -282,23 +341,31 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           placeholder="Entrez le nom du projet"
           error={!!validationErrors.name}
           hint={validationErrors.name}
+          required
         />
+        {!validationErrors.name && (
+          <p className="mt-1 text-xs text-gray-500">{formData.name.length}/50 caractères</p>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
         <TextArea
           value={formData.description}
           onChange={handleDescriptionChange}
-          placeholder="Décrivez le projet"
+          placeholder="Décrivez le projet, ses objectifs, et les résultats attendus"
           rows={4}
           error={!!validationErrors.description}
           hint={validationErrors.description}
+          required
         />
+        {!validationErrors.description && (
+          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 caractères</p>
+        )}
       </div>
 
       <div>
-        <Label>Catégorie</Label>
+        <Label>Catégorie <span className="text-red-500">*</span></Label>
         <div className="relative">
           <Select
             options={categoryOptions}
@@ -306,6 +373,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             onChange={handleCategoryChange}
             value={formData.category}
             className={`dark:bg-dark-900 ${validationErrors.category ? 'border-error-500' : ''}`}
+            required
           />
           {validationErrors.category && (
             <p className="mt-1.5 text-xs text-error-500">
@@ -317,7 +385,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="startDate">Date de début</Label>
+          <Label htmlFor="startDate">Date de début <span className="text-red-500">*</span></Label>
           <Input
             type="date"
             id="startDate"
@@ -326,10 +394,13 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             onChange={handleInputChange}
             error={!!validationErrors.startDate}
             hint={validationErrors.startDate}
+            required
+            min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
           />
+          <p className="mt-1 text-xs text-gray-500">La date de début doit être aujourd'hui ou une date future</p>
         </div>
         <div>
-          <Label htmlFor="deadline">Date limite</Label>
+          <Label htmlFor="deadline">Date limite <span className="text-red-500">*</span></Label>
           <Input
             type="date"
             id="deadline"
@@ -338,7 +409,10 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             onChange={handleInputChange}
             error={!!validationErrors.deadline}
             hint={validationErrors.deadline}
+            required
+            min={formData.startDate} // Empêche de sélectionner des dates antérieures à la date de début
           />
+          <p className="mt-1 text-xs text-gray-500">La date limite doit être postérieure à la date de début</p>
         </div>
       </div>
 

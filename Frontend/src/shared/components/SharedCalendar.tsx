@@ -17,6 +17,14 @@ interface CalendarEvent extends EventInput {
   };
 }
 
+interface ValidationErrors {
+  title?: string;
+  startDate?: string;
+  endDate?: string;
+  calendar?: string;
+  formError?: string;
+}
+
 interface SharedCalendarProps {
   title?: string;
   description?: string;
@@ -34,6 +42,8 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventLevel, setEventLevel] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [loading, setLoading] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -72,7 +82,11 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
       setEvents(formattedEvents);
     } catch (error) {
       console.error("Erreur lors de la récupération des événements:", error);
-      toastManager.addToast("Erreur lors du chargement des événements", "error", 5000);
+      toastManager.addToast({
+        title: "Erreur",
+        description: "Erreur lors du chargement des événements",
+        type: "error"
+      });
     }
   };
 
@@ -111,22 +125,162 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       await axios.delete(`http://localhost:5000/events/${selectedEvent.id}`, { headers });
-      toastManager.addToast("Événement supprimé avec succès", "success", 5000);
+      toastManager.addToast({
+        title: "Succès",
+        description: "Événement supprimé avec succès",
+        type: "success"
+      });
       fetchEvents();
       closeModal();
       resetModalFields();
     } catch (error) {
       console.error("Erreur lors de la suppression de l'événement:", error);
-      toastManager.addToast("Erreur lors de la suppression de l'événement", "error", 5000);
+      toastManager.addToast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression de l'événement",
+        type: "error"
+      });
     }
+  };
+
+  // Fonction de validation du formulaire
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    let isValid = true;
+
+    // Validation du titre
+    if (!eventTitle.trim()) {
+      errors.title = "Le titre de l'événement est requis";
+      isValid = false;
+    } else if (eventTitle.length < 3) {
+      errors.title = "Le titre doit contenir au moins 3 caractères";
+      isValid = false;
+    } else if (eventTitle.length > 100) {
+      errors.title = "Le titre ne doit pas dépasser 100 caractères";
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()[\]{}#@!?]+$/.test(eventTitle)) {
+      // Permet les lettres, chiffres, espaces, accents, tirets, underscores, points, virgules, parenthèses, crochets, accolades, dièse, arobase, point d'exclamation et point d'interrogation
+      errors.title = "Le titre contient des caractères non autorisés";
+      isValid = false;
+    }
+
+    // Validation de la date de début
+    if (!eventStartDate) {
+      errors.startDate = "La date de début est requise";
+      isValid = false;
+    } else {
+      // Vérifier que la date n'est pas dans le passé (avant aujourd'hui)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+      const startDate = new Date(eventStartDate);
+
+      if (startDate < today) {
+        errors.startDate = "La date de début ne peut pas être dans le passé";
+        isValid = false;
+      }
+    }
+
+    // Validation de la date de fin
+    if (eventEndDate) {
+      const startDate = new Date(eventStartDate);
+      const endDate = new Date(eventEndDate);
+
+      if (endDate < startDate) {
+        errors.endDate = "La date de fin doit être postérieure à la date de début";
+        isValid = false;
+      }
+    }
+
+    // Validation de la couleur de l'événement
+    if (!eventLevel) {
+      errors.calendar = "Veuillez sélectionner une couleur pour l'événement";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  // Fonction pour gérer les changements de titre avec validation en temps réel
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEventTitle(value);
+
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+    delete errors.title;
+
+    if (value.length > 0 && value.length < 3) {
+      errors.title = "Le titre doit contenir au moins 3 caractères";
+    } else if (value.length > 100) {
+      errors.title = "Le titre ne doit pas dépasser 100 caractères";
+    } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()[\]{}#@!?]+$/.test(value)) {
+      errors.title = "Le titre contient des caractères non autorisés";
+    }
+
+    setValidationErrors(errors);
+  };
+
+  // Fonction pour gérer les changements de date de début avec validation en temps réel
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEventStartDate(value);
+
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+    delete errors.startDate;
+    delete errors.endDate; // Réinitialiser aussi l'erreur de date de fin car elle dépend de la date de début
+
+    if (value) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+      const startDate = new Date(value);
+
+      if (startDate < today) {
+        errors.startDate = "La date de début ne peut pas être dans le passé";
+      }
+
+      // Vérifier aussi la date de fin si elle existe
+      if (eventEndDate) {
+        const endDate = new Date(eventEndDate);
+        if (endDate < startDate) {
+          errors.endDate = "La date de fin doit être postérieure à la date de début";
+        }
+      }
+    }
+
+    setValidationErrors(errors);
+  };
+
+  // Fonction pour gérer les changements de date de fin avec validation en temps réel
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEventEndDate(value);
+
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+    delete errors.endDate;
+
+    if (value && eventStartDate) {
+      const startDate = new Date(eventStartDate);
+      const endDate = new Date(value);
+
+      if (endDate < startDate) {
+        errors.endDate = "La date de fin doit être postérieure à la date de début";
+      }
+    }
+
+    setValidationErrors(errors);
   };
 
   const handleAddOrUpdateEvent = async () => {
     try {
-      if (!eventTitle || !eventStartDate) {
-        toastManager.addToast("Le titre et la date de début sont requis", "error", 5000);
+      // Valider le formulaire
+      if (!validateForm()) {
         return;
       }
+
+      setLoading(true);
 
       // Récupérer le token d'authentification
       const token = localStorage.getItem("authToken");
@@ -141,10 +295,14 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
           start: eventStartDate,
           end: eventEndDate || eventStartDate,
           allDay: true,
-          calendar: eventLevel,
+          calendar: eventLevel || "Primary", // Utiliser Primary comme valeur par défaut
         }, { headers });
 
-        toastManager.addToast("Événement mis à jour avec succès", "success", 5000);
+        toastManager.addToast({
+          title: "Succès",
+          description: "Événement mis à jour avec succès",
+          type: "success"
+        });
       } else {
         // Ajouter un nouvel événement
         console.log("Création d'un nouvel événement");
@@ -154,10 +312,14 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
           start: eventStartDate,
           end: eventEndDate || eventStartDate,
           allDay: true,
-          calendar: eventLevel,
+          calendar: eventLevel || "Primary", // Utiliser Primary comme valeur par défaut
         }, { headers });
 
-        toastManager.addToast("Événement créé avec succès", "success", 5000);
+        toastManager.addToast({
+          title: "Succès",
+          description: "Événement créé avec succès",
+          type: "success"
+        });
       }
 
       // Recharger les événements
@@ -166,7 +328,13 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
       resetModalFields();
     } catch (error) {
       console.error("Erreur lors de l'ajout/modification de l'événement:", error);
-      toastManager.addToast("Erreur lors de l'enregistrement de l'événement", "error", 5000);
+      toastManager.addToast({
+        title: "Erreur",
+        description: "Erreur lors de l'enregistrement de l'événement",
+        type: "error"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -176,6 +344,7 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
     setEventEndDate("");
     setEventLevel("");
     setSelectedEvent(null);
+    setValidationErrors({});
   };
 
   return (
@@ -224,6 +393,12 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
                 Planifiez votre prochain événement important
               </p>
             </div>
+
+            {validationErrors.formError && (
+              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <p className="text-sm">{validationErrors.formError}</p>
+              </div>
+            )}
             <div className="mt-8">
               <div>
                 <div>
@@ -234,9 +409,17 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
                     id="event-title"
                     type="text"
                     value={eventTitle}
-                    onChange={(e) => setEventTitle(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    onChange={handleTitleChange}
+                    placeholder="Entrez le titre de l'événement"
+                    className={`dark:bg-dark-900 h-11 w-full rounded-lg border ${validationErrors.title ? 'border-red-500' : 'border-gray-300'} bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800`}
+                    required
                   />
+                  {validationErrors.title && (
+                    <p className="mt-1 text-sm text-red-500">{validationErrors.title}</p>
+                  )}
+                  {!validationErrors.title && (
+                    <p className="mt-1 text-xs text-gray-500">{eventTitle.length}/100 caractères</p>
+                  )}
                 </div>
               </div>
               <div className="mt-6">
@@ -284,9 +467,15 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
                     id="event-start-date"
                     type="date"
                     value={eventStartDate}
-                    onChange={(e) => setEventStartDate(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    onChange={handleStartDateChange}
+                    min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
+                    className={`dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border ${validationErrors.startDate ? 'border-red-500' : 'border-gray-300'} bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800`}
+                    required
                   />
+                  {validationErrors.startDate && (
+                    <p className="mt-1 text-sm text-red-500">{validationErrors.startDate}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">La date de début doit être aujourd'hui ou une date future</p>
                 </div>
               </div>
 
@@ -299,9 +488,14 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
                     id="event-end-date"
                     type="date"
                     value={eventEndDate}
-                    onChange={(e) => setEventEndDate(e.target.value)}
-                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    onChange={handleEndDateChange}
+                    min={eventStartDate || new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates antérieures à la date de début
+                    className={`dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border ${validationErrors.endDate ? 'border-red-500' : 'border-gray-300'} bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800`}
                   />
+                  {validationErrors.endDate && (
+                    <p className="mt-1 text-sm text-red-500">{validationErrors.endDate}</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">La date de fin doit être postérieure à la date de début</p>
                 </div>
               </div>
             </div>
@@ -325,9 +519,20 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
               <button
                 onClick={handleAddOrUpdateEvent}
                 type="button"
-                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
+                disabled={loading}
+                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:bg-brand-300 disabled:cursor-not-allowed sm:w-auto"
               >
-                {selectedEvent ? "Mettre à jour" : "Ajouter"}
+                {loading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {selectedEvent ? "Mise à jour..." : "Ajout..."}
+                  </span>
+                ) : (
+                  selectedEvent ? "Mettre à jour" : "Ajouter"
+                )}
               </button>
             </div>
           </div>

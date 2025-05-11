@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
@@ -8,22 +9,35 @@ import QuizResults from "../../components/quiz/QuizResults";
 import Button from "../../components/ui/button/Button";
 
 export default function QuizParticipation() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'list' | 'take' | 'results'>('list');
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [score, setScore] = useState<number | null>(null);
   const [maxScore, setMaxScore] = useState<number | null>(null);
 
+  // Vérifier si l'utilisateur est un administrateur
+  useEffect(() => {
+    const userRole = localStorage.getItem("userRole");
+    if (userRole === "admin") {
+      // Rediriger vers la page "Unauthorized" si l'utilisateur est un administrateur
+      navigate("/unauthorized");
+    }
+  }, [navigate]);
+
   // Fonction pour gérer le clic sur "Répondre au quiz" ou "Voir les détails"
   const handleTakeQuiz = (quizId: string, attemptId?: string) => {
+    console.log(`handleTakeQuiz called with quizId: ${quizId}, attemptId: ${attemptId || 'none'}`);
     setSelectedQuizId(quizId);
 
     // Si un ID de tentative est fourni, cela signifie que l'utilisateur veut voir les résultats d'un quiz déjà complété
     if (attemptId) {
+      console.log('Viewing quiz results');
       setAttemptId(attemptId);
       setActiveTab('results');
     } else {
-      // Sinon, l'utilisateur veut répondre à un nouveau quiz
+      // Accéder directement au quiz
+      console.log('Accessing quiz directly');
       setActiveTab('take');
     }
   };
@@ -73,6 +87,8 @@ export default function QuizParticipation() {
           <AvailableQuizzes onTakeQuiz={handleTakeQuiz} />
         </ComponentCard>
       )}
+
+
 
       {activeTab === 'take' && selectedQuizId && (
         <ComponentCard title="Répondre au quiz">

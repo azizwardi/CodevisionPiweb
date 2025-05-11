@@ -14,6 +14,9 @@ interface ValidationErrors {
   questionType?: string;
   options?: string;
   correctAnswer?: string;
+  points?: string;
+  newOption?: string;
+  formError?: string;
 }
 
 interface AddQuestionFormProps {
@@ -55,13 +58,35 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
       [name]: value
     });
 
-    // Effacer l'erreur de validation pour ce champ
-    if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors({
-        ...validationErrors,
-        [name]: undefined
-      });
+    // Validation en temps réel
+    const errors = { ...validationErrors };
+
+    if (name === "questionText") {
+      // Effacer l'erreur existante
+      delete errors.questionText;
+
+      // Validation du texte de la question en temps réel
+      if (value.length > 0 && value.length < 5) {
+        errors.questionText = "Le texte de la question doit contenir au moins 5 caractères";
+      } else if (value.length > 500) {
+        errors.questionText = "Le texte de la question ne doit pas dépasser 500 caractères";
+      }
+    } else if (name === "correctAnswer") {
+      // Effacer l'erreur existante
+      delete errors.correctAnswer;
+
+      // Validation de la réponse correcte en temps réel
+      if (formData.questionType === "short-answer") {
+        if (value.length > 100) {
+          errors.correctAnswer = "La réponse correcte ne doit pas dépasser 100 caractères";
+        }
+      }
+    } else if (validationErrors[name as keyof ValidationErrors]) {
+      // Pour les autres champs, effacer simplement l'erreur
+      delete errors[name as keyof ValidationErrors];
     }
+
+    setValidationErrors(errors);
   };
 
   const handleSelectChange = (value: string) => {
@@ -105,9 +130,38 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
   };
 
   const handleAddOption = () => {
+    // Validation de l'option
     if (!newOptionText.trim()) {
+      setValidationErrors({
+        ...validationErrors,
+        newOption: "Le texte de l'option ne peut pas être vide"
+      });
       return;
     }
+
+    // Vérifier si l'option existe déjà
+    if (formData.options.some(opt => opt.text.trim().toLowerCase() === newOptionText.trim().toLowerCase())) {
+      setValidationErrors({
+        ...validationErrors,
+        newOption: "Cette option existe déjà"
+      });
+      return;
+    }
+
+    // Vérifier la longueur de l'option
+    if (newOptionText.length > 200) {
+      setValidationErrors({
+        ...validationErrors,
+        newOption: "L'option ne doit pas dépasser 200 caractères"
+      });
+      return;
+    }
+
+    // Effacer l'erreur de validation pour les options
+    const errors = { ...validationErrors };
+    delete errors.newOption;
+    delete errors.options;
+    setValidationErrors(errors);
 
     const newOption: Option = {
       text: newOptionText,
@@ -167,6 +221,12 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
     if (!formData.questionText.trim()) {
       errors.questionText = "Le texte de la question est requis";
       isValid = false;
+    } else if (formData.questionText.length < 5) {
+      errors.questionText = "Le texte de la question doit contenir au moins 5 caractères";
+      isValid = false;
+    } else if (formData.questionText.length > 500) {
+      errors.questionText = "Le texte de la question ne doit pas dépasser 500 caractères";
+      isValid = false;
     }
 
     // Validation du type de question
@@ -176,20 +236,40 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
     }
 
     // Validation des options pour les questions à choix multiple
-    if (formData.questionType === "multiple-choice" && formData.options.length < 2) {
-      errors.options = "Au moins deux options sont requises";
-      isValid = false;
-    }
+    if (formData.questionType === "multiple-choice") {
+      if (formData.options.length < 2) {
+        errors.options = "Au moins deux options sont requises";
+        isValid = false;
+      } else if (!formData.options.some(opt => opt.isCorrect)) {
+        errors.options = "Veuillez sélectionner une option correcte";
+        isValid = false;
+      }
 
-    // Vérifier qu'une option correcte est sélectionnée pour les questions à choix multiple
-    if (formData.questionType === "multiple-choice" && !formData.options.some(opt => opt.isCorrect)) {
-      errors.options = "Veuillez sélectionner une option correcte";
-      isValid = false;
+      // Vérifier que chaque option a un texte valide
+      const invalidOptions = formData.options.filter(opt => opt.text.trim().length < 1);
+      if (invalidOptions.length > 0) {
+        errors.options = "Toutes les options doivent contenir du texte";
+        isValid = false;
+      }
     }
 
     // Validation de la réponse correcte pour les questions à réponse courte
-    if (formData.questionType === "short-answer" && !formData.correctAnswer.trim()) {
-      errors.correctAnswer = "La réponse correcte est requise";
+    if (formData.questionType === "short-answer") {
+      if (!formData.correctAnswer.trim()) {
+        errors.correctAnswer = "La réponse correcte est requise";
+        isValid = false;
+      } else if (formData.correctAnswer.length > 100) {
+        errors.correctAnswer = "La réponse correcte ne doit pas dépasser 100 caractères";
+        isValid = false;
+      }
+    }
+
+    // Validation des points
+    if (formData.points < 1) {
+      errors.points = "La question doit valoir au moins 1 point";
+      isValid = false;
+    } else if (formData.points > 10) {
+      errors.points = "La question ne peut pas valoir plus de 10 points";
       isValid = false;
     }
 
@@ -261,6 +341,12 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {validationErrors.formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <p className="text-sm">{validationErrors.formError}</p>
+        </div>
+      )}
+
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
         <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Ajout de question</h4>
         <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
@@ -268,7 +354,7 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
         </p>
       </div>
       <div>
-        <Label htmlFor="questionText">Texte de la question</Label>
+        <Label htmlFor="questionText">Texte de la question <span className="text-red-500">*</span></Label>
         <TextArea
           id="questionText"
           name="questionText"
@@ -278,11 +364,15 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
           error={!!validationErrors.questionText}
           hint={validationErrors.questionText}
           rows={3}
+          required
         />
+        {!validationErrors.questionText && (
+          <p className="mt-1 text-xs text-gray-500">{formData.questionText.length}/500 caractères</p>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="questionType">Type de question</Label>
+        <Label htmlFor="questionType">Type de question <span className="text-red-500">*</span></Label>
         <Select
           id="questionType"
           options={questionTypes}
@@ -290,6 +380,7 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
           onChange={handleSelectChange}
           value={formData.questionType}
           className={validationErrors.questionType ? "border-red-500" : ""}
+          required
         />
         {validationErrors.questionType && (
           <p className="mt-1 text-sm text-red-500">{validationErrors.questionType}</p>
@@ -334,9 +425,19 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
             <Input
               type="text"
               value={newOptionText}
-              onChange={(e) => setNewOptionText(e.target.value)}
+              onChange={(e) => {
+                setNewOptionText(e.target.value);
+                // Effacer l'erreur de validation pour l'option
+                if (validationErrors.newOption) {
+                  setValidationErrors({
+                    ...validationErrors,
+                    newOption: undefined
+                  });
+                }
+              }}
               placeholder="Nouvelle option"
               className="flex-1"
+              error={!!validationErrors.newOption}
             />
             <Button
               variant="outline"
@@ -347,12 +448,23 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
               <FiPlus className="h-4 w-4 mr-1" /> Ajouter
             </Button>
           </div>
+          {validationErrors.newOption && (
+            <p className="mt-1 text-sm text-red-500">{validationErrors.newOption}</p>
+          )}
+
+          {formData.options.length === 0 && (
+            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                <span className="font-semibold">Attention :</span> Vous devez ajouter au moins deux options et sélectionner une réponse correcte.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {formData.questionType === "short-answer" && (
         <div>
-          <Label htmlFor="correctAnswer">Réponse correcte</Label>
+          <Label htmlFor="correctAnswer">Réponse correcte <span className="text-red-500">*</span></Label>
           <Input
             type="text"
             id="correctAnswer"
@@ -362,12 +474,16 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
             placeholder="Entrez la réponse correcte"
             error={!!validationErrors.correctAnswer}
             hint={validationErrors.correctAnswer}
+            required
           />
+          {!validationErrors.correctAnswer && (
+            <p className="mt-1 text-xs text-gray-500">{formData.correctAnswer.length}/100 caractères</p>
+          )}
         </div>
       )}
 
       <div>
-        <Label htmlFor="points">Points</Label>
+        <Label htmlFor="points">Points <span className="text-red-500">*</span></Label>
         <Input
           type="number"
           id="points"
@@ -376,7 +492,11 @@ export default function AddQuestionForm({ quizId, onSuccess, onCancel }: AddQues
           onChange={handlePointsChange}
           min="1"
           max="10"
+          error={!!validationErrors.points}
+          hint={validationErrors.points}
+          required
         />
+        <p className="mt-1 text-xs text-gray-500">Valeur entre 1 et 10 points</p>
       </div>
 
       <div className="flex flex-wrap justify-end gap-3 mt-6">

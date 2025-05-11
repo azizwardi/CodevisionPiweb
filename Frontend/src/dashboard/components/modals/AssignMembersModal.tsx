@@ -69,34 +69,129 @@ export default function AssignMembersModal({
     fetchMembers();
   }, [projectId]);
 
+  // Vérifier si l'email est valide
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   // Rechercher des utilisateurs par terme de recherche (email, nom d'utilisateur, prénom, nom)
   const searchUsers = async () => {
     try {
+      // Validation du terme de recherche
+      if (!searchTerm || searchTerm.trim().length < 2) {
+        setError("Veuillez entrer au moins 2 caractères pour la recherche");
+        toastManager.addToast({
+          title: "Validation",
+          description: "Veuillez entrer au moins 2 caractères pour la recherche",
+          type: "warning"
+        });
+        return;
+      }
+
       setSearchLoading(true);
       setError("");
       console.log("Recherche d'utilisateurs avec le terme:", searchTerm);
+
+      // Si le terme ressemble à un email, essayons d'abord de vérifier directement cet email
+      if (isValidEmail(searchTerm)) {
+        console.log("Le terme de recherche semble être un email, vérification directe...");
+        try {
+          // Vérifier d'abord si l'email existe et récupérer son rôle
+          const checkResponse = await axios.get(`http://localhost:5000/api/user/check-email`, {
+            params: { email: searchTerm }
+          });
+
+          console.log("Résultat de la vérification d'email:", checkResponse.data);
+
+          if (checkResponse.data.exists) {
+            // Si l'utilisateur existe, vérifier son rôle
+            if (checkResponse.data.role === "Member") {
+              // Si c'est un membre, récupérer ses détails complets
+              const userResponse = await axios.get(`http://localhost:5000/api/user/showByid/${checkResponse.data.userId}`);
+              console.log("Détails de l'utilisateur trouvé:", userResponse.data);
+
+              // Créer un tableau avec cet utilisateur
+              const foundUser = {
+                _id: userResponse.data._id,
+                username: userResponse.data.username,
+                email: userResponse.data.email,
+                firstName: userResponse.data.firstName,
+                lastName: userResponse.data.lastName
+              };
+
+              setUsers([foundUser]);
+
+              toastManager.addToast({
+                title: "Succès",
+                description: "Utilisateur trouvé avec cet email",
+                type: "success"
+              });
+
+              setSearchLoading(false);
+              return;
+            } else {
+              // Si l'utilisateur existe mais n'est pas un membre
+              setError(`Ce mail n'est pas d'un member (rôle: ${checkResponse.data.role})`);
+              toastManager.addToast({
+                title: "Information",
+                description: `Ce mail n'est pas d'un member (rôle: ${checkResponse.data.role})`,
+                type: "warning"
+              });
+              setSearchLoading(false);
+              return;
+            }
+          }
+          // Si l'email n'existe pas, continuer avec la recherche normale
+          console.log("Email non trouvé, poursuite avec la recherche standard...");
+        } catch (emailCheckErr: any) {
+          console.error("Erreur lors de la vérification de l'email:", emailCheckErr);
+
+          // Afficher un message d'erreur spécifique pour aider au débogage
+          const errorMessage = emailCheckErr.response?.data?.message || emailCheckErr.message || "Erreur lors de la vérification de l'email";
+          console.warn(`Erreur de vérification d'email: ${errorMessage}. Tentative de recherche standard...`);
+
+          // Afficher un toast d'information sans bloquer la recherche
+          toastManager.addToast({
+            title: "Information",
+            description: "Vérification directe de l'email impossible, tentative de recherche standard...",
+            type: "info"
+          });
+
+          // Continuer avec la recherche normale en cas d'erreur
+        }
+      }
+
+      // Appel à l'API pour rechercher des utilisateurs
       const response = await axios.get(`http://localhost:5000/projects/users/all`, {
         params: { searchTerm }
       });
+
       console.log("Utilisateurs trouvés:", response.data);
       setUsers(response.data);
 
       if (response.data.length === 0) {
-        toastManager.addToast(
-          "Aucun utilisateur trouvé avec ce terme de recherche",
-          "info",
-          5000
-        );
+        toastManager.addToast({
+          title: "Information",
+          description: "Aucun utilisateur trouvé avec ce terme de recherche",
+          type: "info"
+        });
+      } else {
+        toastManager.addToast({
+          title: "Succès",
+          description: `${response.data.length} utilisateur(s) trouvé(s)`,
+          type: "success"
+        });
       }
     } catch (err: any) {
       console.error("Erreur lors de la recherche d'utilisateurs:", err);
       const errorMessage = err.response?.data?.message || err.message || "Erreur lors de la recherche d'utilisateurs";
-      setError(`Erreur: ${errorMessage}. Détails: ${JSON.stringify(err.response?.data || {})}`);
-      toastManager.addToast(
-        errorMessage,
-        "error",
-        5000
-      );
+      setError(`Erreur: ${errorMessage}`);
+      toastManager.addToast({
+        title: "Erreur",
+        description: errorMessage,
+        type: "error"
+      });
     } finally {
       setSearchLoading(false);
     }
@@ -117,11 +212,11 @@ export default function AssignMembersModal({
       // Filtrer l'utilisateur ajouté de la liste des utilisateurs
       setUsers(users.filter(user => user._id !== userId));
 
-      toastManager.addToast(
-        "Membre ajouté avec succès",
-        "success",
-        5000
-      );
+      toastManager.addToast({
+        title: "Succès",
+        description: "Membre ajouté avec succès",
+        type: "success"
+      });
 
       // Notifier le parent que le membre a été ajouté
       onMemberAdded();
@@ -129,11 +224,11 @@ export default function AssignMembersModal({
       console.error("Erreur lors de l'ajout d'un membre:", err);
       const errorMessage = err.response?.data?.message || "Erreur lors de l'ajout d'un membre";
       setError(errorMessage);
-      toastManager.addToast(
-        errorMessage,
-        "error",
-        5000
-      );
+      toastManager.addToast({
+        title: "Erreur",
+        description: errorMessage,
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -148,22 +243,22 @@ export default function AssignMembersModal({
       // Supprimer le membre de la liste
       setMembers(members.filter(member => member.user._id !== userId));
 
-      toastManager.addToast(
-        "Membre supprimé avec succès",
-        "success",
-        5000
-      );
+      toastManager.addToast({
+        title: "Succès",
+        description: "Membre supprimé avec succès",
+        type: "success"
+      });
 
       // Notifier le parent que le membre a été supprimé
       onMemberAdded();
     } catch (err: any) {
       console.error("Erreur lors de la suppression d'un membre:", err);
       setError("Erreur lors de la suppression d'un membre");
-      toastManager.addToast(
-        "Erreur lors de la suppression d'un membre",
-        "error",
-        5000
-      );
+      toastManager.addToast({
+        title: "Erreur",
+        description: "Erreur lors de la suppression d'un membre",
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -213,30 +308,56 @@ export default function AssignMembersModal({
         {/* Section de recherche */}
         <div className="mb-6">
           <h3 className="mb-2 text-lg font-medium">Rechercher des utilisateurs</h3>
+          <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <span className="font-semibold">Astuce :</span> Pour trouver rapidement un utilisateur, entrez son adresse email complète.
+            </p>
+          </div>
+
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="Rechercher par nom, email ou username"
+              placeholder="Entrez un email ou un nom d'utilisateur"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                // Effacer l'erreur si l'utilisateur commence à taper
+                if (error) setError("");
+              }}
               className="flex-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   searchUsers();
                 }
               }}
+              error={!!error && (error.includes("recherche") || error.includes("mail"))}
+              hint={error && (error.includes("recherche") || error.includes("mail")) ? error : ""}
             />
             <Button
               variant="primary"
               onClick={searchUsers}
-              disabled={searchLoading}
+              disabled={searchLoading || !searchTerm.trim() || searchTerm.trim().length < 2}
             >
-              {searchLoading ? "Recherche..." : "Rechercher"}
+              {searchLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Recherche...
+                </span>
+              ) : "Rechercher"}
             </Button>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Vous pouvez rechercher par nom, prénom, nom d'utilisateur ou adresse email
+            Vous pouvez rechercher par adresse email complète (ex: user@example.com) ou par nom/prénom (minimum 2 caractères)
           </p>
+
+          {isValidEmail(searchTerm) && (
+            <div className="mt-2 text-xs text-green-600">
+              ✓ Format d'email valide détecté - la recherche sera plus précise
+            </div>
+          )}
         </div>
 
         {/* Liste des utilisateurs trouvés */}
@@ -345,9 +466,15 @@ export default function AssignMembersModal({
           )}
         </div>
 
-        {error && (
-          <div className="mt-4 rounded-md bg-red-50 p-4 text-red-500 dark:bg-red-900/20">
-            {error}
+        {error && !error.includes("recherche") && (
+          <div className="mt-4 rounded-md bg-red-50 p-4 text-red-500 dark:bg-red-900/20 flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-medium">Erreur</p>
+              <p>{error}</p>
+            </div>
           </div>
         )}
 

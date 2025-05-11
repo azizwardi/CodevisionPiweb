@@ -21,7 +21,10 @@ interface ToastItem {
 // Créer un gestionnaire global de toasts
 export const toastManager = {
   // Référence à la fonction d'ajout de toast (sera définie par le composant)
-  addToast: (p0: string, p1: string, p2: number, params: ToastParams) => {},
+  addToast: (params: ToastParams | string, type?: ToastType, duration?: number) => {
+    // Cette fonction sera remplacée par l'implémentation réelle
+    console.warn("Toast manager not initialized yet");
+  },
 };
 
 const ToastContainer: React.FC = () => {
@@ -43,7 +46,27 @@ const ToastContainer: React.FC = () => {
   // Définir la fonction d'ajout dans le gestionnaire global
   useEffect(() => {
     console.log("Initialisation du gestionnaire de toasts");
-    toastManager.addToast = addToast;
+
+    // Fonction qui gère à la fois l'ancien et le nouveau format
+    toastManager.addToast = (paramsOrMessage: ToastParams | string, typeOrUndefined?: ToastType, durationOrUndefined?: number) => {
+      // Si le premier paramètre est un objet, c'est le nouveau format
+      if (typeof paramsOrMessage === 'object') {
+        addToast(paramsOrMessage);
+      }
+      // Sinon, c'est l'ancien format (message, type, duration)
+      else {
+        const message = paramsOrMessage;
+        const type = typeOrUndefined || 'info';
+        const duration = durationOrUndefined || 5000;
+
+        addToast({
+          title: type.charAt(0).toUpperCase() + type.slice(1),
+          description: message,
+          type: type,
+          duration: duration
+        });
+      }
+    };
   }, [addToast]);
 
   return (

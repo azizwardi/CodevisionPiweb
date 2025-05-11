@@ -216,6 +216,7 @@ app.use("/chatbot", chatbotRouter);
 app.use("/quizzes", quizRouter);
 app.use("/quiz-attempts", require("./routes/quizAttemptRoutes"));
 app.use("/certificates", require("./routes/certificateRoutes"));
+app.use("/dashboard", require("./routes/dashboardRoutes"));
 // Log des routes pour le débogage
 console.log("Routes des compétences:");
 skillRouter.stack.forEach((r) => {
