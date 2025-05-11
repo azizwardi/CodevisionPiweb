@@ -5,6 +5,7 @@ import { toastManager } from "../ui/toast/ToastContainer";
 import Button from "../ui/button/Button";
 import Badge from "../ui/badge/Badge";
 import Radio from "../form/input/Radio";
+import FaceVerification from "./FaceVerification";
 
 interface Quiz {
   _id: string;
@@ -45,6 +46,8 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
   const [error, setError] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [faceVerified, setFaceVerified] = useState(false);
+  const [showFaceVerification, setShowFaceVerification] = useState(true);
 
   // Récupérer l'ID de l'utilisateur à partir du token JWT
   useEffect(() => {
@@ -158,6 +161,25 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
     }));
   };
 
+  // Fonction pour gérer la vérification faciale
+  const handleFaceVerificationComplete = (success: boolean) => {
+    setFaceVerified(success);
+    if (success) {
+      setShowFaceVerification(false);
+      toastManager.addToast({
+        title: "Vérification réussie",
+        description: "Votre identité a été vérifiée avec succès",
+        type: "success"
+      });
+    } else {
+      toastManager.addToast({
+        title: "Échec de la vérification",
+        description: "La vérification faciale a échoué. Veuillez réessayer.",
+        type: "error"
+      });
+    }
+  };
+
   // Fonction pour gérer la saisie d'une réponse courte
   const handleTextAnswerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!questions[currentQuestionIndex]) return;
@@ -208,6 +230,18 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
 
       // Soumettre la réponse
       await axios.post("http://localhost:5000/quiz-attempts/submit-answer", payload);
+
+      // Vérification faciale périodique (toutes les 3 questions)
+      if ((currentQuestionIndex + 1) % 3 === 0 && currentQuestionIndex < questions.length - 1) {
+        setShowFaceVerification(true);
+        setFaceVerified(false);
+        toastManager.addToast({
+          title: "Vérification requise",
+          description: "Veuillez vérifier à nouveau votre identité pour continuer",
+          type: "info"
+        });
+        return;
+      }
 
       // Passer à la question suivante ou terminer le quiz
       if (currentQuestionIndex < questions.length - 1) {
@@ -314,6 +348,30 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
         <Button variant="outline" className="mt-4" onClick={onCancel}>
           Retour
         </Button>
+      </div>
+    );
+  }
+
+  // Afficher la vérification faciale avant de commencer le quiz
+  if (showFaceVerification && !faceVerified && userId) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+        <h2 className="text-2xl font-bold mb-4">{quiz.title}</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Avant de commencer ce quiz, nous devons vérifier votre identité.
+        </p>
+
+        <FaceVerification
+          onVerificationComplete={handleFaceVerificationComplete}
+          userId={userId}
+          quizId={quizId}
+        />
+
+        <div className="mt-6 flex justify-between">
+          <Button variant="outline" onClick={onCancel}>
+            Annuler
+          </Button>
+        </div>
       </div>
     );
   }
