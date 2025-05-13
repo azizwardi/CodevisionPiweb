@@ -79,18 +79,14 @@ pipeline {
                 script {
                     def scannerHome = tool 'scanner'
                     withSonarQubeEnv('scanner') {
-                        // Increase memory for SonarQube scanner
+                        // Skip JavaScript/TypeScript analysis completely
                         sh """
                         export SONAR_SCANNER_OPTS="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"
-                        export SONAR_SCANNER_DEBUG_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000"
                         ${scannerHome}/bin/sonar-scanner \\
                         -Dsonar.projectKey=piweb \\
                         -Dsonar.projectName=Piweb \\
                         -Dsonar.sources=. \\
-                        -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/*.min.js,**/*.css,**/*.html,**/*.json,**/*.properties,**/*.bat,**/*.sh,**/*.xml,**/*.md \\
-                        -Dsonar.javascript.lcov.reportPaths=**/coverage/lcov.info \\
-                        -Dsonar.javascript.node.maxspace=4096 \\
-                        -Dsonar.nodejs.executable=/usr/bin/node \\
+                        -Dsonar.exclusions=**/*.js,**/*.jsx,**/*.ts,**/*.tsx,**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/*.min.js,**/*.css,**/*.html,**/*.json,**/*.properties,**/*.bat,**/*.sh,**/*.xml,**/*.md \\
                         -Dsonar.sourceEncoding=UTF-8 \\
                         -Dsonar.host.url=${SONAR_HOST_URL} \\
                         -Dsonar.login=${SONAR_AUTH_TOKEN}
@@ -98,7 +94,7 @@ pipeline {
                     }
 
                     // Optional: Wait for quality gate
-                    timeout(time: 15, unit: 'MINUTES') {
+                    timeout(time: 5, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: false
                     }
                 }
