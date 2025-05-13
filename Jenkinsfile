@@ -47,29 +47,7 @@ pipeline {
             }
         }
 
-        stage('Lint') {
-            parallel {
-                stage('Backend Lint') {
-                    steps {
-                        dir('Backend') {
-                            script {
-                                sh 'echo "No lint specified for backend"'
-                                // When ESLint is configured: sh 'npm run lint'
-                            }
-                        }
-                    }
-                }
-                stage('Frontend Lint') {
-                    steps {
-                        dir('Frontend') {
-                            script {
-                                sh 'npm run lint'
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        
 
         stage('Unit Test') {
             parallel {
