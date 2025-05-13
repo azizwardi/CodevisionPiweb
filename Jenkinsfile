@@ -68,14 +68,54 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Add middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Backend API is running' });
+// Add CORS support
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
 });
 
-app.listen(port, () => {
+// Basic health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Backend API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add error handling
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Start the server
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
 });
 EOF
                         fi
@@ -105,7 +145,12 @@ EOF
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
-    "bcrypt": "^5.1.1"
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0"
   }
 }'''
 
@@ -264,7 +309,7 @@ services:
   backend:
     image: ${BACKEND_IMAGE}
     container_name: backend-${uniqueSuffix}
-    restart: always
+    restart: on-failure:3
     depends_on:
       - db
     environment:
@@ -272,10 +317,24 @@ services:
       - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@db-${uniqueSuffix}:27017/codevisionpiweb?authSource=admin
       - JWT_SECRET=${JWT_SECRET}
       - PORT=5000
+      - DEBUG=express:*
     ports:
       - "${backendPort}:5000"
     networks:
       - app-network-${uniqueSuffix}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: >
+      sh -c "
+        echo 'Waiting for MongoDB to be ready...' &&
+        sleep 10 &&
+        echo 'Starting backend application...' &&
+        node server.js
+      "
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -409,6 +468,17 @@ EOL
                         MONGO_PASSWORD=${MONGO_PASSWORD} \\
                         JWT_SECRET=${JWT_SECRET} \\
                         docker-compose -f docker-compose.prod.yml up -d
+
+                        # Wait a moment for containers to start
+                        sleep 10
+
+                        # Check container status
+                        echo "Checking container status..."
+                        docker ps -a | grep ${BUILD_NUMBER}
+
+                        # Check logs of the backend container to diagnose any issues
+                        echo "Backend container logs:"
+                        docker logs backend-${BUILD_NUMBER} || true
                         """
                     }
                 }
