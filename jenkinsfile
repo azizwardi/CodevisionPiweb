@@ -13,10 +13,12 @@ pipeline {
         // Enable Docker BuildKit for faster builds
         DOCKER_BUILDKIT = "1"
 
-        // Using Jenkins credentials for secure storage
-        MONGO_USER = credentials('mongo-user')
-        MONGO_PASSWORD = credentials('mongo-password')
-        JWT_SECRET = credentials('jwt-secret')
+        // Using hardcoded MongoDB credentials (NOT RECOMMENDED FOR PRODUCTION)
+        MONGO_USER = "root"
+        MONGO_PASSWORD = "example"
+
+        // Using a fixed JWT secret (NOT RECOMMENDED FOR PRODUCTION)
+        JWT_SECRET = "development_jwt_secret_replace_in_production"
     }
 
     stages {
@@ -239,40 +241,12 @@ services:
     networks:
       - app-network
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    restart: always
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - app-network
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=\${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge
 
 volumes:
   mongo-data:
-  grafana-data:
 """
                 }
             }
@@ -297,19 +271,14 @@ volumes:
                         sh "docker pull ${FRONTEND_IMAGE}"
 
                         // Deploy using docker-compose
-                        withCredentials([
-                            string(credentialsId: 'grafana-admin-password', variable: 'GRAFANA_ADMIN_PASSWORD')
-                        ]) {
-                            sh """
-                            BACKEND_IMAGE=${BACKEND_IMAGE} \\
-                            FRONTEND_IMAGE=${FRONTEND_IMAGE} \\
-                            MONGO_USER=${MONGO_USER} \\
-                            MONGO_PASSWORD=${MONGO_PASSWORD} \\
-                            JWT_SECRET=${JWT_SECRET} \\
-                            GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD} \\
-                            docker-compose -f docker-compose.prod.yml up -d
-                            """
-                        }
+                        sh """
+                        BACKEND_IMAGE=${BACKEND_IMAGE} \\
+                        FRONTEND_IMAGE=${FRONTEND_IMAGE} \\
+                        MONGO_USER=${MONGO_USER} \\
+                        MONGO_PASSWORD=${MONGO_PASSWORD} \\
+                        JWT_SECRET=${JWT_SECRET} \\
+                        docker-compose -f docker-compose.prod.yml up -d
+                        """
                     }
                 }
             }
@@ -328,17 +297,7 @@ volumes:
                 stage('Run Grafana') {
                     steps {
                         script {
-                            withCredentials([
-                                string(credentialsId: 'grafana-admin-password', variable: 'GRAFANA_ADMIN_PASSWORD')
-                            ]) {
-                                sh '''
-                                docker start grafana || docker run -d --name grafana \
-                                -p 3000:3000 \
-                                -e GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin} \
-                                -e GF_USERS_ALLOW_SIGN_UP=false \
-                                grafana/grafana
-                                '''
-                            }
+                            sh 'docker start grafana || docker run -d --name grafana -p 3000:3000 grafana/grafana'
                         }
                     }
                 }

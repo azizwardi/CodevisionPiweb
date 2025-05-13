@@ -6,8 +6,8 @@ services:
     container_name: db
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-example}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - "27017:27017"
     volumes:
@@ -24,8 +24,8 @@ services:
       - db
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://${MONGO_USER:-root}:${MONGO_PASSWORD:-example}@db:27017/codevisionpiweb?authSource=admin
-      - JWT_SECRET=${JWT_SECRET:-changeme}
+      - MONGO_URI=mongodb://root:example@db:27017/codevisionpiweb?authSource=admin
+      - JWT_SECRET=your_jwt_secret_here
       - PORT=5000
     ports:
       - "5000:5000"
@@ -64,7 +64,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
