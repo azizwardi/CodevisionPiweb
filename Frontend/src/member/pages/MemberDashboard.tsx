@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { toastManager } from '../../dashboard/components/ui/toast/ToastContainer';
+import TaskStatusChart from "../../dashboard/components/charts/TaskStatusChart";
+import QuizActivityChart from "../../dashboard/components/charts/QuizActivityChart";
 
 interface User {
   _id: string;
@@ -58,6 +60,18 @@ const MemberDashboard: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [userId, setUserId] = useState<string | null>(null);
 
+  // États pour les graphiques
+  const [taskStats, setTaskStats] = useState({
+    pending: 0,
+    inProgress: 0,
+    completed: 0
+  });
+  const [quizStats, setQuizStats] = useState({
+    attempts: 0,
+    completed: 0,
+    certificates: 0
+  });
+
   // Get user ID from token
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -94,6 +108,18 @@ const MemberDashboard: React.FC = () => {
       );
       setTasks(userTasks);
 
+      // Calculate task statistics
+      const pendingTasks = userTasks.filter(task => task.status === 'pending').length;
+      const inProgressTasks = userTasks.filter(task => task.status === 'in-progress').length;
+      const completedTasks = userTasks.filter(task => task.status === 'completed').length;
+
+      // Set task statistics for charts
+      setTaskStats({
+        pending: pendingTasks,
+        inProgress: inProgressTasks,
+        completed: completedTasks
+      });
+
       // Fetch projects the user is involved in
       const projectsResponse = await axios.get("http://localhost:5000/projects");
       const userProjects = projectsResponse.data.filter((project: Project) => {
@@ -108,6 +134,13 @@ const MemberDashboard: React.FC = () => {
         return isTeamMember || hasTasksInProject;
       });
       setProjects(userProjects);
+
+      // Simulate quiz statistics (in a real app, you would fetch these from an API)
+      setQuizStats({
+        attempts: 12,
+        completed: 8,
+        certificates: 3
+      });
 
       // For announcements, we'll keep the static data for now
       // In a real application, you would fetch these from an API
@@ -210,7 +243,7 @@ const MemberDashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">In Progress</p>
-                  <p className="text-2xl font-bold">{tasks.filter(task => task.status === 'in-progress').length}</p>
+                  <p className="text-2xl font-bold">{taskStats.inProgress}</p>
                 </div>
               </div>
             </div>
@@ -223,8 +256,8 @@ const MemberDashboard: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-gray-500 text-sm">Blocked</p>
-                  <p className="text-2xl font-bold">{tasks.filter(task => task.status === 'blocked').length}</p>
+                  <p className="text-gray-500 text-sm">Completed</p>
+                  <p className="text-2xl font-bold">{taskStats.completed}</p>
                 </div>
               </div>
             </div>
@@ -244,122 +277,146 @@ const MemberDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* My Tasks */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow mb-6">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">My Tasks</h2>
-                  <a href="/member/tasks" className="text-sm text-green-600 hover:text-green-800">View All</a>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Task
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Due Date
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Priority
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {tasks.slice(0, 4).map((task) => (
-                        <tr key={task._id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{task.title}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{new Date(task.dueDate).toLocaleDateString()}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                              {task.priority
-                                ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1)
-                                : 'Medium'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(task.status)}`}>
-                              {task.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          {/* Graphiques statistiques */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Graphique de statut des tâches */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">État des tâches</h2>
+              <div className="h-64">
+                <TaskStatusChart
+                  pending={taskStats.pending}
+                  inProgress={taskStats.inProgress}
+                  completed={taskStats.completed}
+                  loading={loading}
+                />
               </div>
-
-              {/* My Projects */}
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">My Projects</h2>
-                  <a href="/member/projects" className="text-sm text-green-600 hover:text-green-800">View All</a>
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">En attente</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {taskStats.pending}
+                  </div>
                 </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {projects.slice(0, 2).map((project) => (
-                    <div key={project._id} className="border rounded-lg p-4">
-                      <h3 className="font-semibold text-lg mb-2">{project.name}</h3>
-                      <div className="flex items-center mb-4">
-                        <img
-                          className="h-8 w-8 rounded-full mr-2"
-                          src={project.teamLeader?.avatarUrl || "https://via.placeholder.com/40"}
-                          alt={project.teamLeader?.username || "Team Leader"}
-                        />
-                        <span className="text-sm text-gray-600">
-                          Team Leader: {project.teamLeader?.firstName && project.teamLeader?.lastName
-                            ? `${project.teamLeader.firstName} ${project.teamLeader.lastName}`
-                            : project.teamLeader?.username || "Unknown"}
-                        </span>
-                      </div>
-                      <div className="mb-2">
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-700">Progress</span>
-                          <span className="text-sm font-medium text-gray-700">{calculateProgress(project._id)}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="bg-green-600 h-2.5 rounded-full"
-                            style={{ width: `${calculateProgress(project._id)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">En cours</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {taskStats.inProgress}
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">Terminées</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {taskStats.completed}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Announcements */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold">Team Announcements</h2>
+            {/* Graphique d'activité des quiz */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Activité des quiz</h2>
+              <div className="h-64">
+                <QuizActivityChart
+                  published={0} // Non disponible pour les membres
+                  attempts={quizStats.attempts}
+                  completed={quizStats.completed}
+                  certificates={quizStats.certificates}
+                  loading={loading}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">Tentatives</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {quizStats.attempts}
+                  </div>
                 </div>
-                <div className="p-6">
-                  {announcements.map((announcement) => (
-                    <div key={announcement.id} className="mb-6 last:mb-0">
-                      <div className="flex items-center mb-2">
-                        <img className="h-8 w-8 rounded-full mr-2" src={announcement.authorAvatar} alt={announcement.author} />
-                        <div>
-                          <p className="text-sm font-medium">{announcement.author}</p>
-                          <p className="text-xs text-gray-500">{new Date(announcement.date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <h3 className="font-medium mb-2">{announcement.title}</h3>
-                      <div className="border-t border-gray-100 pt-2 mt-2">
-                        <a href="#" className="text-sm text-green-600 hover:text-green-800">Read More</a>
-                      </div>
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">Complétés</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {quizStats.completed}
+                  </div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded-lg text-center">
+                  <span className="text-sm text-gray-500">Certificats</span>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {quizStats.certificates}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Espace supplémentaire pour les graphiques */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Graphique de progression des tâches par projet */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Progression par projet</h2>
+              <div className="space-y-4">
+                {projects.slice(0, 3).map((project) => (
+                  <div key={project._id} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between mb-2">
+                      <h3 className="font-medium">{project.name}</h3>
+                      <span className="text-sm font-medium">{calculateProgress(project._id)}%</span>
                     </div>
-                  ))}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className="bg-green-600 h-2.5 rounded-full"
+                        style={{ width: `${calculateProgress(project._id)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+                {projects.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    Aucun projet assigné
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Graphique des tâches par priorité */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Tâches par priorité</h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-red-50 p-4 rounded-lg text-center">
+                    <div className="text-red-600 text-xl font-bold">
+                      {tasks.filter(task => task.priority === 'high').length}
+                    </div>
+                    <div className="text-sm text-gray-600">Haute</div>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg text-center">
+                    <div className="text-yellow-600 text-xl font-bold">
+                      {tasks.filter(task => task.priority === 'medium').length}
+                    </div>
+                    <div className="text-sm text-gray-600">Moyenne</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg text-center">
+                    <div className="text-green-600 text-xl font-bold">
+                      {tasks.filter(task => task.priority === 'low').length}
+                    </div>
+                    <div className="text-sm text-gray-600">Basse</div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium mb-2">Tâches à venir</h3>
+                  <div className="space-y-2">
+                    {tasks.filter(task => new Date(task.dueDate) > new Date()).slice(0, 3).map((task) => (
+                      <div key={task._id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                        <span className="text-sm">{task.title}</span>
+                        <span className={`px-2 text-xs rounded-full ${getPriorityColor(task.priority)}`}>
+                          {new Date(task.dueDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                    {tasks.filter(task => new Date(task.dueDate) > new Date()).length === 0 && (
+                      <div className="text-center text-gray-500 py-2">
+                        Aucune tâche à venir
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
