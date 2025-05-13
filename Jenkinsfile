@@ -279,10 +279,12 @@ services:
 
 networks:
   app-network:
+    name: app-network
     driver: bridge
 
 volumes:
   mongo-data:
+    name: mongo-data
 """
                 }
             }
@@ -316,7 +318,16 @@ volumes:
                         # Login to Docker registry if needed for pulling images
                         echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin http://192.168.33.10:8083
 
+                        # Stop and remove existing containers if they exist
+                        echo "Stopping and removing existing containers..."
+                        docker stop db backend frontend || true
+                        docker rm db backend frontend || true
+
+                        # Remove existing network if it exists
+                        docker network rm app-network || true
+
                         # Run docker-compose with environment variables
+                        echo "Starting new containers..."
                         BACKEND_IMAGE=${BACKEND_IMAGE} \\
                         FRONTEND_IMAGE=${FRONTEND_IMAGE} \\
                         MONGO_USER=${MONGO_USER} \\
