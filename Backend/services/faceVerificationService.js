@@ -1,4 +1,13 @@
-const { HfInference } = require('@huggingface/inference');
+// Use mock for build process
+let HfInference;
+try {
+  // Try to load the real module first
+  ({ HfInference } = require('@huggingface/inference'));
+} catch (error) {
+  // Fall back to mock if the real module is not available
+  console.log('Using mock HuggingFace inference module for build');
+  ({ HfInference } = require('./mockHuggingface'));
+}
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
