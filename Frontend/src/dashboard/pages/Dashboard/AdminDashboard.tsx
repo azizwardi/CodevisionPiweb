@@ -6,6 +6,14 @@ import { ArrowUpIcon, ArrowDownIcon, UserCircleIcon, ListIcon, QuizIcon, TaskIco
 import Badge from "../../components/ui/badge/Badge";
 import { Spinner } from "../../components/ui/spinner/Spinner";
 import { toastManager } from "../../components/ui/toast/ToastContainer";
+import ComponentCard from "../../components/common/ComponentCard";
+
+// Importer les composants de graphiques
+import UserDistributionChart from "../../components/charts/UserDistributionChart";
+import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
+import TaskStatusChart from "../../components/charts/TaskStatusChart";
+import QuizActivityChart from "../../components/charts/QuizActivityChart";
+import ActivityOverviewChart from "../../components/charts/ActivityOverviewChart";
 
 // Types pour les statistiques
 interface DashboardStats {
@@ -181,58 +189,136 @@ const AdminDashboard: React.FC = () => {
               loading={loading}
             />
           </div>
+
+          {/* Graphique d'activité */}
+          <ComponentCard title="Aperçu de l'activité">
+            <ActivityOverviewChart loading={loading} />
+          </ComponentCard>
         </div>
 
         {/* Statistiques détaillées */}
-        <div className="col-span-12 space-y-6 xl:col-span-4">
-          <StatsSection
-            title="Utilisateurs"
-            stats={{
-              admins: stats?.users.admins || 0,
-              teamLeaders: stats?.users.teamLeaders || 0,
-              members: stats?.users.members || 0,
-            }}
-            icon={<UserCircleIcon className="text-gray-800 size-4 dark:text-white/90" />}
-            loading={loading}
-          />
+        <div className="col-span-12 xl:col-span-4">
+          <ComponentCard title="Distribution des utilisateurs">
+            <UserDistributionChart
+              admins={stats?.users.admins || 0}
+              teamLeaders={stats?.users.teamLeaders || 0}
+              members={stats?.users.members || 0}
+              loading={loading}
+            />
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Admins</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.users.admins || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Team Leaders</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.users.teamLeaders || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Membres</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.users.members || 0}
+                </div>
+              </div>
+            </div>
+          </ComponentCard>
         </div>
 
         <div className="col-span-12 xl:col-span-4">
-          <StatsSection
-            title="Projets"
-            stats={{
-              active: stats?.projects.active || 0,
-              completed: stats?.projects.completed || 0,
-            }}
-            icon={<ListIcon className="text-gray-800 size-4 dark:text-white/90" />}
-            loading={loading}
-          />
+          <ComponentCard title="État des projets">
+            <ProjectStatusChart
+              active={stats?.projects.active || 0}
+              completed={stats?.projects.completed || 0}
+              loading={loading}
+            />
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Actifs</span>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.projects.active || 0}
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Terminés</span>
+                <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.projects.completed || 0}
+                </div>
+              </div>
+            </div>
+          </ComponentCard>
         </div>
 
         <div className="col-span-12 xl:col-span-4">
-          <StatsSection
-            title="Tâches"
-            stats={{
-              pending: stats?.tasks.pending || 0,
-              inProgress: stats?.tasks.inProgress || 0,
-              completed: stats?.tasks.completed || 0,
-            }}
-            icon={<TaskIcon className="text-gray-800 size-4 dark:text-white/90" />}
-            loading={loading}
-          />
+          <ComponentCard title="État des tâches">
+            <TaskStatusChart
+              pending={stats?.tasks.pending || 0}
+              inProgress={stats?.tasks.inProgress || 0}
+              completed={stats?.tasks.completed || 0}
+              loading={loading}
+            />
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">En attente</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.tasks.pending || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">En cours</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.tasks.inProgress || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Terminées</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.tasks.completed || 0}
+                </div>
+              </div>
+            </div>
+          </ComponentCard>
         </div>
 
-        <div className="col-span-12 xl:col-span-4">
-          <StatsSection
-            title="Quiz"
-            stats={{
-              published: stats?.quizzes.published || 0,
-              attempts: stats?.quizzes.attempts || 0,
-              completed: stats?.quizzes.completedAttempts || 0,
-            }}
-            icon={<QuizIcon className="text-gray-800 size-4 dark:text-white/90" />}
-            loading={loading}
-          />
+        <div className="col-span-12">
+          <ComponentCard title="Activité des quiz">
+            <QuizActivityChart
+              published={stats?.quizzes.published || 0}
+              attempts={stats?.quizzes.attempts || 0}
+              completed={stats?.quizzes.completedAttempts || 0}
+              certificates={stats?.quizzes.certificates || 0}
+              loading={loading}
+            />
+            <div className="grid grid-cols-4 gap-2 mt-4">
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Publiés</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.quizzes.published || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Tentatives</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.quizzes.attempts || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Terminés</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.quizzes.completedAttempts || 0}
+                </div>
+              </div>
+              <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Certificats</span>
+                <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {loading ? <Spinner size="sm" /> : stats?.quizzes.certificates || 0}
+                </div>
+              </div>
+            </div>
+          </ComponentCard>
         </div>
       </div>
     </>

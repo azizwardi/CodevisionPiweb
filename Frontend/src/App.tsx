@@ -48,6 +48,7 @@ import TeamLeaderProjects from "./teamleader/pages/TeamLeaderProjects";
 import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
 import TeamLeaderCalendar from "./teamleader/pages/TeamLeaderCalendar";
 import TeamLeaderProjectDetails from "./teamleader/pages/ProjectDetails";
+import TeamLeaderTeam from "./teamleader/pages/TeamLeaderTeam";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -133,13 +134,14 @@ export default function App() {
             <Route element={<TeamLeaderHomeLayout />}>
               <Route path="/team-leader-dashboard" element={<TeamLeaderDashboard />} />
               <Route path="/team-leader/profile" element={<TeamLeaderProfile />} />
-              <Route path="/team-leader/team" element={<div />} />
+              <Route path="/team-leader/team" element={<TeamLeaderTeam />} />
               <Route path="/team-leader/projects" element={<TeamLeaderProjects />} />
               <Route path="/team-leader/projects/:projectId" element={<TeamLeaderProjectDetails />} />
               <Route path="/team-leader/projects/:projectId/kanban" element={<ProjectKanban />} />
               <Route path="/team-leader/tasks" element={<TeamLeaderTasks />} />
               <Route path="/team-leader/tasks/kanban" element={<KanbanBoard />} />
               <Route path="/team-leader/tasks/edit/:taskId" element={<EditTask />} />
+              <Route path="/team-leader/tasks/auto-assign" element={<AutoAssignTask />} />
               <Route path="/team-leader/calendar" element={<TeamLeaderCalendar />} />
               <Route path="/team-leader/reports" element={<div />} />
               <Route path="/team-leader/assistant" element={<ChatbotPage />} />

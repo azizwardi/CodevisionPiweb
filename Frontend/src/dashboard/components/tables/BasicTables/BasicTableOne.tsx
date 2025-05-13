@@ -368,14 +368,6 @@ export default function BasicTableOne() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-primary-500 hover:bg-primary-50 hover:text-primary-700"
-                          onClick={() => window.location.href = `/users/${user._id}`}
-                        >
-                          Profil
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
                           className="text-error-500 hover:bg-error-50 hover:text-error-700"
                           onClick={() => handleDeleteUser(user._id)}
                         >

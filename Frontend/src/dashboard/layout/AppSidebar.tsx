@@ -124,7 +124,6 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
     subItems: [
       { name: "Task List", path: "/tasks" },
-      { name: "AI Task Assignment", path: "/tasks/auto-assign" },
     ],
   },
   {
@@ -383,7 +382,7 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(getNavItems(), "main")}
             </div>
             {/* Others section removed */}
             {/* Section "Others" supprimée */}

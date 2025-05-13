@@ -118,7 +118,10 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
         {
           name: "Task Management",
           icon: <ListIcon />,
-          subItems: [{ name: "Task List", path: "/team-leader/tasks" }],
+          subItems: [
+            { name: "Task List", path: "/team-leader/tasks" },
+            { name: "AI Task Assignment", path: "/team-leader/tasks/auto-assign" },
+          ],
         },
         {
           name: "My Team",

@@ -42,7 +42,21 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
       try {
         // Récupérer les projets
         const projectsResponse = await axios.get('http://localhost:5000/projects');
-        setProjects(projectsResponse.data);
+
+        // Vérifier le rôle de l'utilisateur
+        const userRole = localStorage.getItem('userRole');
+        const userId = localStorage.getItem('userId');
+
+        // Si c'est un TeamLeader, filtrer les projets dont il est créateur
+        if (userRole === 'TeamLeader' && userId) {
+          const filteredProjects = projectsResponse.data.filter(
+            (project: any) => project.creator === userId
+          );
+          setProjects(filteredProjects);
+        } else {
+          // Pour les autres rôles (admin), afficher tous les projets
+          setProjects(projectsResponse.data);
+        }
       } catch (err: any) {
         console.error('Error fetching projects:', err);
         setError(err.message || 'Failed to load projects');
@@ -98,7 +112,13 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate('/tasks');
+        // Rediriger en fonction du rôle de l'utilisateur
+        const userRole = localStorage.getItem('userRole');
+        if (userRole === 'TeamLeader') {
+          navigate('/team-leader/tasks');
+        } else {
+          navigate('/tasks');
+        }
       }
     } catch (err: any) {
       console.error('Error creating task:', err);
@@ -303,7 +323,14 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
             size="sm"
             variant="outline"
             type="button"
-            onClick={() => navigate('/tasks')}
+            onClick={() => {
+              const userRole = localStorage.getItem('userRole');
+              if (userRole === 'TeamLeader') {
+                navigate('/team-leader/tasks');
+              } else {
+                navigate('/tasks');
+              }
+            }}
           >
             Cancel
           </Button>

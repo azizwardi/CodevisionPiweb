@@ -21,6 +21,7 @@ const quizRouter = require("./routes/quizRoutes");
 const skillRouter = require("./routes/skillRoutes");
 const courseRecommendationRouter = require("./routes/courseRecommendationRoutes");
 const faceVerificationRouter = require("./routes/faceVerificationRoutes");
+const teamRouter = require("./routes/teamRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -219,6 +220,7 @@ app.use("/quiz-attempts", require("./routes/quizAttemptRoutes"));
 app.use("/certificates", require("./routes/certificateRoutes"));
 app.use("/dashboard", require("./routes/dashboardRoutes"));
 app.use("/face-verification", faceVerificationRouter);
+app.use("/teams", teamRouter);
 // Log des routes pour le débogage
 console.log("Routes des compétences:");
 skillRouter.stack.forEach((r) => {

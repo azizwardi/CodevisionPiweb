@@ -62,9 +62,9 @@ class TaskAssignmentService {
 
       console.log(`Nombre total de membres trouvés: ${allMembers.length}`);
 
-      // 1. Filtrer par rôle approprié (seulement les membres avec rôle "user")
+      // 1. Filtrer par rôle approprié (seulement les membres avec rôle "Member" ou "user")
       const membersByRole = allMembers.filter((member) => {
-        const isAppropriateRole = member.role === "user";
+        const isAppropriateRole = member.role === "Member" || member.role === "user";
         if (!isAppropriateRole) {
           console.log(
             `${member.username || member.email} exclu: rôle inapproprié (${
