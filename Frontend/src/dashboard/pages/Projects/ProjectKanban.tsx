@@ -124,11 +124,28 @@ const ProjectKanban: React.FC = () => {
 
         // Fetch tasks for this project
         console.log(`Fetching tasks for project ${projectId}...`);
-        const tasksResponse = await axios.get(`http://localhost:5000/tasks/project/${projectId}`, { headers });
-        console.log("Project tasks fetched successfully:", tasksResponse.data);
+        let tasks = [];
+        try {
+          // Récupérer toutes les tâches du projet
+          try {
+            const tasksResponse = await axios.get(`http://localhost:5000/tasks/project/${projectId}`, { headers });
+            console.log("All project tasks fetched successfully:", tasksResponse.data);
+            tasks = tasksResponse.data;
+
+            // Si aucune tâche n'est trouvée, afficher un message
+            if (tasks.length === 0) {
+              console.log("Aucune tâche dans ce projet.");
+            }
+          } catch (error) {
+            console.error("Error fetching project tasks:", error);
+            throw error;
+          }
+        } catch (taskError) {
+          console.error("Error fetching tasks:", taskError);
+          throw new Error(`Failed to fetch tasks: ${taskError instanceof Error ? taskError.message : 'Unknown error'}`);
+        }
 
         // Process tasks for Kanban board
-        const tasks = tasksResponse.data;
         const tasksById: { [key: string]: Task } = {};
         const columns = { ...data.columns };
 
@@ -396,9 +413,11 @@ const ProjectKanban: React.FC = () => {
             >
               Back to Projects
             </Button>
-            <Link to={`/tasks/create?projectId=${projectId}`}>
-              <Button variant="primary">Add Task</Button>
-            </Link>
+            {localStorage.getItem("userRole")?.toLowerCase() !== "member" && (
+              <Link to={`/tasks/create?projectId=${projectId}`}>
+                <Button variant="primary">Add Task</Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -427,27 +446,34 @@ const ProjectKanban: React.FC = () => {
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium text-gray-900 dark:text-white">{task.title}</h4>
                         <div className="flex space-x-1">
-                          <div className="relative status-menu-trigger">
-                            <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                              </svg>
-                            </button>
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 status-menu">
-                              {data.columnOrder.map(colId => (
-                                colId !== task.status && (
-                                  <button
-                                    key={colId}
-                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    onClick={() => changeTaskStatus(task._id, colId)}
-                                  >
-                                    Move to {data.columns[colId].title}
-                                  </button>
-                                )
-                              ))}
+                          {localStorage.getItem("userRole")?.toLowerCase() !== "member" && (
+                            <div className="relative status-menu-trigger">
+                              <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                              </button>
+                              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 status-menu">
+                                {data.columnOrder.map(colId => (
+                                  colId !== task.status && (
+                                    <button
+                                      key={colId}
+                                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                      onClick={() => changeTaskStatus(task._id, colId)}
+                                    >
+                                      Move to {data.columns[colId].title}
+                                    </button>
+                                  )
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                          <Link to={`/tasks/edit/${task._id}`} className="text-blue-500 hover:text-blue-700">
+                          )}
+                          <Link
+                            to={localStorage.getItem("userRole")?.toLowerCase() === "member"
+                              ? `/member/tasks/edit/${task._id}`
+                              : `/tasks/edit/${task._id}`}
+                            className="text-blue-500 hover:text-blue-700"
+                          >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>

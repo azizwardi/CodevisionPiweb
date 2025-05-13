@@ -9,7 +9,8 @@ exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find()
       .populate("assignedTo")
-      .populate("projectId");
+      .populate("projectId")
+      .populate("createdBy");
     res.status(200).json(tasks);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving tasks", error });
@@ -22,7 +23,8 @@ exports.getTasksByProject = async (req, res) => {
     const { projectId } = req.params;
     const tasks = await Task.find({ projectId })
       .populate("assignedTo")
-      .populate("projectId");
+      .populate("projectId")
+      .populate("createdBy");
     res.status(200).json(tasks);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving tasks", error });
@@ -34,7 +36,8 @@ exports.getTaskById = async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId)
       .populate("assignedTo")
-      .populate("projectId");
+      .populate("projectId")
+      .populate("createdBy");
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
@@ -99,12 +102,20 @@ exports.createTask = async (req, res) => {
         .json({ message: "assignedTo is required when autoAssign is false" });
     }
 
+    // Récupérer l'ID de l'utilisateur qui crée la tâche (team leader)
+    const creatorId = req.body.userId || (req.user && req.user.id);
+
+    if (!creatorId) {
+      return res.status(400).json({ message: "Creator ID is required" });
+    }
+
     // Créer l'objet de tâche
     const task = new Task({
       title,
       description,
       status: status || "pending",
       taskType: taskType || "development",
+      createdBy: creatorId, // Ajouter le créateur
       projectId,
       dueDate,
       priority: priority || "medium",
@@ -289,7 +300,8 @@ exports.getTasksByProject = async (req, res) => {
     // Récupérer toutes les tâches associées au projet
     const tasks = await Task.find({ projectId })
       .populate("assignedTo")
-      .populate("projectId");
+      .populate("projectId")
+      .populate("createdBy");
 
     console.log(`Found ${tasks.length} tasks for project ${projectId}`);
 
@@ -298,6 +310,195 @@ exports.getTasksByProject = async (req, res) => {
     console.error("Error retrieving tasks by project:", error);
     res.status(500).json({
       message: "Error retrieving tasks for this project",
+      error: error.message,
+    });
+  }
+};
+
+// Get tasks created by a specific user (team leader)
+exports.getTasksByCreator = async (req, res) => {
+  try {
+    const { creatorId } = req.params;
+
+    // Vérifier si l'utilisateur existe
+    const userExists = await User.findById(creatorId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Récupérer toutes les tâches créées par cet utilisateur
+    const tasks = await Task.find({ createdBy: creatorId })
+      .populate("assignedTo")
+      .populate("projectId")
+      .populate("createdBy");
+
+    console.log(`Found ${tasks.length} tasks created by user ${creatorId}`);
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error("Error retrieving tasks by creator:", error);
+    res.status(500).json({
+      message: "Error retrieving tasks for this creator",
+      error: error.message,
+    });
+  }
+};
+
+// Créer une tâche de test (temporaire, à des fins de débogage)
+exports.createTestTask = async (req, res) => {
+  try {
+    const { projectId, userId } = req.params;
+
+    // Vérifier si le projet existe
+    const projectExists = await Project.findById(projectId);
+    if (!projectExists) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Créer une tâche de test
+    const testTask = new Task({
+      title: "Tâche de test",
+      description: "Ceci est une tâche de test créée automatiquement",
+      status: "pending",
+      taskType: "development",
+      createdBy: userId, // L'utilisateur est aussi le créateur pour ce test
+      assignedTo: userId,
+      projectId: projectId,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Dans une semaine
+      priority: "medium",
+      estimatedHours: 8,
+      complexity: 3
+    });
+
+    await testTask.save();
+
+    res.status(201).json({
+      message: "Tâche de test créée avec succès",
+      task: testTask
+    });
+  } catch (error) {
+    console.error("Error creating test task:", error);
+    res.status(500).json({
+      message: "Error creating test task",
+      error: error.message
+    });
+  }
+};
+
+// Get tasks assigned to a specific user in a specific project
+exports.getTasksAssignedToUserInProject = async (req, res) => {
+  try {
+    const { projectId, userId } = req.params;
+
+    // Vérifier si le projet existe
+    const projectExists = await Project.findById(projectId);
+    if (!projectExists) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`Recherche des tâches avec projectId=${projectId} et assignedTo=${userId}`);
+
+    // Vérifier si des tâches existent pour ce projet
+    const allProjectTasks = await Task.find({ projectId: projectId });
+    console.log(`Nombre total de tâches dans ce projet: ${allProjectTasks.length}`);
+
+    // Vérifier si des tâches sont assignées à cet utilisateur
+    const allUserTasks = await Task.find({ assignedTo: userId });
+    console.log(`Nombre total de tâches assignées à cet utilisateur: ${allUserTasks.length}`);
+
+    // Afficher toutes les tâches pour comprendre leur structure
+    const sampleTasks = await Task.find().limit(2);
+    if (sampleTasks.length > 0) {
+      console.log("Exemple de tâche:", JSON.stringify(sampleTasks[0], null, 2));
+    }
+
+    // Récupérer toutes les tâches assignées à cet utilisateur dans ce projet
+    // Utiliser toString() pour s'assurer que la comparaison est correcte
+    const tasks = await Task.find()
+      .populate("assignedTo")
+      .populate("projectId")
+      .populate("createdBy");
+
+    // Filtrer manuellement pour s'assurer que les IDs correspondent
+    const filteredTasks = tasks.filter(task => {
+      const taskProjectId = task.projectId && task.projectId._id ? task.projectId._id.toString() : null;
+      const taskAssignedTo = task.assignedTo && task.assignedTo._id ? task.assignedTo._id.toString() : null;
+
+      const projectMatches = taskProjectId === projectId;
+      const userMatches = taskAssignedTo === userId;
+
+      console.log(`Tâche ${task._id}: projectId=${taskProjectId} (match=${projectMatches}), assignedTo=${taskAssignedTo} (match=${userMatches})`);
+
+      return projectMatches && userMatches;
+    });
+
+    console.log(`Tâches trouvées après filtrage manuel: ${filteredTasks.length}`);
+
+    console.log(`Found ${filteredTasks.length} tasks assigned to user ${userId} in project ${projectId}`);
+
+    res.status(200).json(filteredTasks);
+  } catch (error) {
+    console.error("Error retrieving tasks assigned to user in project:", error);
+    res.status(500).json({
+      message: "Error retrieving tasks assigned to user in project",
+      error: error.message,
+    });
+  }
+};
+
+// Get tasks for projects where a user is a member
+exports.getTasksForMemberProjects = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Vérifier si l'utilisateur existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Trouver tous les projets où l'utilisateur est membre
+    console.log(`Recherche des projets pour l'utilisateur ${userId}...`);
+    const projects = await Project.find({
+      "members.user": userId
+    });
+
+    console.log(`Found ${projects.length} projects where user ${userId} is a member`);
+
+    if (projects.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Récupérer les IDs des projets
+    const projectIds = projects.map(project => project._id);
+
+    // Récupérer toutes les tâches associées à ces projets
+    const tasks = await Task.find({
+      projectId: { $in: projectIds }
+    })
+      .populate("assignedTo")
+      .populate("projectId")
+      .populate("createdBy");
+
+    console.log(`Found ${tasks.length} tasks for projects where user ${userId} is a member`);
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error("Error retrieving tasks for member projects:", error);
+    res.status(500).json({
+      message: "Error retrieving tasks for member projects",
       error: error.message,
     });
   }

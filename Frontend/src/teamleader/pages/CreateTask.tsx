@@ -254,6 +254,7 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onClose, onTaskCreated }) => {
         assignedTo: formData.assignedTo || assignedMember, // Utiliser la valeur sélectionnée ou assigner automatiquement
         projectId: formData.projectId,
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
+        userId: userId, // Ajouter l'ID du créateur (team leader)
       };
 
       const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);

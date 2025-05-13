@@ -54,18 +54,52 @@ const TaskList: React.FC = () => {
       setError("");
 
       try {
-        const tasksResponse = await axios.get("http://localhost:5000/tasks");
-        setTasks(tasksResponse.data);
-        setFilteredTasks(tasksResponse.data);
+        // Récupérer l'ID de l'utilisateur connecté (team leader)
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
 
+        // Décoder le token pour obtenir l'ID utilisateur
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const userId = decoded.user?.id || decoded.id;
+
+        if (!userId) {
+          throw new Error("User ID not found in token");
+        }
+
+        console.log("Team Leader ID:", userId);
+
+        try {
+          // Récupérer uniquement les tâches créées par ce team leader
+          console.log("Fetching tasks for creator:", userId);
+          const tasksResponse = await axios.get(`http://localhost:5000/tasks/creator/${userId}`);
+          console.log("Tasks response:", tasksResponse.data);
+          setTasks(tasksResponse.data);
+          setFilteredTasks(tasksResponse.data);
+        } catch (err: any) {
+          console.error("Error fetching tasks by creator:", err);
+          // Fallback: récupérer toutes les tâches si la route spécifique échoue
+          console.log("Falling back to fetching all tasks");
+          const allTasksResponse = await axios.get("http://localhost:5000/tasks");
+          // Filtrer manuellement les tâches créées par ce team leader
+          const userTasks = allTasksResponse.data.filter(
+            (task: any) => task.createdBy?._id === userId || task.createdBy === userId
+          );
+          console.log("Filtered tasks:", userTasks);
+          setTasks(userTasks);
+          setFilteredTasks(userTasks);
+        }
+
+        // Récupérer les projets pour le filtrage
         const projectsResponse = await axios.get("http://localhost:5000/projects");
         setProjects(projectsResponse.data);
       } catch (err: any) {
         setError(err.message || "Failed to fetch data");
         toastManager.addToast("Error loading tasks", "error", 5000, {
-          title: "Success",
-          description: "The task was successfully deleted.",
-          type: "success"
+          title: "Error",
+          description: "Failed to load tasks: " + (err.message || "Unknown error"),
+          type: "error"
         });
       } finally {
         setLoading(false);

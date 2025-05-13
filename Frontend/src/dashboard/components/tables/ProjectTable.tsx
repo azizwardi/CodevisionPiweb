@@ -40,9 +40,10 @@ interface ProjectTableProps {
   onEdit: (projectId: string) => void;
   refreshTrigger: number;
   isAdmin?: boolean;
+  isMember?: boolean;
 }
 
-export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }: ProjectTableProps) {
+export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false, isMember = false }: ProjectTableProps) {
   const navigate = useNavigate();
   // État pour stocker les données des projets
   const [projects, setProjects] = useState<Project[]>([]);
@@ -75,10 +76,29 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
     setError("");
     try {
       const response = await axios.get("http://localhost:5000/projects");
+      const tasksResponse = await axios.get("http://localhost:5000/tasks");
+      const tasks = tasksResponse.data;
 
       // Si c'est un admin, afficher tous les projets
       if (isAdmin) {
         setProjects(response.data);
+      } else if (isMember && userId) {
+        // Pour les Members, filtrer uniquement les projets où ils sont explicitement membres
+        const userProjects = response.data.filter((project: any) => {
+          // Check if user is a team member (using members array from backend)
+          const isTeamMember = project.members?.some((member: any) =>
+            member.user._id === userId || member.user === userId
+          );
+
+          // Check if user is in teamMembers array (frontend structure)
+          const isInTeamMembers = project.teamMembers?.some((member: any) =>
+            member._id === userId
+          );
+
+          // Only return projects where the user is a team member
+          return isTeamMember || isInTeamMembers;
+        });
+        setProjects(userProjects);
       } else {
         // Pour les TeamLeaders, filtrer les projets dont ils sont créateurs
         const userRole = localStorage.getItem('userRole');
@@ -105,7 +125,7 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
     if (userId || isAdmin) {
       fetchProjects();
     }
-  }, [refreshTrigger, userId, isAdmin]);
+  }, [refreshTrigger, userId, isAdmin, isMember]);
 
   const handleDelete = async (projectId: string) => {
     // Récupérer l'ID de l'utilisateur connecté
@@ -317,7 +337,7 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
                       </TableCell>
                       <TableCell className="px-4 py-3 text-start">
                         <div className="flex gap-2">
-                          {!isAdmin && (
+                          {!isAdmin && !isMember && (
                             <>
                               <Button
                                 size="sm"
@@ -330,16 +350,7 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
                                 size="sm"
                                 variant="primary"
                                 onClick={() => {
-                                  // Rediriger en fonction du rôle de l'utilisateur
-                                  const userRole = localStorage.getItem("userRole");
-                                  if (userRole?.toLowerCase() === "teamleader") {
-                                    navigate(`/team-leader/projects/${project._id}`);
-                                  } else if (userRole?.toLowerCase() === "member") {
-                                    navigate(`/member/projects/${project._id}`);
-                                  } else {
-                                    // Pour les administrateurs et autres rôles
-                                    navigate(`/projects/${project._id}`);
-                                  }
+                                  navigate(`/team-leader/projects/${project._id}`);
                                 }}
                               >
                                 Voir les tâches
@@ -371,17 +382,28 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
                               </Button>
                             </>
                           )}
-                          {isAdmin && (
+                          {isMember && (
                             <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setExpandedProjectId(expandedProjectId === project._id ? null : project._id)}
+                              >
+                                {expandedProjectId === project._id ? "Masquer" : "Commentaires"}
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="primary"
                                 onClick={() => {
-                                  navigate(`/projects/${project._id}`);
+                                  navigate(`/member/projects/${project._id}`);
                                 }}
                               >
                                 Voir les tâches
                               </Button>
+                            </>
+                          )}
+                          {isAdmin && (
+                            <>
                               <span className="text-gray-400 text-sm ml-2 self-center">Accès en lecture seule</span>
                             </>
                           )}
@@ -390,9 +412,9 @@ export default function ProjectTable({ onEdit, refreshTrigger, isAdmin = false }
                     </TableRow>
 
                     {/* Section de commentaires expansible - uniquement pour les non-admins */}
-                    {!isAdmin && expandedProjectId === project._id && (
+                    {(!isAdmin && expandedProjectId === project._id) && (
                       <TableRow>
-                        <TableCell className="px-4 py-4 bg-gray-50 dark:bg-gray-800" colSpan={5}>
+                        <TableCell className="px-4 py-4 bg-gray-50 dark:bg-gray-800" colSpan={6}>
                           <CommentSection projectId={project._id} />
                         </TableCell>
                       </TableRow>

@@ -76,20 +76,57 @@ const MemberTasks: React.FC = () => {
     setError("");
 
     try {
-      // Fetch all tasks
-      const tasksResponse = await axios.get("http://localhost:5000/tasks");
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
 
-      // Filter tasks assigned to the current user
-      const userTasks = tasksResponse.data.filter(
-        (task: Task) => task.assignedTo?._id === userId
-      );
+      console.log("Member ID:", userId);
 
-      setTasks(userTasks);
-      setFilteredTasks(userTasks);
+      try {
+        // Fetch tasks for projects where the user is a member
+        console.log("Fetching tasks for member projects:", userId);
+        const tasksResponse = await axios.get(`http://localhost:5000/tasks/member-projects/${userId}`);
+        console.log("Tasks response:", tasksResponse.data);
 
-      // Fetch projects for filtering
+        // Filter tasks to show only those assigned to the current user
+        const userTasks = tasksResponse.data.filter(
+          (task: Task) => task.assignedTo?._id === userId
+        );
+        console.log("Filtered tasks assigned to user:", userTasks);
+
+        setTasks(userTasks);
+        setFilteredTasks(userTasks);
+      } catch (err: any) {
+        console.error("Error fetching tasks for member projects:", err);
+        // Fallback: récupérer toutes les tâches si la route spécifique échoue
+        console.log("Falling back to fetching all tasks");
+        const allTasksResponse = await axios.get("http://localhost:5000/tasks");
+        // Filtrer manuellement les tâches assignées à ce membre
+        const userTasks = allTasksResponse.data.filter(
+          (task: Task) => task.assignedTo?._id === userId
+        );
+        console.log("Filtered tasks from all tasks:", userTasks);
+        setTasks(userTasks);
+        setFilteredTasks(userTasks);
+      }
+
+      // Fetch projects for filtering (only projects where the user is a member)
       const projectsResponse = await axios.get("http://localhost:5000/projects");
-      setProjects(projectsResponse.data);
+      const userProjects = projectsResponse.data.filter((project: any) => {
+        // Check if user is a team member (using members array from backend)
+        const isTeamMember = project.members?.some((member: any) =>
+          member.user._id === userId || member.user === userId
+        );
+
+        // Check if user is in teamMembers array (frontend structure)
+        const isInTeamMembers = project.teamMembers?.some((member: any) =>
+          member._id === userId
+        );
+
+        return isTeamMember || isInTeamMembers;
+      });
+
+      setProjects(userProjects);
     } catch (err: any) {
       setError(err.message || "Failed to fetch data");
       toastManager.addToast("Error loading tasks", "error", 5000);

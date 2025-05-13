@@ -56,9 +56,30 @@ const ProjectDetails: React.FC = () => {
         const projectResponse = await axios.get(`http://localhost:5000/projects/${projectId}`);
         setProject(projectResponse.data);
 
-        // Récupérer les tâches associées au projet
-        const tasksResponse = await axios.get(`http://localhost:5000/tasks/project/${projectId}`);
-        setTasks(tasksResponse.data);
+        // Récupérer toutes les tâches associées au projet
+        console.log(`Récupération des tâches pour le projet ${projectId}...`);
+        const token = localStorage.getItem("authToken");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        try {
+          const tasksResponse = await axios.get(
+            `http://localhost:5000/tasks/project/${projectId}`,
+            { headers }
+          );
+          console.log(`Tâches récupérées: ${tasksResponse.data.length}`);
+
+          // Afficher les détails des tâches pour le débogage
+          if (tasksResponse.data.length > 0) {
+            console.log("Exemple de tâche récupérée:", tasksResponse.data[0]);
+          } else {
+            console.log("Aucune tâche trouvée pour ce projet");
+          }
+
+          setTasks(tasksResponse.data);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des tâches:", error);
+          throw error;
+        }
       } catch (err: any) {
         console.error("Error fetching project details:", err);
         setError(err.response?.data?.message || err.message || "Failed to fetch project details");

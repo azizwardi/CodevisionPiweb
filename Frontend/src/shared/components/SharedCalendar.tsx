@@ -28,11 +28,13 @@ interface ValidationErrors {
 interface SharedCalendarProps {
   title?: string;
   description?: string;
+  isMember?: boolean;
 }
 
 const SharedCalendar: React.FC<SharedCalendarProps> = ({
   title = "Calendrier",
-  description = "Calendrier des événements"
+  description = "Calendrier des événements",
+  isMember = false
 }) => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
@@ -102,6 +104,14 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
+    // Si c'est un membre, il ne peut pas modifier les événements
+    if (isMember) {
+      // Afficher les détails de l'événement en lecture seule
+      const event = clickInfo.event;
+      alert(`Événement: ${event.title}\nDate de début: ${event.start ? new Date(event.start).toLocaleDateString() : 'Non définie'}\nDate de fin: ${event.end ? new Date(event.end).toLocaleDateString() : 'Non définie'}`);
+      return;
+    }
+
     const event = clickInfo.event;
     setSelectedEvent(event as unknown as CalendarEvent);
     setEventTitle(event.title);
@@ -362,12 +372,12 @@ const SharedCalendar: React.FC<SharedCalendarProps> = ({
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             headerToolbar={{
-              left: "prev,next addEventButton",
+              left: isMember ? "prev,next" : "prev,next addEventButton",
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
             events={events}
-            selectable={true}
+            selectable={!isMember}
             select={handleDateSelect}
             eventClick={handleEventClick}
             eventContent={renderEventContent}

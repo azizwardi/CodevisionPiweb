@@ -30,15 +30,21 @@ exports.getProjectsByCreator = async (req, res) => {
 // Récupérer un projet par son ID
 exports.getProjectById = async (req, res) => {
   try {
-    const project = await Project.findById(req.params.projectId);
+    const project = await Project.findById(req.params.projectId)
+      .populate('creator')
+      .populate('members.user');
+
     if (!project) {
       return res.status(404).json({ message: "Projet non trouvé" });
     }
+
+    console.log(`Projet récupéré: ${project._id}, Membres: ${project.members.length}`);
     res.status(200).json(project);
   } catch (error) {
+    console.error("Erreur lors de la récupération du projet:", error);
     res
       .status(500)
-      .json({ message: "Erreur lors de la récupération du projet", error });
+      .json({ message: "Erreur lors de la récupération du projet", error: error.message });
   }
 };
 
