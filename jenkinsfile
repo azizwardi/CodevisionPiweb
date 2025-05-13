@@ -658,7 +658,7 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)(\$\$|/)'
 
   prometheus:
     image: ${PROMETHEUS_IMAGE}
