@@ -242,7 +242,9 @@ server {
                     // Create unique names for containers, networks, and volumes
                     def uniqueSuffix = "${BUILD_NUMBER}"
 
-                    writeFile file: 'docker-compose.prod.yml', text: """
+                    // Write the docker-compose file with explicit content
+                    sh """
+                    cat > docker-compose.prod.yml << 'EOL'
 version: '3.8'
 services:
   db:
@@ -250,8 +252,8 @@ services:
     container_name: db-${uniqueSuffix}
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: \${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: \${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
       - "${mongoPort}:27017"
     volumes:
@@ -267,8 +269,8 @@ services:
       - db
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://\${MONGO_USER}:\${MONGO_PASSWORD}@db-${uniqueSuffix}:27017/codevisionpiweb?authSource=admin
-      - JWT_SECRET=\${JWT_SECRET}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@db-${uniqueSuffix}:27017/codevisionpiweb?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
       - PORT=5000
     ports:
       - "${backendPort}:5000"
@@ -288,13 +290,16 @@ services:
 
 networks:
   app-network-${uniqueSuffix}:
-    name: app-network-${uniqueSuffix}
     driver: bridge
 
 volumes:
   mongo-data-${uniqueSuffix}:
-    name: mongo-data-${uniqueSuffix}
-"""
+EOL
+
+                    # Display the content of the file for debugging
+                    echo "Docker Compose file content:"
+                    cat docker-compose.prod.yml
+                    """
                 }
             }
         }
@@ -327,13 +332,30 @@ volumes:
                         # Login to Docker registry if needed for pulling images
                         echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin http://192.168.33.10:8083
 
-                        # Stop and remove existing containers if they exist
+                        # First, check if there are any existing containers with the same name
+                        echo "Checking for existing containers with the same names..."
+
+                        # Use docker-compose down if the file exists from a previous run
+                        if [ -f docker-compose.prod.yml ]; then
+                            echo "Using docker-compose down to clean up previous deployment..."
+                            BACKEND_IMAGE=${BACKEND_IMAGE} \\
+                            FRONTEND_IMAGE=${FRONTEND_IMAGE} \\
+                            MONGO_USER=${MONGO_USER} \\
+                            MONGO_PASSWORD=${MONGO_PASSWORD} \\
+                            JWT_SECRET=${JWT_SECRET} \\
+                            docker-compose -f docker-compose.prod.yml down -v || true
+                        fi
+
+                        # Also try direct container removal as a backup
                         echo "Stopping and removing existing containers..."
                         docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
                         docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
 
                         # Remove existing network if it exists
                         docker network rm app-network-${BUILD_NUMBER} || true
+
+                        # Remove existing volume if it exists
+                        docker volume rm mongo-data-${BUILD_NUMBER} || true
 
                         # Clean up old deployments (optional, keep last 3 builds)
                         echo "Cleaning up old deployments..."
