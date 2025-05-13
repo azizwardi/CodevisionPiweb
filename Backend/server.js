@@ -406,6 +406,33 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Handle messages being marked as read
+  socket.on('messagesRead', async (data) => {
+    try {
+      const { teamId, userId, messageIds } = data;
+
+      if (!teamId || !userId || !messageIds || !messageIds.length) {
+        console.error('Socket.IO: Invalid messagesRead event data', data);
+        return;
+      }
+
+      console.log(`Socket.IO: User ${userId} marked messages as read in team ${teamId}:`, messageIds);
+
+      // Broadcast to all team members that messages were read
+      socket.broadcast.to(`team_${teamId}`).emit('messagesRead', {
+        teamId,
+        userId,
+        messageIds,
+        timestamp: new Date().toISOString()
+      });
+
+      // Update the database (this is already done via API call from the client)
+      // But we could add additional logic here if needed
+    } catch (error) {
+      console.error('Socket.IO: Error handling messagesRead event:', error);
+    }
+  });
+
   // Handle direct message sending via socket
   socket.on("sendTeamMessage", async (data) => {
     try {
@@ -444,12 +471,13 @@ io.on("connection", (socket) => {
       console.log(`Socket.IO: Broadcasting message to team_${teamId}:`, messageWithTempId);
 
       // Emit to all team members including sender
-      io.to(`team_${teamId}`).emit("newTeamMessage", messageWithTempId);
+      // Use broadcast.to to send to all sockets in the room EXCEPT the sender
+      socket.broadcast.to(`team_${teamId}`).emit("newTeamMessage", messageWithTempId);
 
-      // Also emit directly to the sender to ensure they receive it
+      // Emit directly to the sender with a different event to avoid duplication
       if (socket.id) {
         console.log(`Socket.IO: Also emitting directly to sender socket ${socket.id}`);
-        socket.emit("newTeamMessage", messageWithTempId);
+        socket.emit("yourMessageSent", messageWithTempId);
       }
 
       console.log(`Socket.IO: Team message sent and saved to database`);

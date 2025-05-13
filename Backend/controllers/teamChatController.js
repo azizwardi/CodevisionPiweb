@@ -146,12 +146,9 @@ exports.sendMessage = async (req, res) => {
     console.log("Populated message:", populatedMessage);
 
     // Emit socket event for real-time updates
-    if (global.io) {
-      console.log(`Emitting newTeamMessage event to team_${teamId}`);
-      global.io.to(`team_${teamId}`).emit("newTeamMessage", populatedMessage);
-    } else {
-      console.log("Socket.io not available for real-time updates");
-    }
+    // Note: We're not emitting here anymore because the socket.io event in server.js
+    // will handle the real-time updates to avoid duplication
+    console.log("Message saved to database, socket.io events will handle real-time updates");
 
     res.status(201).json({
       message: "Message sent successfully",

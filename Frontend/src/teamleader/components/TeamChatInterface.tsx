@@ -91,8 +91,9 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
         console.log('TeamLeader - Team room joined confirmation received:', data);
       });
 
+      // Handle messages from other users
       newSocket.on('newTeamMessage', (message: any) => {
-        console.log('TeamLeader - New team message received:', message);
+        console.log('TeamLeader - New team message received from another user:', message);
 
         // Check if this message already exists in our state
         setMessages(prevMessages => {
@@ -102,48 +103,34 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
             return prevMessages;
           }
 
-          // If this is a message from another user, just add it
-          if (message.sender._id !== userId) {
-            console.log('TeamLeader - Adding message from another user');
+          // Force scroll to bottom
+          setTimeout(() => {
+            scrollToBottom();
+          }, 50);
 
-            // Force scroll to bottom
-            setTimeout(() => {
-              scrollToBottom();
-            }, 50);
+          return [...prevMessages, message];
+        });
+      });
 
-            return [...prevMessages, message];
+      // Handle our own messages sent via socket
+      newSocket.on('yourMessageSent', (message: any) => {
+        console.log('TeamLeader - Your message was sent and saved:', message);
+
+        // Process message to ensure correct display name
+        const processedMessage = {
+          ...message,
+          sender: {
+            ...message.sender,
+            username: 'You' // Always set username to 'You' for current user
           }
+        };
 
-          // If this is our own message, make sure it has the right display name
-          const processedMessage = {
-            ...message,
-            sender: {
-              ...message.sender,
-              username: 'You' // Always set username to 'You' for current user
-            }
-          };
-
-          // If this is our own message, check if we have a temporary version
-          if (message.tempMessageId) {
-            const tempIndex = prevMessages.findIndex(m => m._id === message.tempMessageId);
-
-            if (tempIndex !== -1) {
-              console.log('TeamLeader - Replacing temporary message with real one');
-              const newMessages = [...prevMessages];
-              newMessages[tempIndex] = processedMessage;
-
-              // Force scroll to bottom
-              setTimeout(() => {
-                scrollToBottom();
-              }, 50);
-
-              return newMessages;
-            }
-          }
-
-          // If we get here, it's our message but we don't have a temp version
-          // Just add it to the list
-          console.log('TeamLeader - Adding our own message (no temp found)');
+        // Always add the message to the UI
+        // Since we're not adding temporary messages anymore, this is the first time
+        // the message appears in the UI
+        setMessages(prevMessages => {
+          // Add the new message to the list
+          console.log('TeamLeader - Adding our message to the UI');
 
           // Force scroll to bottom
           setTimeout(() => {
@@ -170,6 +157,26 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
 
         if (data.tempMessageId) {
           toastManager.addToast('Failed to send message', 'error', 5000);
+        }
+      });
+
+      // Handle messages read by other users
+      newSocket.on('messagesRead', (data: any) => {
+        console.log('TeamLeader - Messages read event received:', data);
+
+        if (data.userId !== userId) {
+          // Update read status for messages
+          setMessages(prevMessages =>
+            prevMessages.map(msg => {
+              if (data.messageIds.includes(msg._id) && !msg.readBy.includes(data.userId)) {
+                return {
+                  ...msg,
+                  readBy: [...msg.readBy, data.userId]
+                };
+              }
+              return msg;
+            })
+          );
         }
       });
 
@@ -205,6 +212,21 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Mark messages as read when they are visible
+  useEffect(() => {
+    if (messages.length > 0 && userId) {
+      // Get all unread messages not sent by current user
+      const unreadMessages = messages.filter(
+        msg => msg.sender._id !== userId && (!msg.readBy || !msg.readBy.includes(userId))
+      );
+
+      if (unreadMessages.length > 0) {
+        console.log(`TeamLeader - Marking ${unreadMessages.length} messages as read`);
+        markMessagesAsRead(unreadMessages.map(msg => msg._id));
+      }
+    }
+  }, [messages, userId]);
 
   const fetchMessages = async () => {
     try {
@@ -327,14 +349,11 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
         readBy: [userId]
       };
 
-      // Add the temporary message to the UI immediately
-      console.log('TeamLeader - Adding temporary message to UI');
-      setMessages(prevMessages => [...prevMessages, tempMessage]);
+      // Store the temporary message ID for later reference
+      console.log('TeamLeader - Created temporary message with ID:', tempMessage._id);
 
-      // Scroll to bottom
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+      // We'll add the message to the UI when we receive the socket event
+      // This prevents duplicate messages
 
       // Send the message to the server
       try {
@@ -413,6 +432,44 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
     return user.username || "User";
   };
 
+  // Function to mark messages as read
+  const markMessagesAsRead = async (messageIds: string[]) => {
+    if (!messageIds.length || !teamId || !userId) return;
+
+    try {
+      const response = await axios.put(`http://localhost:5000/team-chat/${teamId}/messages/read`, {
+        userId,
+        messageIds
+      });
+
+      console.log('TeamLeader - Messages marked as read:', response.data);
+
+      // Update local message state to reflect read status
+      setMessages(prevMessages =>
+        prevMessages.map(msg => {
+          if (messageIds.includes(msg._id)) {
+            return {
+              ...msg,
+              readBy: [...(msg.readBy || []), userId]
+            };
+          }
+          return msg;
+        })
+      );
+
+      // Emit socket event to notify other users
+      if (socket && socket.connected) {
+        socket.emit('messagesRead', {
+          teamId,
+          userId,
+          messageIds
+        });
+      }
+    } catch (error) {
+      console.error('TeamLeader - Error marking messages as read:', error);
+    }
+  };
+
   const [showMembers, setShowMembers] = useState(false);
 
   return (
@@ -475,7 +532,6 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
                 const isCurrentUser = message.sender._id === userId;
                 const showDate = index === 0 ||
                   formatDate(messages[index-1].createdAt) !== formatDate(message.createdAt);
-                const isTempMessage = message._id.startsWith('temp-');
 
                 return (
                   <React.Fragment key={message._id}>
@@ -511,6 +567,21 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
                           <span className="text-xs opacity-70">
                             {formatTime(message.createdAt)}
                           </span>
+                          {isCurrentUser && (
+                            <span className="ml-1">
+                              {message.readBy && message.readBy.length > 1 ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {isCurrentUser && (
