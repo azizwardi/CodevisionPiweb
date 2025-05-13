@@ -90,7 +90,6 @@ pipeline {
                         -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/*.min.js,**/*.css,**/*.html,**/*.json,**/*.properties,**/*.bat,**/*.sh,**/*.xml,**/*.md \\
                         -Dsonar.javascript.lcov.reportPaths=**/coverage/lcov.info \\
                         -Dsonar.javascript.node.maxspace=4096 \\
-                        -Dsonar.scanner.metadataFilePath=.scannerwork/report-task.txt \\
                         -Dsonar.nodejs.executable=/usr/bin/node \\
                         -Dsonar.sourceEncoding=UTF-8 \\
                         -Dsonar.host.url=${SONAR_HOST_URL} \\
