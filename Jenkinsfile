@@ -337,15 +337,47 @@ volumes:
 
                         # Clean up old deployments (optional, keep last 3 builds)
                         echo "Cleaning up old deployments..."
-                        for i in \$(seq 1 \$((${BUILD_NUMBER}-3))); do
-                            if [ \$i -gt 0 ]; then
-                                echo "Removing deployment \$i if it exists..."
-                                docker stop db-\$i backend-\$i frontend-\$i || true
-                                docker rm db-\$i backend-\$i frontend-\$i || true
-                                docker network rm app-network-\$i || true
-                                docker volume rm mongo-data-\$i || true
-                            fi
-                        done
+
+                        # Get list of existing containers to avoid unnecessary commands
+                        EXISTING_CONTAINERS=\$(docker ps -a --format '{{.Names}}')
+                        EXISTING_NETWORKS=\$(docker network ls --format '{{.Name}}')
+                        EXISTING_VOLUMES=\$(docker volume ls --format '{{.Name}}')
+
+                        # Only clean up builds from 10 builds ago to avoid too much log noise
+                        START_CLEAN=\$((${BUILD_NUMBER}-10))
+                        if [ \$START_CLEAN -lt 1 ]; then
+                            START_CLEAN=1
+                        fi
+
+                        END_CLEAN=\$((${BUILD_NUMBER}-3))
+                        if [ \$END_CLEAN -gt \$START_CLEAN ]; then
+                            echo "Cleaning up deployments \$START_CLEAN through \$END_CLEAN..."
+
+                            for i in \$(seq \$START_CLEAN \$END_CLEAN); do
+                                # Check if containers exist before trying to remove them
+                                for CONTAINER in db-\$i backend-\$i frontend-\$i; do
+                                    if echo "\$EXISTING_CONTAINERS" | grep -q "\$CONTAINER"; then
+                                        echo "Removing container \$CONTAINER..."
+                                        docker stop \$CONTAINER || true
+                                        docker rm \$CONTAINER || true
+                                    fi
+                                done
+
+                                # Check if network exists before trying to remove it
+                                if echo "\$EXISTING_NETWORKS" | grep -q "app-network-\$i"; then
+                                    echo "Removing network app-network-\$i..."
+                                    docker network rm app-network-\$i || true
+                                fi
+
+                                # Check if volume exists before trying to remove it
+                                if echo "\$EXISTING_VOLUMES" | grep -q "mongo-data-\$i"; then
+                                    echo "Removing volume mongo-data-\$i..."
+                                    docker volume rm mongo-data-\$i || true
+                                fi
+                            done
+                        else
+                            echo "No old deployments to clean up."
+                        fi
 
                         # Run docker-compose with environment variables
                         echo "Starting new containers..."
