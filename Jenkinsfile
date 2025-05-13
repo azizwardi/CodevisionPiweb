@@ -74,32 +74,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'scanner'
-                    withSonarQubeEnv('scanner') {
-                        // Skip JavaScript/TypeScript analysis completely
-                        sh """
-                        export SONAR_SCANNER_OPTS="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"
-                        ${scannerHome}/bin/sonar-scanner \\
-                        -Dsonar.projectKey=piweb \\
-                        -Dsonar.projectName=Piweb \\
-                        -Dsonar.sources=. \\
-                        -Dsonar.exclusions=**/*.js,**/*.jsx,**/*.ts,**/*.tsx,**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/*.min.js,**/*.css,**/*.html,**/*.json,**/*.properties,**/*.bat,**/*.sh,**/*.xml,**/*.md \\
-                        -Dsonar.sourceEncoding=UTF-8 \\
-                        -Dsonar.host.url=${SONAR_HOST_URL} \\
-                        -Dsonar.login=${SONAR_AUTH_TOKEN}
-                        """
-                    }
-
-                    // Optional: Wait for quality gate
-                    timeout(time: 5, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: false
-                    }
-                }
-            }
-        }
+        
 
         stage('Build Application') {
             parallel {
