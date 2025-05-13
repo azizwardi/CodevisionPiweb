@@ -22,6 +22,28 @@ pipeline {
     }
 
     stages {
+        stage('Setup') {
+            steps {
+                script {
+                    // Configure Docker daemon to accept insecure registries
+                    sh '''
+                    # Check if we have sudo access (for Jenkins agent)
+                    if command -v sudo &> /dev/null; then
+                        # Create or update Docker daemon configuration
+                        echo '{ "insecure-registries" : ["192.168.33.10:8083", "192.168.33.10:8081"] }' | sudo tee /etc/docker/daemon.json || true
+                        # Restart Docker daemon if possible
+                        sudo systemctl restart docker || true
+                    else
+                        echo "No sudo access, will configure Docker client only"
+                        # Configure Docker client
+                        mkdir -p ~/.docker
+                        echo '{ "insecure-registries" : ["192.168.33.10:8083", "192.168.33.10:8081"] }' > ~/.docker/config.json
+                    fi
+                    '''
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -295,6 +317,11 @@ volumes:
                     withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                         // Login to Docker registry using credentials
                         sh '''
+                            # Configure Docker to use insecure registry if needed
+                            mkdir -p ~/.docker
+                            echo '{ "insecure-registries" : ["192.168.33.10:8083", "192.168.33.10:8081"] }' > ~/.docker/config.json
+
+                            # Login to registry
                             echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin http://192.168.33.10:8083
                         '''
 
@@ -313,6 +340,10 @@ volumes:
                     withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                         // Deploy using docker-compose
                         sh """
+                        # Configure Docker to use insecure registry if needed
+                        mkdir -p ~/.docker
+                        echo '{ "insecure-registries" : ["192.168.33.10:8083", "192.168.33.10:8081"] }' > ~/.docker/config.json
+
                         # Login to Docker registry if needed for pulling images
                         echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin http://192.168.33.10:8083
 
