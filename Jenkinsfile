@@ -55,50 +55,31 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        // Create a simple build script
-                        writeFile file: 'build.sh', text: '''#!/bin/sh
-export NODE_OPTIONS="--max-old-space-size=4096"
-echo "Building backend..."
+                        // Create a simple directory for the build output
+                        sh 'mkdir -p dev_build'
 
-# Create a simple webpack config if needed
-if [ ! -f webpack.dev.js ]; then
-  cat > webpack.dev.js << 'EOF'
-const path = require('path');
+                        // Copy server files to the build directory
+                        sh 'cp -r server.js routes models controllers middleware config utils dev_build/'
 
-module.exports = {
-  entry: './server.js',
-  target: 'node',
-  mode: 'development',
-  output: {
-    path: path.resolve(__dirname, 'dev_build'),
-    filename: 'main.js'
+                        // Create a simple package.json for production
+                        writeFile file: 'dev_build/package.json', text: '''{
+  "name": "backend-prod",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
   },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      }
-    ]
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.10.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1"
   }
-};
-EOF
-fi
+}'''
 
-# Install necessary packages
-npm install --no-save --yes webpack webpack-cli babel-loader @babel/core @babel/preset-env
-
-# Run webpack
-npx webpack --config webpack.dev.js --mode development
-'''
-                        sh 'chmod +x build.sh'
-                        sh './build.sh'
+                        echo "Backend build completed successfully"
                     }
                 }
             }
@@ -108,44 +89,27 @@ npx webpack --config webpack.dev.js --mode development
             steps {
                 dir('Frontend') {
                     script {
-                        // Create a simplified build script that doesn't rely on TypeScript project references
-                        writeFile file: 'build.sh', text: '''#!/bin/sh
-export NODE_OPTIONS="--max-old-space-size=4096"
-echo "Building frontend..."
+                        // Install required dependencies
+                        sh 'npm install --no-save --yes vite@latest @vitejs/plugin-react vite-plugin-svgr'
 
-# Ensure Vite is installed (with --yes to avoid prompts)
-npm install --no-save --yes vite@latest @vitejs/plugin-react vite-plugin-svgr
+                        // Create a simple vite config
+                        writeFile file: 'vite.simple.config.js', text: '''
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-# Create a simplified tsconfig for the build
-cat > tsconfig.simple.json << 'EOF'
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src"]
-}
-EOF
-
-# Skip TypeScript build and just use Vite directly
-echo "Running Vite build..."
-npx vite build --config vite.config.js
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: "dist",
+    emptyOutDir: true
+  }
+});
 '''
-                        sh 'chmod +x build.sh'
-                        sh './build.sh'
+
+                        // Build using the simple config
+                        sh 'export NODE_OPTIONS="--max-old-space-size=4096" && npx vite build --config vite.simple.config.js'
+
+                        echo "Frontend build completed successfully"
                     }
                 }
             }
@@ -160,10 +124,8 @@ npx vite build --config vite.config.js
                                 writeFile file: 'Dockerfile.prod', text: '''
 FROM node:18-alpine
 WORKDIR /app
-COPY package*.json ./
+COPY dev_build .
 RUN npm ci --only=production
-COPY . .
-COPY dev_build ./dist
 EXPOSE 5000
 CMD ["node", "server.js"]
 '''
