@@ -233,58 +233,67 @@ server {
         stage('Create Docker Compose File') {
             steps {
                 script {
+                    // Calculate port offsets based on build number to avoid conflicts
+                    def buildNumberInt = BUILD_NUMBER.toInteger()
+                    def backendPort = 5000 + (buildNumberInt % 10) // Use build number modulo 10 to get a range of 10 ports
+                    def frontendPort = 8000 + (buildNumberInt % 10) // Frontend on 8000-8009 range
+                    def mongoPort = 27017 + (buildNumberInt % 10) // MongoDB on 27017-27026 range
+
+                    // Create unique names for containers, networks, and volumes
+                    def uniqueSuffix = "${BUILD_NUMBER}"
+
                     writeFile file: 'docker-compose.prod.yml', text: """
 version: '3.8'
 services:
   db:
     image: mongo:4.2
-    container_name: db
+    container_name: db-${uniqueSuffix}
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: \${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: \${MONGO_PASSWORD}
     ports:
-      - "27017:27017"
+      - "${mongoPort}:27017"
     volumes:
-      - mongo-data:/data/db
+      - mongo-data-${uniqueSuffix}:/data/db
     networks:
-      - app-network
+      - app-network-${uniqueSuffix}
 
   backend:
     image: ${BACKEND_IMAGE}
-    container_name: backend
+    container_name: backend-${uniqueSuffix}
     restart: always
     depends_on:
       - db
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://\${MONGO_USER}:\${MONGO_PASSWORD}@db:27017/codevisionpiweb?authSource=admin
+      - MONGO_URI=mongodb://\${MONGO_USER}:\${MONGO_PASSWORD}@db-${uniqueSuffix}:27017/codevisionpiweb?authSource=admin
       - JWT_SECRET=\${JWT_SECRET}
       - PORT=5000
     ports:
-      - "5000:5000"
+      - "${backendPort}:5000"
     networks:
-      - app-network
+      - app-network-${uniqueSuffix}
 
   frontend:
     image: ${FRONTEND_IMAGE}
-    container_name: frontend
+    container_name: frontend-${uniqueSuffix}
     restart: always
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "${frontendPort}:80"
     networks:
-      - app-network
+      - app-network-${uniqueSuffix}
 
 networks:
-  app-network:
-    name: app-network
+  app-network-${uniqueSuffix}:
+    name: app-network-${uniqueSuffix}
     driver: bridge
 
 volumes:
-  mongo-data:
-    name: mongo-data
+  mongo-data-${uniqueSuffix}:
+    name: mongo-data-${uniqueSuffix}
 """
                 }
             }
@@ -320,11 +329,23 @@ volumes:
 
                         # Stop and remove existing containers if they exist
                         echo "Stopping and removing existing containers..."
-                        docker stop db backend frontend || true
-                        docker rm db backend frontend || true
+                        docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
+                        docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
 
                         # Remove existing network if it exists
-                        docker network rm app-network || true
+                        docker network rm app-network-${BUILD_NUMBER} || true
+
+                        # Clean up old deployments (optional, keep last 3 builds)
+                        echo "Cleaning up old deployments..."
+                        for i in \$(seq 1 \$((${BUILD_NUMBER}-3))); do
+                            if [ \$i -gt 0 ]; then
+                                echo "Removing deployment \$i if it exists..."
+                                docker stop db-\$i backend-\$i frontend-\$i || true
+                                docker rm db-\$i backend-\$i frontend-\$i || true
+                                docker network rm app-network-\$i || true
+                                docker volume rm mongo-data-\$i || true
+                            fi
+                        done
 
                         # Run docker-compose with environment variables
                         echo "Starting new containers..."
@@ -346,7 +367,39 @@ volumes:
             cleanWs()
         }
         success {
-            echo 'Pipeline completed successfully!'
+            script {
+                // Calculate the ports used for this deployment
+                def buildNumberInt = BUILD_NUMBER.toInteger()
+                def backendPort = 5000 + (buildNumberInt % 10)
+                def frontendPort = 8000 + (buildNumberInt % 10)
+                def mongoPort = 27017 + (buildNumberInt % 10)
+
+                echo """
+                ========================================
+                Pipeline completed successfully!
+                ========================================
+
+                Deployment Information:
+                - Build Number: ${BUILD_NUMBER}
+                - Container Names: db-${BUILD_NUMBER}, backend-${BUILD_NUMBER}, frontend-${BUILD_NUMBER}
+
+                Access URLs:
+                - Frontend: http://192.168.33.10:${frontendPort}
+                - Backend API: http://192.168.33.10:${backendPort}
+                - MongoDB: mongodb://root:example@192.168.33.10:${mongoPort}
+
+                Images:
+                - Backend: ${BACKEND_IMAGE}
+                - Frontend: ${FRONTEND_IMAGE}
+
+                To stop this deployment:
+                docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
+                docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
+                docker network rm app-network-${BUILD_NUMBER}
+                docker volume rm mongo-data-${BUILD_NUMBER}
+                ========================================
+                """
+            }
         }
         failure {
             echo 'Pipeline failed. Check logs for details.'
