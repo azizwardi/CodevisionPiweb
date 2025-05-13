@@ -49,6 +49,7 @@ import TeamLeaderTasks from "./teamleader/pages/TeamLeaderTasks";
 import TeamLeaderCalendar from "./teamleader/pages/TeamLeaderCalendar";
 import TeamLeaderProjectDetails from "./teamleader/pages/ProjectDetails";
 import TeamLeaderTeam from "./teamleader/pages/TeamLeaderTeam";
+import TeamLeaderChat from "./teamleader/pages/TeamLeaderChat";
 
 // Member imports
 import MemberHomeLayout from "./member/layout/MemberHomeLayout";
@@ -59,6 +60,7 @@ import MemberProjects from "./member/pages/MemberProjects";
 import MemberCalendar from "./member/pages/MemberCalendar";
 import EditMemberTask from "./member/pages/EditMemberTask";
 import MemberProjectDetails from "./member/pages/ProjectDetails";
+import TeamChat from "./member/pages/TeamChat";
 import ProtectedRoute from "./ProtectedRoute";
 import ProjectKanban from "./dashboard/pages/Projects/ProjectKanban";
 import AuthSuccess from "./dashboard/AuthSuccess";
@@ -144,6 +146,7 @@ export default function App() {
               <Route path="/team-leader/tasks/auto-assign" element={<AutoAssignTask />} />
               <Route path="/team-leader/calendar" element={<TeamLeaderCalendar />} />
               <Route path="/team-leader/reports" element={<div />} />
+              <Route path="/team-leader/team-chat" element={<TeamLeaderChat />} />
               <Route path="/team-leader/assistant" element={<ChatbotPage />} />
               <Route path="/team-leader/quiz-participation" element={<QuizParticipation />} />
             </Route>
@@ -162,7 +165,7 @@ export default function App() {
               <Route path="/member/projects/:projectId" element={<MemberProjectDetails />} />
               <Route path="/member/projects/:projectId/kanban" element={<ProjectKanban />} />
               <Route path="/member/time-tracking" element={<div />} />
-              <Route path="/member/team-chat" element={<div />} />
+              <Route path="/member/team-chat" element={<TeamChat />} />
               <Route path="/member/assistant" element={<ChatbotPage />} />
               <Route path="/member/quiz-participation" element={<QuizParticipation />} />
             </Route>

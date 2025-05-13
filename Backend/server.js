@@ -22,6 +22,7 @@ const skillRouter = require("./routes/skillRoutes");
 const courseRecommendationRouter = require("./routes/courseRecommendationRoutes");
 const faceVerificationRouter = require("./routes/faceVerificationRoutes");
 const teamRouter = require("./routes/teamRoutes");
+const teamChatRouter = require("./routes/teamChatRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -221,6 +222,7 @@ app.use("/certificates", require("./routes/certificateRoutes"));
 app.use("/dashboard", require("./routes/dashboardRoutes"));
 app.use("/face-verification", faceVerificationRouter);
 app.use("/teams", teamRouter);
+app.use("/team-chat", teamChatRouter);
 // Log des routes pour le débogage
 console.log("Routes des compétences:");
 skillRouter.stack.forEach((r) => {
@@ -323,6 +325,151 @@ io.on("connection", (socket) => {
 
   socket.on("error", (error) => {
     console.error("Socket.IO: Error event:", error);
+  });
+
+  // Team chat socket events
+  socket.on("joinTeam", (teamId) => {
+    if (teamId) {
+      socket.join(`team_${teamId}`);
+      console.log(`Socket.IO: User joined team chat room: team_${teamId}`);
+
+      socket.emit("teamJoined", {
+        message: `Room d'équipe rejointe avec succès: team_${teamId}`,
+        timestamp: new Date().toISOString(),
+        teamId: teamId
+      });
+
+      // Broadcast to all team members that someone joined
+      if (socket.userId) {
+        socket.to(`team_${teamId}`).emit("userJoined", {
+          userId: socket.userId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      console.log("Socket.IO: User tried to join a team room without providing a teamId");
+    }
+  });
+
+  // Leave team chat room
+  socket.on("leaveTeam", (teamId) => {
+    if (teamId) {
+      socket.leave(`team_${teamId}`);
+      console.log(`Socket.IO: User left team chat room: team_${teamId}`);
+
+      // Broadcast to all team members that someone left
+      if (socket.userId) {
+        socket.to(`team_${teamId}`).emit("userLeft", {
+          userId: socket.userId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  });
+
+  // Track online users
+  const onlineUsers = new Map(); // Map to store online users by team
+
+  socket.on("userOnline", ({ userId, teamId }) => {
+    if (!userId || !teamId) return;
+
+    // Store user ID in socket for reference
+    socket.userId = userId;
+
+    // Add user to online users for this team
+    if (!onlineUsers.has(teamId)) {
+      onlineUsers.set(teamId, new Set());
+    }
+    onlineUsers.get(teamId).add(userId);
+
+    // Broadcast updated online users list to all team members
+    const onlineUsersArray = Array.from(onlineUsers.get(teamId));
+    io.to(`team_${teamId}`).emit("onlineUsers", onlineUsersArray);
+
+    console.log(`User ${userId} is now online in team ${teamId}`);
+    console.log(`Online users in team ${teamId}:`, onlineUsersArray);
+  });
+
+  socket.on("userOffline", ({ userId, teamId }) => {
+    if (!userId || !teamId) return;
+
+    // Remove user from online users for this team
+    if (onlineUsers.has(teamId)) {
+      onlineUsers.get(teamId).delete(userId);
+
+      // Broadcast updated online users list to all team members
+      const onlineUsersArray = Array.from(onlineUsers.get(teamId));
+      io.to(`team_${teamId}`).emit("onlineUsers", onlineUsersArray);
+
+      console.log(`User ${userId} is now offline in team ${teamId}`);
+      console.log(`Online users in team ${teamId}:`, onlineUsersArray);
+    }
+  });
+
+  // Handle direct message sending via socket
+  socket.on("sendTeamMessage", async (data) => {
+    try {
+      const { teamId, senderId, content, tempMessageId } = data;
+
+      if (!teamId || !senderId || !content) {
+        console.error("Missing required fields for team message");
+        return;
+      }
+
+      console.log(`Socket.IO: Received team message from ${senderId} to team ${teamId}`);
+
+      // Create and save the message to database
+      const TeamChatMessage = require("./models/teamChat");
+      const message = new TeamChatMessage({
+        team: teamId,
+        sender: senderId,
+        content,
+        readBy: [senderId] // Sender has read their own message
+      });
+
+      const savedMessage = await message.save();
+
+      // Populate sender information
+      const populatedMessage = await TeamChatMessage.findById(savedMessage._id)
+        .populate("sender", "username firstName lastName email avatarUrl");
+
+      const messageObject = populatedMessage.toObject();
+
+      // Add tempMessageId to the message object
+      const messageWithTempId = {
+        ...messageObject,
+        tempMessageId // Include the temp ID so client can replace temp message
+      };
+
+      console.log(`Socket.IO: Broadcasting message to team_${teamId}:`, messageWithTempId);
+
+      // Emit to all team members including sender
+      io.to(`team_${teamId}`).emit("newTeamMessage", messageWithTempId);
+
+      // Also emit directly to the sender to ensure they receive it
+      if (socket.id) {
+        console.log(`Socket.IO: Also emitting directly to sender socket ${socket.id}`);
+        socket.emit("newTeamMessage", messageWithTempId);
+      }
+
+      console.log(`Socket.IO: Team message sent and saved to database`);
+
+      // Send confirmation to the sender
+      socket.emit("messageSent", {
+        success: true,
+        messageId: savedMessage._id,
+        tempMessageId,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error handling socket team message:", error);
+      // Notify sender of error
+      socket.emit("messageError", {
+        error: "Failed to save message to database",
+        timestamp: new Date().toISOString(),
+        tempMessageId: data.tempMessageId
+      });
+    }
   });
 });
 

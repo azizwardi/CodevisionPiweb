@@ -6,6 +6,7 @@ const {
   updateTask,
   deleteTask,
   getTasksByProject,
+  getTasksByProjectSimple,
   getTasksByCreator,
   getTasksForMemberProjects,
   createTestTask
@@ -19,6 +20,9 @@ router.get("/", getAllTasks);
 // Routes spécifiques avec des préfixes (doivent être définies avant les routes paramétrées génériques)
 // Get tasks by project
 router.get("/project/:projectId", getTasksByProject);
+
+// Alternative route for backward compatibility
+router.get("/project-simple/:projectId", getTasksByProjectSimple);
 
 // Get tasks created by a specific user (team leader)
 router.get("/creator/:creatorId", getTasksByCreator);

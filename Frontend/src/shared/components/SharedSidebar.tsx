@@ -129,6 +129,11 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
           path: "/team-leader/team",
         },
         {
+          name: "Team Chat",
+          icon: <ChatIcon />,
+          path: "/team-leader/team-chat",
+        },
+        {
           name: "Reports",
           icon: <ListIcon />,
           path: "/team-leader/reports",

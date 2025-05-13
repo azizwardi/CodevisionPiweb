@@ -17,8 +17,9 @@ exports.getAllTasks = async (req, res) => {
   }
 };
 
-// Get tasks by project
-exports.getTasksByProject = async (req, res) => {
+// Get tasks by project (deprecated - use the more detailed version below)
+// This function is kept for backward compatibility
+exports.getTasksByProjectSimple = async (req, res) => {
   try {
     const { projectId } = req.params;
     const tasks = await Task.find({ projectId })
