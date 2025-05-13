@@ -33,7 +33,10 @@ pipeline {
                 stage('Backend Dependencies') {
                     steps {
                         dir('Backend') {
-                            sh 'npm ci'
+                            // Use --legacy-peer-deps to avoid dependency conflicts
+                            sh 'npm ci --legacy-peer-deps'
+                            // Install build dependencies explicitly
+                            sh 'npm install --no-save --yes webpack webpack-cli babel-loader'
                         }
                     }
                 }
@@ -52,8 +55,50 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        // Make sure webpack is available by using npx
-                        sh 'npx webpack --config webpack.dev.js --mode development'
+                        // Create a simple build script
+                        writeFile file: 'build.sh', text: '''#!/bin/sh
+export NODE_OPTIONS="--max-old-space-size=4096"
+echo "Building backend..."
+
+# Create a simple webpack config if needed
+if [ ! -f webpack.dev.js ]; then
+  cat > webpack.dev.js << 'EOF'
+const path = require('path');
+
+module.exports = {
+  entry: './server.js',
+  target: 'node',
+  mode: 'development',
+  output: {
+    path: path.resolve(__dirname, 'dev_build'),
+    filename: 'main.js'
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
+      }
+    ]
+  }
+};
+EOF
+fi
+
+# Install necessary packages
+npm install --no-save --yes webpack webpack-cli babel-loader @babel/core @babel/preset-env
+
+# Run webpack
+npx webpack --config webpack.dev.js --mode development
+'''
+                        sh 'chmod +x build.sh'
+                        sh './build.sh'
                     }
                 }
             }
@@ -68,8 +113,8 @@ pipeline {
 export NODE_OPTIONS="--max-old-space-size=4096"
 echo "Building frontend..."
 
-# Ensure Vite is installed
-npm install --no-save vite@latest @vitejs/plugin-react vite-plugin-svgr
+# Ensure Vite is installed (with --yes to avoid prompts)
+npm install --no-save --yes vite@latest @vitejs/plugin-react vite-plugin-svgr
 
 # Create a simplified tsconfig for the build
 cat > tsconfig.simple.json << 'EOF'
