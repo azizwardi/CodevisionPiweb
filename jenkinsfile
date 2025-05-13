@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Registry configuration
         registryCredentials = "nexus"
-        registry = "192.168.33.10:8081"
+        registry = "192.168.33.10:8083"
 
         // Image names with build number for versioning
         BACKEND_IMAGE = "${registry}/piwebapp-backend:${BUILD_NUMBER}"
@@ -291,7 +291,14 @@ volumes:
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry("http://${registry}", registryCredentials) {
+                    // Use Jenkins credentials for Docker login
+                    withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // Login to Docker registry using credentials
+                        sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin http://192.168.33.10:8083
+                        '''
+
+                        // Push images
                         sh "docker push ${BACKEND_IMAGE}"
                         sh "docker push ${FRONTEND_IMAGE}"
                     }
@@ -302,8 +309,14 @@ volumes:
         stage('Deploy Application') {
             steps {
                 script {
-                    docker.withRegistry("http://${registry}", registryCredentials) {
+                    // Use Jenkins credentials for Docker login if needed
+                    withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // Deploy using docker-compose
                         sh """
+                        # Login to Docker registry if needed for pulling images
+                        echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin http://192.168.33.10:8083
+
+                        # Run docker-compose with environment variables
                         BACKEND_IMAGE=${BACKEND_IMAGE} \\
                         FRONTEND_IMAGE=${FRONTEND_IMAGE} \\
                         MONGO_USER=${MONGO_USER} \\
