@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Registry configuration
         registryCredentials = "nexus"
-        registry = "192.168.33.10:8083"
+        registry = "192.168.33.10:8081"
 
         // Image names with build number for versioning
         BACKEND_IMAGE = "${registry}/piwebapp-backend:${BUILD_NUMBER}"
