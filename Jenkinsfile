@@ -23,7 +23,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-          v   }
+            }
         }
 
         stage('Install Dependencies') {
