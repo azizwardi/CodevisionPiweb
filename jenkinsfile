@@ -16,7 +16,9 @@ pipeline {
         // MongoDB credentials - use Jenkins credentials in production
         MONGO_USER = credentials('mongo-user')
         MONGO_PASSWORD = credentials('mongo-password')
-        JWT_SECRET = credentials('jwt-secret')
+
+        // Using a fixed JWT secret (NOT RECOMMENDED FOR PRODUCTION)
+        JWT_SECRET = "development_jwt_secret_replace_in_production"
     }
 
     stages {
