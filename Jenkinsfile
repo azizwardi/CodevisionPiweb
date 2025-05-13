@@ -13,10 +13,12 @@ pipeline {
         // Enable Docker BuildKit for faster builds
         DOCKER_BUILDKIT = "1"
 
-        // Use credentials from Jenkins credentials store
-        MONGO_USER = credentials('mongodb-user')
-        MONGO_PASSWORD = credentials('mongodb-password')
-        JWT_SECRET = credentials('jwt-secret')
+        // Using hardcoded MongoDB credentials (NOT RECOMMENDED FOR PRODUCTION)
+        MONGO_USER = "root"
+        MONGO_PASSWORD = "example"
+
+        // Using a fixed JWT secret (NOT RECOMMENDED FOR PRODUCTION)
+        JWT_SECRET = "development_jwt_secret_replace_in_production"
     }
 
     stages {
@@ -72,7 +74,7 @@ pipeline {
             }
         }
 
-
+        
 
         stage('Build Application') {
             parallel {
