@@ -25,6 +25,7 @@ const teamRouter = require("./routes/teamRoutes");
 const teamChatRouter = require("./routes/teamChatRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
+const { metricsMiddleware, register, metrics } = require('./middleware/metricsMiddleware');
 
 const passport = require("passport");
 require("./auth"); // Importe la configuration de Passport depuis auth.js
@@ -40,6 +41,20 @@ app.use(cookieParser());
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
+});
+
+// Apply metrics middleware to track request metrics
+app.use(metricsMiddleware);
+
+// Expose metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    console.error('Error generating metrics:', err);
+    res.status(500).end();
+  }
 });
 
 // Configuration CORS pour permettre l'accès aux images
@@ -256,6 +271,9 @@ global.io = io;
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
+  // Increment active connections metric
+  metrics.activeConnections.inc();
+
   // Envoyer immédiatement un message de test pour confirmer que la connexion fonctionne
   socket.emit("connectionTest", {
     message: "Connexion Socket.IO établie avec succès",
@@ -316,6 +334,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    // Decrement active connections metric
+    metrics.activeConnections.dec();
+
     console.log(
       "Socket.IO: User disconnected:",
       socket.id,
@@ -324,6 +345,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("error", (error) => {
+    // Increment error counter metric
+    metrics.errorCounter.inc({ type: 'socket', location: 'connection' });
     console.error("Socket.IO: Error event:", error);
   });
 

@@ -9,6 +9,8 @@ pipeline {
         // Image names with build number for versioning
         BACKEND_IMAGE = "${registry}/piwebapp-backend:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "${registry}/piwebapp-frontend:${BUILD_NUMBER}"
+        PROMETHEUS_IMAGE = "${registry}/piwebapp-prometheus:${BUILD_NUMBER}"
+        GRAFANA_IMAGE = "${registry}/piwebapp-grafana:${BUILD_NUMBER}"
 
         // MongoDB credentials (stored as Jenkins credentials would be better)
         MONGO_USER = "root"
@@ -68,9 +70,15 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Import metrics module
+const { register, metricsMiddleware } = require('./metrics');
+
 // Add middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add metrics middleware
+app.use(metricsMiddleware);
 
 // Add CORS support
 app.use((req, res, next) => {
@@ -92,6 +100,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
+
 // Add error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -101,6 +119,7 @@ app.use((err, req, res, next) => {
 // Start the server
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Metrics available at http://localhost:${port}/metrics`);
 });
 
 // Handle graceful shutdown
@@ -150,9 +169,73 @@ EOF
     "cookie-parser": "^1.4.7",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "prom-client": "^14.2.0"
   }
 }'''
+
+                        // Create a metrics.js file for Prometheus metrics
+                        writeFile file: 'dev_build/metrics.js', text: '''
+const promClient = require('prom-client');
+
+// Create a Registry to register the metrics
+const register = new promClient.Registry();
+
+// Add a default label which is added to all metrics
+register.setDefaultLabels({
+  app: 'piwebapp-backend'
+});
+
+// Enable the collection of default metrics
+promClient.collectDefaultMetrics({ register });
+
+// Create custom metrics
+const httpRequestDurationMicroseconds = new promClient.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]
+});
+
+const httpRequestCounter = new promClient.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+// Register the custom metrics
+register.registerMetric(httpRequestDurationMicroseconds);
+register.registerMetric(httpRequestCounter);
+
+// Middleware to track HTTP request duration and count
+const metricsMiddleware = (req, res, next) => {
+  const start = Date.now();
+
+  // Record end time and calculate duration on response finish
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const route = req.route ? req.route.path : req.path;
+    const method = req.method;
+    const statusCode = res.statusCode;
+
+    // Record metrics
+    httpRequestDurationMicroseconds
+      .labels(method, route, statusCode)
+      .observe(duration / 1000); // Convert to seconds
+
+    httpRequestCounter
+      .labels(method, route, statusCode)
+      .inc();
+  });
+
+  next();
+};
+
+module.exports = {
+  register,
+  metricsMiddleware
+};
+'''
 
                         echo "Backend build completed successfully"
                     }
@@ -272,6 +355,215 @@ server {
                         }
                     }
                 }
+                stage('Prometheus Image') {
+                    steps {
+                        script {
+                            // Create a directory for Prometheus
+                            sh "mkdir -p Prometheus"
+                            dir('Prometheus') {
+                                // Create prometheus.yml configuration file
+                                writeFile file: 'prometheus.yml', text: '''
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:5000']
+    metrics_path: /metrics
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+'''
+                                // Create Dockerfile for Prometheus
+                                writeFile file: 'Dockerfile', text: '''
+FROM prom/prometheus:latest
+COPY prometheus.yml /etc/prometheus/prometheus.yml
+EXPOSE 9090
+'''
+                                // Build Prometheus image
+                                sh "docker build -t ${PROMETHEUS_IMAGE} ."
+                            }
+                        }
+                    }
+                }
+                stage('Grafana Image') {
+                    steps {
+                        script {
+                            // Create a directory for Grafana
+                            sh "mkdir -p Grafana"
+                            dir('Grafana') {
+                                // Create datasource.yml for Grafana
+                                writeFile file: 'datasource.yml', text: '''
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+'''
+                                // Create dashboard.json for Grafana
+                                writeFile file: 'dashboard.json', text: '''
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "up",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Service Status",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "schemaVersion": 22,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "PiWeb Application Dashboard",
+  "uid": "piweb",
+  "version": 1
+}
+'''
+                                // Create dashboard.yml for Grafana
+                                writeFile file: 'dashboard.yml', text: '''
+apiVersion: 1
+
+providers:
+  - name: 'Default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/provisioning/dashboards
+'''
+                                // Create Dockerfile for Grafana
+                                writeFile file: 'Dockerfile', text: '''
+FROM grafana/grafana:latest
+COPY datasource.yml /etc/grafana/provisioning/datasources/datasource.yml
+COPY dashboard.yml /etc/grafana/provisioning/dashboards/dashboard.yml
+COPY dashboard.json /etc/grafana/provisioning/dashboards/dashboard.json
+EXPOSE 3000
+'''
+                                // Build Grafana image
+                                sh "docker build -t ${GRAFANA_IMAGE} ."
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -283,6 +575,9 @@ server {
                     def backendPort = 5000 + (buildNumberInt % 10) // Use build number modulo 10 to get a range of 10 ports
                     def frontendPort = 8000 + (buildNumberInt % 10) // Frontend on 8000-8009 range
                     def mongoPort = 27017 + (buildNumberInt % 10) // MongoDB on 27017-27026 range
+                    def prometheusPort = 9090 + (buildNumberInt % 10) // Prometheus on 9090-9099 range
+                    def grafanaPort = 3000 + (buildNumberInt % 10) // Grafana on 3000-3009 range
+                    def nodeExporterPort = 9100 + (buildNumberInt % 10) // Node Exporter on 9100-9109 range
 
                     // Create unique names for containers, networks, and volumes
                     def uniqueSuffix = "${BUILD_NUMBER}"
@@ -347,6 +642,51 @@ services:
     networks:
       - app-network-${uniqueSuffix}
 
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-${uniqueSuffix}
+    restart: always
+    ports:
+      - "${nodeExporterPort}:9100"
+    networks:
+      - app-network-${uniqueSuffix}
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE}
+    container_name: prometheus-${uniqueSuffix}
+    restart: always
+    depends_on:
+      - backend
+      - node-exporter
+    ports:
+      - "${prometheusPort}:9090"
+    networks:
+      - app-network-${uniqueSuffix}
+
+  grafana:
+    image: ${GRAFANA_IMAGE}
+    container_name: grafana-${uniqueSuffix}
+    restart: always
+    depends_on:
+      - prometheus
+    ports:
+      - "${grafanaPort}:3000"
+    networks:
+      - app-network-${uniqueSuffix}
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
 networks:
   app-network-${uniqueSuffix}:
     driver: bridge
@@ -376,6 +716,8 @@ EOL
                         // Push images
                         sh "docker push ${BACKEND_IMAGE}"
                         sh "docker push ${FRONTEND_IMAGE}"
+                        sh "docker push ${PROMETHEUS_IMAGE}"
+                        sh "docker push ${GRAFANA_IMAGE}"
                     }
                 }
             }
@@ -407,8 +749,8 @@ EOL
 
                         # Also try direct container removal as a backup
                         echo "Stopping and removing existing containers..."
-                        docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
-                        docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
+                        docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} prometheus-${BUILD_NUMBER} grafana-${BUILD_NUMBER} node-exporter-${BUILD_NUMBER} || true
+                        docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} prometheus-${BUILD_NUMBER} grafana-${BUILD_NUMBER} node-exporter-${BUILD_NUMBER} || true
 
                         # Remove existing network if it exists
                         docker network rm app-network-${BUILD_NUMBER} || true
@@ -436,7 +778,7 @@ EOL
 
                             for i in \$(seq \$START_CLEAN \$END_CLEAN); do
                                 # Check if containers exist before trying to remove them
-                                for CONTAINER in db-\$i backend-\$i frontend-\$i; do
+                                for CONTAINER in db-\$i backend-\$i frontend-\$i prometheus-\$i grafana-\$i node-exporter-\$i; do
                                     if echo "\$EXISTING_CONTAINERS" | grep -q "\$CONTAINER"; then
                                         echo "Removing container \$CONTAINER..."
                                         docker stop \$CONTAINER || true
@@ -497,6 +839,9 @@ EOL
                 def backendPort = 5000 + (buildNumberInt % 10)
                 def frontendPort = 8000 + (buildNumberInt % 10)
                 def mongoPort = 27017 + (buildNumberInt % 10)
+                def prometheusPort = 9090 + (buildNumberInt % 10)
+                def grafanaPort = 3000 + (buildNumberInt % 10)
+                def nodeExporterPort = 9100 + (buildNumberInt % 10)
 
                 echo """
                 ========================================
@@ -505,20 +850,26 @@ EOL
 
                 Deployment Information:
                 - Build Number: ${BUILD_NUMBER}
-                - Container Names: db-${BUILD_NUMBER}, backend-${BUILD_NUMBER}, frontend-${BUILD_NUMBER}
+                - Container Names: db-${BUILD_NUMBER}, backend-${BUILD_NUMBER}, frontend-${BUILD_NUMBER},
+                  prometheus-${BUILD_NUMBER}, grafana-${BUILD_NUMBER}, node-exporter-${BUILD_NUMBER}
 
                 Access URLs:
                 - Frontend: http://192.168.33.10:${frontendPort}
                 - Backend API: http://192.168.33.10:${backendPort}
                 - MongoDB: mongodb://root:example@192.168.33.10:${mongoPort}
+                - Prometheus: http://192.168.33.10:${prometheusPort}
+                - Grafana: http://192.168.33.10:${grafanaPort} (admin/admin)
+                - Node Exporter: http://192.168.33.10:${nodeExporterPort}/metrics
 
                 Images:
                 - Backend: ${BACKEND_IMAGE}
                 - Frontend: ${FRONTEND_IMAGE}
+                - Prometheus: ${PROMETHEUS_IMAGE}
+                - Grafana: ${GRAFANA_IMAGE}
 
                 To stop this deployment:
-                docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
-                docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
+                docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} prometheus-${BUILD_NUMBER} grafana-${BUILD_NUMBER} node-exporter-${BUILD_NUMBER}
+                docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} prometheus-${BUILD_NUMBER} grafana-${BUILD_NUMBER} node-exporter-${BUILD_NUMBER}
                 docker network rm app-network-${BUILD_NUMBER}
                 docker volume rm mongo-data-${BUILD_NUMBER}
                 ========================================
