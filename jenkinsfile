@@ -40,7 +40,8 @@ pipeline {
                 stage('Frontend Dependencies') {
                     steps {
                         dir('Frontend') {
-                            sh 'npm ci'
+                            // Use --legacy-peer-deps to avoid dependency conflicts
+                            sh 'npm ci --legacy-peer-deps'
                         }
                     }
                 }
@@ -51,7 +52,8 @@ pipeline {
             steps {
                 dir('Backend') {
                     script {
-                        sh 'npm run build-dev'
+                        // Make sure webpack is available by using npx
+                        sh 'npx webpack --config webpack.dev.js --mode development'
                     }
                 }
             }
@@ -65,8 +67,37 @@ pipeline {
                         writeFile file: 'build.sh', text: '''#!/bin/sh
 export NODE_OPTIONS="--max-old-space-size=4096"
 echo "Building frontend..."
+
+# Ensure Vite is installed
+npm install --no-save vite@latest @vitejs/plugin-react vite-plugin-svgr
+
+# Create a simplified tsconfig for the build
+cat > tsconfig.simple.json << 'EOF'
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+EOF
+
 # Skip TypeScript build and just use Vite directly
-npx vite build
+echo "Running Vite build..."
+npx vite build --config vite.config.js
 '''
                         sh 'chmod +x build.sh'
                         sh './build.sh'
