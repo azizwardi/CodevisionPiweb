@@ -125,12 +125,28 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
           }
         };
 
-        // Always add the message to the UI
-        // Since we're not adding temporary messages anymore, this is the first time
-        // the message appears in the UI
+        // Check if we have a temporary version of this message
         setMessages(prevMessages => {
-          // Add the new message to the list
-          console.log('TeamLeader - Adding our message to the UI');
+          if (message.tempMessageId) {
+            const tempIndex = prevMessages.findIndex(m => m._id === message.tempMessageId);
+
+            if (tempIndex !== -1) {
+              console.log('TeamLeader - Replacing temporary message with real one');
+              const newMessages = [...prevMessages];
+              newMessages[tempIndex] = processedMessage;
+
+              // Force scroll to bottom
+              setTimeout(() => {
+                scrollToBottom();
+              }, 50);
+
+              return newMessages;
+            }
+          }
+
+          // If we get here, we don't have a temp version
+          // This shouldn't normally happen, but just in case
+          console.log('TeamLeader - No temporary message found, adding as new');
 
           // Force scroll to bottom
           setTimeout(() => {
@@ -349,11 +365,14 @@ const TeamChatInterface: React.FC<TeamChatInterfaceProps> = ({ teamId, userId, t
         readBy: [userId]
       };
 
-      // Store the temporary message ID for later reference
-      console.log('TeamLeader - Created temporary message with ID:', tempMessage._id);
+      // Add the temporary message to the UI immediately
+      console.log('TeamLeader - Adding temporary message to UI');
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
 
-      // We'll add the message to the UI when we receive the socket event
-      // This prevents duplicate messages
+      // Scroll to bottom
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
 
       // Send the message to the server
       try {
