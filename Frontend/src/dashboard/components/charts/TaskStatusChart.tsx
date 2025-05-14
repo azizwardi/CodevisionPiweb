@@ -1,16 +1,16 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  Title, 
-  Tooltip, 
-  Legend 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
 } from 'chart.js';
 
-// Enregistrer les composants nécessaires pour Chart.js
+// Register necessary components for Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,23 +27,23 @@ interface TaskStatusChartProps {
   loading: boolean;
 }
 
-const TaskStatusChart: React.FC<TaskStatusChartProps> = ({ 
-  pending, 
-  inProgress, 
-  completed, 
-  loading 
+const TaskStatusChart: React.FC<TaskStatusChartProps> = ({
+  pending,
+  inProgress,
+  completed,
+  loading
 }) => {
-  // Données pour le graphique
+  // Data for the chart
   const data = {
-    labels: ['En attente', 'En cours', 'Terminées'],
+    labels: ['Pending', 'In Progress', 'Completed'],
     datasets: [
       {
-        label: 'Nombre de tâches',
+        label: 'Number of tasks',
         data: [pending, inProgress, completed],
         backgroundColor: [
-          'rgba(255, 99, 132, 0.7)',   // Rouge pour les tâches en attente
-          'rgba(255, 159, 64, 0.7)',   // Orange pour les tâches en cours
-          'rgba(75, 192, 192, 0.7)',   // Vert pour les tâches terminées
+          'rgba(255, 99, 132, 0.7)',   // Red for pending tasks
+          'rgba(255, 159, 64, 0.7)',   // Orange for in-progress tasks
+          'rgba(75, 192, 192, 0.7)',   // Green for completed tasks
         ],
         borderColor: [
           'rgba(255, 99, 132, 1)',
@@ -55,7 +55,7 @@ const TaskStatusChart: React.FC<TaskStatusChartProps> = ({
     ],
   };
 
-  // Options pour le graphique
+  // Options for the chart
   const options = {
     responsive: true,
     maintainAspectRatio: false,

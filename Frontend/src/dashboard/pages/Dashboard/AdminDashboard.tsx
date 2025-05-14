@@ -42,7 +42,7 @@ interface DashboardStats {
   };
 }
 
-// Composant pour afficher une métrique
+// Component to display a metric
 interface MetricCardProps {
   title: string;
   value: number;
@@ -78,7 +78,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, change, loa
   );
 };
 
-// Composant pour afficher une section de statistiques
+// Component to display a statistics section
 interface StatsSectionProps {
   title: string;
   stats: Record<string, number>;
@@ -112,7 +112,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ title, stats, icon, loading
   );
 };
 
-// Composant principal du dashboard
+// Main dashboard component
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -122,21 +122,21 @@ const AdminDashboard: React.FC = () => {
     const fetchDashboardStats = async () => {
       try {
         setLoading(true);
-        console.log('Récupération des statistiques du dashboard admin...');
+        console.log('Retrieving admin dashboard statistics...');
 
-        // Utiliser l'URL complète du backend
+        // Use the complete backend URL
         const response = await axios.get('http://localhost:5000/dashboard/admin');
-        console.log('Réponse du backend:', response.data);
+        console.log('Backend response:', response.data);
         const dashboardStats = response.data;
 
         setStats(dashboardStats);
         setLoading(false);
       } catch (err: any) {
-        console.error('Erreur lors de la récupération des statistiques:', err);
-        setError(err.message || 'Une erreur est survenue lors de la récupération des statistiques');
+        console.error('Error retrieving statistics:', err);
+        setError(err.message || 'An error occurred while retrieving statistics');
         toastManager.addToast({
-          title: "Erreur",
-          description: "Impossible de charger les statistiques du dashboard",
+          title: "Error",
+          description: "Unable to load dashboard statistics",
           type: "error"
         });
         setLoading(false);
@@ -149,10 +149,10 @@ const AdminDashboard: React.FC = () => {
   return (
     <>
       <PageMeta
-        title="Dashboard Administrateur | CodevisionPiweb"
-        description="Tableau de bord administrateur pour CodevisionPiweb"
+        title="Administrator Dashboard | CodevisionPiweb"
+        description="Administrator dashboard for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Dashboard Administrateur" />
+      <PageBreadcrumb pageTitle="Administrator Dashboard" />
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -161,44 +161,44 @@ const AdminDashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-12 gap-4 md:gap-6">
-        {/* Métriques principales */}
+        {/* Main metrics */}
         <div className="col-span-12 space-y-6 xl:col-span-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
             <MetricCard
-              title="Utilisateurs"
+              title="Users"
               value={stats?.users.total || 0}
               icon={<UserCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}
               loading={loading}
             />
             <MetricCard
-              title="Projets"
+              title="Projects"
               value={stats?.projects.total || 0}
               icon={<ListIcon className="text-gray-800 size-6 dark:text-white/90" />}
               loading={loading}
             />
             <MetricCard
-              title="Tâches"
+              title="Tasks"
               value={stats?.tasks.total || 0}
               icon={<TaskIcon className="text-gray-800 size-6 dark:text-white/90" />}
               loading={loading}
             />
             <MetricCard
-              title="Quiz"
+              title="Quizzes"
               value={stats?.quizzes.total || 0}
               icon={<QuizIcon className="text-gray-800 size-6 dark:text-white/90" />}
               loading={loading}
             />
           </div>
 
-          {/* Graphique d'activité */}
-          <ComponentCard title="Aperçu de l'activité">
+          {/* Activity chart */}
+          <ComponentCard title="Activity Overview">
             <ActivityOverviewChart loading={loading} />
           </ComponentCard>
         </div>
 
-        {/* Statistiques détaillées */}
+        {/* Detailed statistics */}
         <div className="col-span-12 xl:col-span-4">
-          <ComponentCard title="Distribution des utilisateurs">
+          <ComponentCard title="User Distribution">
             <UserDistributionChart
               admins={stats?.users.admins || 0}
               teamLeaders={stats?.users.teamLeaders || 0}
@@ -219,7 +219,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Membres</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Members</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.users.members || 0}
                 </div>
@@ -229,7 +229,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="col-span-12 xl:col-span-4">
-          <ComponentCard title="État des projets">
+          <ComponentCard title="Project Status">
             <ProjectStatusChart
               active={stats?.projects.active || 0}
               completed={stats?.projects.completed || 0}
@@ -237,13 +237,13 @@ const AdminDashboard: React.FC = () => {
             />
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Actifs</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Active</span>
                 <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.projects.active || 0}
                 </div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminés</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.projects.completed || 0}
                 </div>
@@ -253,7 +253,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="col-span-12 xl:col-span-4">
-          <ComponentCard title="État des tâches">
+          <ComponentCard title="Task Status">
             <TaskStatusChart
               pending={stats?.tasks.pending || 0}
               inProgress={stats?.tasks.inProgress || 0}
@@ -262,19 +262,19 @@ const AdminDashboard: React.FC = () => {
             />
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En attente</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Pending</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks.pending || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En cours</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">In Progress</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks.inProgress || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminées</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks.completed || 0}
                 </div>
@@ -284,7 +284,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="col-span-12">
-          <ComponentCard title="Activité des quiz">
+          <ComponentCard title="Quiz Activity">
             <QuizActivityChart
               published={stats?.quizzes.published || 0}
               attempts={stats?.quizzes.attempts || 0}
@@ -294,25 +294,25 @@ const AdminDashboard: React.FC = () => {
             />
             <div className="grid grid-cols-4 gap-2 mt-4">
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Publiés</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Published</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes.published || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Tentatives</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Attempts</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes.attempts || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminés</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes.completedAttempts || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Certificats</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Certificates</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes.certificates || 0}
                 </div>

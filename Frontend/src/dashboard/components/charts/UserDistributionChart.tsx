@@ -2,7 +2,7 @@ import React from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-// Enregistrer les composants nécessaires pour Chart.js
+// Register necessary components for Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface UserDistributionChartProps {
@@ -12,22 +12,22 @@ interface UserDistributionChartProps {
   loading: boolean;
 }
 
-const UserDistributionChart: React.FC<UserDistributionChartProps> = ({ 
-  admins, 
-  teamLeaders, 
-  members, 
-  loading 
+const UserDistributionChart: React.FC<UserDistributionChartProps> = ({
+  admins,
+  teamLeaders,
+  members,
+  loading
 }) => {
-  // Données pour le graphique
+  // Data for the chart
   const data = {
-    labels: ['Administrateurs', 'Chefs d\'équipe', 'Membres'],
+    labels: ['Administrators', 'Team Leaders', 'Members'],
     datasets: [
       {
         data: [admins, teamLeaders, members],
         backgroundColor: [
-          'rgba(54, 162, 235, 0.7)',  // Bleu pour les admins
-          'rgba(255, 159, 64, 0.7)',  // Orange pour les team leaders
-          'rgba(75, 192, 192, 0.7)',  // Vert pour les membres
+          'rgba(54, 162, 235, 0.7)',  // Blue for admins
+          'rgba(255, 159, 64, 0.7)',  // Orange for team leaders
+          'rgba(75, 192, 192, 0.7)',  // Green for members
         ],
         borderColor: [
           'rgba(54, 162, 235, 1)',
@@ -39,7 +39,7 @@ const UserDistributionChart: React.FC<UserDistributionChartProps> = ({
     ],
   };
 
-  // Options pour le graphique
+  // Options for the chart
   const options = {
     responsive: true,
     maintainAspectRatio: false,

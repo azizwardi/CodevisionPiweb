@@ -5,10 +5,10 @@ const Quiz = require("../models/quiz");
 const QuizAttempt = require("../models/quizAttempt");
 const Certificate = require("../models/certificate");
 
-// Récupérer les statistiques pour le dashboard administrateur
+// Get statistics for the admin dashboard
 exports.getAdminDashboardStats = async (req, res) => {
   try {
-    // Récupérer les statistiques des utilisateurs
+    // Get user statistics
     const users = await User.find();
     const userStats = {
       total: users.length,
@@ -17,7 +17,7 @@ exports.getAdminDashboardStats = async (req, res) => {
       members: users.filter(user => user.role === 'Member').length,
     };
 
-    // Récupérer les statistiques des projets
+    // Get project statistics
     const projects = await Project.find();
     const currentDate = new Date();
     const projectStats = {
@@ -26,7 +26,7 @@ exports.getAdminDashboardStats = async (req, res) => {
       completed: projects.filter(project => new Date(project.deadline) <= currentDate).length,
     };
 
-    // Récupérer les statistiques des tâches
+    // Get task statistics
     const tasks = await Task.find();
     const taskStats = {
       total: tasks.length,
@@ -35,7 +35,7 @@ exports.getAdminDashboardStats = async (req, res) => {
       completed: tasks.filter(task => task.status === 'completed').length,
     };
 
-    // Récupérer les statistiques des quiz
+    // Get quiz statistics
     const quizzes = await Quiz.find();
     const quizAttempts = await QuizAttempt.find();
     const certificates = await Certificate.find();
@@ -47,7 +47,7 @@ exports.getAdminDashboardStats = async (req, res) => {
       certificates: certificates.length,
     };
 
-    // Renvoyer toutes les statistiques
+    // Return all statistics
     res.status(200).json({
       users: userStats,
       projects: projectStats,
@@ -55,40 +55,40 @@ exports.getAdminDashboardStats = async (req, res) => {
       quizzes: quizStats,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des statistiques du dashboard:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération des statistiques du dashboard", 
-      error: error.message 
+    console.error("Error retrieving dashboard statistics:", error);
+    res.status(500).json({
+      message: "Error retrieving dashboard statistics",
+      error: error.message
     });
   }
 };
 
-// Récupérer les statistiques pour le dashboard TeamLeader
+// Get statistics for the TeamLeader dashboard
 exports.getTeamLeaderDashboardStats = async (req, res) => {
   try {
     const { userId } = req.params;
 
     if (!userId) {
-      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Vérifier si l'utilisateur existe et est un TeamLeader
+    // Check if the user exists and is a TeamLeader
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(404).json({ message: "User not found" });
     }
     if (user.role !== 'TeamLeader') {
-      return res.status(403).json({ message: "Accès non autorisé" });
+      return res.status(403).json({ message: "Access not authorized" });
     }
 
-    // Récupérer les projets créés par le TeamLeader
+    // Get projects created by the TeamLeader
     const projects = await Project.find({ creator: userId });
     const projectIds = projects.map(project => project._id);
 
-    // Récupérer les tâches associées aux projets du TeamLeader
+    // Get tasks associated with the TeamLeader's projects
     const tasks = await Task.find({ projectId: { $in: projectIds } });
 
-    // Calculer les statistiques
+    // Calculate statistics
     const currentDate = new Date();
     const projectStats = {
       total: projects.length,
@@ -103,49 +103,49 @@ exports.getTeamLeaderDashboardStats = async (req, res) => {
       completed: tasks.filter(task => task.status === 'completed').length,
     };
 
-    // Renvoyer les statistiques
+    // Return statistics
     res.status(200).json({
       projects: projectStats,
       tasks: taskStats,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des statistiques du dashboard TeamLeader:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération des statistiques du dashboard TeamLeader", 
-      error: error.message 
+    console.error("Error retrieving TeamLeader dashboard statistics:", error);
+    res.status(500).json({
+      message: "Error retrieving TeamLeader dashboard statistics",
+      error: error.message
     });
   }
 };
 
-// Récupérer les statistiques pour le dashboard Member
+// Get statistics for the Member dashboard
 exports.getMemberDashboardStats = async (req, res) => {
   try {
     const { userId } = req.params;
 
     if (!userId) {
-      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Vérifier si l'utilisateur existe et est un Member
+    // Check if the user exists and is a Member
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(404).json({ message: "User not found" });
     }
     if (user.role !== 'Member') {
-      return res.status(403).json({ message: "Accès non autorisé" });
+      return res.status(403).json({ message: "Access not authorized" });
     }
 
-    // Récupérer les tâches assignées au Member
+    // Get tasks assigned to the Member
     const tasks = await Task.find({ assignedTo: userId });
 
-    // Récupérer les projets auxquels le Member participe
+    // Get projects the Member participates in
     const projects = await Project.find({ 'members.user': userId });
 
-    // Récupérer les tentatives de quiz du Member
+    // Get quiz attempts by the Member
     const quizAttempts = await QuizAttempt.find({ user: userId });
     const certificates = await Certificate.find({ user: userId });
 
-    // Calculer les statistiques
+    // Calculate statistics
     const taskStats = {
       total: tasks.length,
       pending: tasks.filter(task => task.status === 'pending').length,
@@ -159,17 +159,17 @@ exports.getMemberDashboardStats = async (req, res) => {
       certificates: certificates.length,
     };
 
-    // Renvoyer les statistiques
+    // Return statistics
     res.status(200).json({
       projects: { total: projects.length },
       tasks: taskStats,
       quizzes: quizStats,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des statistiques du dashboard Member:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération des statistiques du dashboard Member", 
-      error: error.message 
+    console.error("Error retrieving Member dashboard statistics:", error);
+    res.status(500).json({
+      message: "Error retrieving Member dashboard statistics",
+      error: error.message
     });
   }
 };

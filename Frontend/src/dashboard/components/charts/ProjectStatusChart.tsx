@@ -2,7 +2,7 @@ import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-// Enregistrer les composants nécessaires pour Chart.js
+// Register necessary components for Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface ProjectStatusChartProps {
@@ -11,20 +11,20 @@ interface ProjectStatusChartProps {
   loading: boolean;
 }
 
-const ProjectStatusChart: React.FC<ProjectStatusChartProps> = ({ 
-  active, 
-  completed, 
-  loading 
+const ProjectStatusChart: React.FC<ProjectStatusChartProps> = ({
+  active,
+  completed,
+  loading
 }) => {
-  // Données pour le graphique
+  // Data for the chart
   const data = {
-    labels: ['Actifs', 'Terminés'],
+    labels: ['Active', 'Completed'],
     datasets: [
       {
         data: [active, completed],
         backgroundColor: [
-          'rgba(255, 206, 86, 0.7)',  // Jaune pour les projets actifs
-          'rgba(75, 192, 192, 0.7)',   // Vert pour les projets terminés
+          'rgba(255, 206, 86, 0.7)',  // Yellow for active projects
+          'rgba(75, 192, 192, 0.7)',   // Green for completed projects
         ],
         borderColor: [
           'rgba(255, 206, 86, 1)',
@@ -35,7 +35,7 @@ const ProjectStatusChart: React.FC<ProjectStatusChartProps> = ({
     ],
   };
 
-  // Options pour le graphique
+  // Options for the chart
   const options = {
     responsive: true,
     maintainAspectRatio: false,

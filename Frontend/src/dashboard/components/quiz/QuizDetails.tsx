@@ -49,156 +49,156 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour récupérer les détails du quiz
+  // Function to retrieve quiz details
   const fetchQuizDetails = async () => {
     try {
       setLoading(true);
       const quizResponse = await axios.get(`http://localhost:5000/quizzes/${quizId}`);
       setQuiz(quizResponse.data);
 
-      // Récupérer les questions du quiz
+      // Retrieve quiz questions
       const questionsResponse = await axios.get(`http://localhost:5000/quizzes/${quizId}/questions`);
       setQuestions(questionsResponse.data);
 
       setError(null);
     } catch (error) {
-      console.error("Erreur lors de la récupération des détails du quiz:", error);
-      setError("Impossible de charger les détails du quiz");
+      console.error("Error retrieving quiz details:", error);
+      setError("Unable to load quiz details");
     } finally {
       setLoading(false);
     }
   };
 
-  // Charger les détails du quiz au chargement du composant
+  // Load quiz details when component mounts
   useEffect(() => {
     fetchQuizDetails();
   }, [quizId]);
 
-  // Fonction pour supprimer une question
+  // Function to delete a question
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette question ?")) {
+    if (!window.confirm("Are you sure you want to delete this question?")) {
       return;
     }
 
     try {
       await axios.delete(`http://localhost:5000/quizzes/questions/${questionId}`);
       toastManager.addToast({
-        title: "Succès",
-        description: "La question a été supprimée avec succès",
+        title: "Success",
+        description: "The question has been successfully deleted",
         type: "success",
       });
-      fetchQuizDetails(); // Rafraîchir les données après suppression
+      fetchQuizDetails(); // Refresh data after deletion
     } catch (error) {
-      console.error("Erreur lors de la suppression de la question:", error);
+      console.error("Error deleting the question:", error);
       toastManager.addToast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression de la question",
+        title: "Error",
+        description: "An error occurred while deleting the question",
         type: "error",
       });
     }
   };
 
-  // Fonction pour publier un quiz
+  // Function to publish a quiz
   const handlePublishQuiz = async () => {
-    console.log("Tentative de publication du quiz:", quizId);
-    console.log("Nombre de questions:", questions.length);
+    console.log("Attempting to publish quiz:", quizId);
+    console.log("Number of questions:", questions.length);
 
     if (questions.length === 0) {
-      console.log("Impossible de publier un quiz sans questions");
+      console.log("Cannot publish a quiz without questions");
       toastManager.addToast({
-        title: "Attention",
-        description: "Vous ne pouvez pas publier un quiz sans questions",
+        title: "Warning",
+        description: "You cannot publish a quiz without questions",
         type: "warning",
       });
       return;
     }
 
-    if (!window.confirm("Êtes-vous sûr de vouloir publier ce quiz ? Une fois publié, il sera visible par tous les utilisateurs.")) {
+    if (!window.confirm("Are you sure you want to publish this quiz? Once published, it will be visible to all users.")) {
       return;
     }
 
     try {
-      console.log("Envoi de la requête POST à http://localhost:5000/quizzes/" + quizId + "/publish");
+      console.log("Sending POST request to http://localhost:5000/quizzes/" + quizId + "/publish");
       const response = await axios.post(`http://localhost:5000/quizzes/${quizId}/publish`);
-      console.log("Réponse reçue:", response.data);
+      console.log("Response received:", response.data);
 
       toastManager.addToast({
-        title: "Succès",
-        description: "Le quiz a été publié avec succès",
+        title: "Success",
+        description: "The quiz has been successfully published",
         type: "success",
       });
-      fetchQuizDetails(); // Rafraîchir les données après publication
+      fetchQuizDetails(); // Refresh data after publication
     } catch (error: any) {
-      console.error("Erreur lors de la publication du quiz:", error);
+      console.error("Error publishing the quiz:", error);
 
-      // Afficher des détails supplémentaires sur l'erreur
+      // Display additional error details
       if (error.response) {
-        console.error("Données de réponse d'erreur:", error.response.data);
-        console.error("Statut d'erreur:", error.response.status);
+        console.error("Error response data:", error.response.data);
+        console.error("Error status:", error.response.status);
 
         toastManager.addToast({
-          title: "Erreur " + error.response.status,
-          description: error.response.data.message || "Une erreur est survenue lors de la publication du quiz",
+          title: "Error " + error.response.status,
+          description: error.response.data.message || "An error occurred while publishing the quiz",
           type: "error",
         });
       } else if (error.request) {
-        console.error("Requête sans réponse:", error.request);
+        console.error("Request without response:", error.request);
 
         toastManager.addToast({
-          title: "Erreur de connexion",
-          description: "Impossible de se connecter au serveur. Vérifiez que le backend est en cours d'exécution.",
+          title: "Connection Error",
+          description: "Unable to connect to the server. Please verify that the backend is running.",
           type: "error",
         });
       } else {
-        console.error("Erreur de configuration:", error.message);
+        console.error("Configuration error:", error.message);
 
         toastManager.addToast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la publication du quiz: " + error.message,
+          title: "Error",
+          description: "An error occurred while publishing the quiz: " + error.message,
           type: "error",
         });
       }
     }
   };
 
-  // Fonction pour obtenir le libellé de la catégorie
+  // Function to get the category label
   const getCategoryLabel = (categoryValue: string): string => {
     const categories: Record<string, string> = {
-      "education": "Éducation",
-      "technology": "Technologie",
+      "education": "Education",
+      "technology": "Technology",
       "science": "Science",
-      "history": "Histoire",
-      "geography": "Géographie",
-      "entertainment": "Divertissement",
+      "history": "History",
+      "geography": "Geography",
+      "entertainment": "Entertainment",
       "sports": "Sports",
-      "other": "Autre"
+      "other": "Other"
     };
 
     return categories[categoryValue] || categoryValue;
   };
 
-  // Fonction pour obtenir le libellé du type de question
+  // Function to get the question type label
   const getQuestionTypeLabel = (typeValue: string): string => {
     const types: Record<string, string> = {
-      "multiple-choice": "Choix multiple",
-      "true-false": "Vrai ou Faux",
-      "short-answer": "Réponse courte"
+      "multiple-choice": "Multiple Choice",
+      "true-false": "True or False",
+      "short-answer": "Short Answer"
     };
 
     return types[typeValue] || typeValue;
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement des détails du quiz...</div>;
+    return <div className="text-center py-8">Loading quiz details...</div>;
   }
 
   if (error || !quiz) {
     return (
       <div className="text-center py-8 text-red-500">
-        {error || "Quiz non trouvé"}
+        {error || "Quiz not found"}
         <div className="mt-4">
           <Button variant="outline" onClick={onBack}>
-            Retour à la liste
+            Back to list
           </Button>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec les informations du quiz */}
+      {/* Header with quiz information */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -216,14 +216,14 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onEdit(quiz._id)}>
-              <FiEdit className="h-4 w-4 mr-1" /> Modifier
+              <FiEdit className="h-4 w-4 mr-1" /> Edit
             </Button>
             <Button variant="primary" onClick={() => onAddQuestion(quiz._id)}>
-              <FiPlus className="h-4 w-4 mr-1" /> Ajouter une question
+              <FiPlus className="h-4 w-4 mr-1" /> Add Question
             </Button>
             {!quiz.isPublished && questions.length > 0 && (
               <Button variant="primary" className="bg-green-600 hover:bg-green-700" onClick={handlePublishQuiz}>
-                Publier
+                Publish
               </Button>
             )}
           </div>
@@ -231,27 +231,27 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Catégorie</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Category</p>
             <p>{getCategoryLabel(quiz.category)}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Statut</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
             <p>
               {quiz.isPublished ? (
-                <Badge color="success">Publié</Badge>
+                <Badge color="success">Published</Badge>
               ) : (
-                <Badge color="warning">Brouillon</Badge>
+                <Badge color="warning">Draft</Badge>
               )}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Créé le</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Created on</p>
             <p>{formatDate(quiz.createdAt)}</p>
           </div>
         </div>
       </div>
 
-      {/* Liste des questions */}
+      {/* Question list */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Questions ({questions.length})</h3>
@@ -259,9 +259,9 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
 
         {questions.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">Aucune question n'a été ajoutée à ce quiz.</p>
+            <p className="text-gray-500 dark:text-gray-400">No questions have been added to this quiz.</p>
             <Button variant="outline" className="mt-4" onClick={() => onAddQuestion(quiz._id)}>
-              <FiPlus className="h-4 w-4 mr-1" /> Ajouter une question
+              <FiPlus className="h-4 w-4 mr-1" /> Add Question
             </Button>
           </div>
         ) : (
@@ -277,24 +277,24 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
                     </div>
                     <p className="mt-2">{question.questionText}</p>
 
-                    {/* Afficher les options pour les questions à choix multiple */}
+                    {/* Display options for multiple choice questions */}
                     {question.questionType === "multiple-choice" && (
                       <div className="mt-3 space-y-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Options:</p>
                         <ul className="list-disc list-inside space-y-1">
                           {question.options.map((option, optIndex) => (
                             <li key={optIndex} className={option.isCorrect ? "text-green-600 dark:text-green-400 font-medium" : ""}>
-                              {option.text} {option.isCorrect && "(Correcte)"}
+                              {option.text} {option.isCorrect && "(Correct)"}
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
 
-                    {/* Afficher la réponse correcte pour les questions à réponse courte */}
+                    {/* Display correct answer for short answer questions */}
                     {question.questionType === "short-answer" && (
                       <div className="mt-3">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Réponse correcte:</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Correct answer:</p>
                         <p className="text-green-600 dark:text-green-400 font-medium">{question.correctAnswer}</p>
                       </div>
                     )}
@@ -315,10 +315,10 @@ export default function QuizDetails({ quizId, onEdit, onAddQuestion, onBack }: Q
         )}
       </div>
 
-      {/* Bouton de retour */}
+      {/* Back button */}
       <div className="flex justify-end">
         <Button variant="outline" onClick={onBack}>
-          Retour à la liste
+          Back to list
         </Button>
       </div>
     </div>

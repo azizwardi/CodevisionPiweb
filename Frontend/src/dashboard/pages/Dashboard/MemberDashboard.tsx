@@ -7,13 +7,13 @@ import { useAuth } from '../../../context/AuthContext';
 import { Spinner } from '../../../components/ui/spinner';
 import { ArrowUpIcon, ArrowDownIcon } from '../../../components/ui/icons';
 import { Badge } from '../../../components/ui/badge';
-import { UserCircleIcon, ListIcon, TaskIcon, ClockIcon } from '../../../components/ui/icons';
+import { UserCircleIcon, ListIcon, TaskIcon, AwardIcon } from '../../../components/ui/icons';
 import TaskStatusChart from "../../components/charts/TaskStatusChart";
 import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
 import QuizActivityChart from "../../components/charts/QuizActivityChart";
 import toastManager from '../../../utils/toastManager';
 
-// Types pour les statistiques
+// Types for statistics
 interface MemberDashboardStats {
   projects: {
     total: number;
@@ -31,7 +31,7 @@ interface MemberDashboardStats {
   };
 }
 
-// Composant pour afficher une métrique
+// Component to display a metric
 interface MetricCardProps {
   title: string;
   value: number;
@@ -67,7 +67,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, change, loa
   );
 };
 
-// Composant pour afficher une tâche
+// Component to display a task
 interface TaskItemProps {
   title: string;
   dueDate: string;
@@ -88,11 +88,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ title, dueDate, priority, status })
   const getStatusBadge = () => {
     switch (status) {
       case 'pending':
-        return <p className="inline-flex rounded-full bg-danger bg-opacity-10 py-1 px-3 text-sm font-medium text-danger">En attente</p>;
+        return <p className="inline-flex rounded-full bg-danger bg-opacity-10 py-1 px-3 text-sm font-medium text-danger">Pending</p>;
       case 'in-progress':
-        return <p className="inline-flex rounded-full bg-warning bg-opacity-10 py-1 px-3 text-sm font-medium text-warning">En cours</p>;
+        return <p className="inline-flex rounded-full bg-warning bg-opacity-10 py-1 px-3 text-sm font-medium text-warning">In Progress</p>;
       case 'completed':
-        return <p className="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">Terminée</p>;
+        return <p className="inline-flex rounded-full bg-success bg-opacity-10 py-1 px-3 text-sm font-medium text-success">Completed</p>;
       default:
         return null;
     }
@@ -109,7 +109,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ title, dueDate, priority, status })
       </div>
 
       <div className="flex items-center justify-center p-2.5 xl:p-5">
-        <p className={getPriorityColor()}>{priority === 'high' ? 'Élevée' : priority === 'medium' ? 'Moyenne' : 'Basse'}</p>
+        <p className={getPriorityColor()}>{priority === 'high' ? 'High' : priority === 'medium' ? 'Medium' : 'Low'}</p>
       </div>
 
       <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
@@ -131,20 +131,20 @@ export default function MemberDashboard() {
 
       try {
         setLoading(true);
-        console.log('Récupération des statistiques du dashboard member...');
+        console.log('Retrieving member dashboard statistics...');
 
-        // Récupérer les statistiques du dashboard
+        // Get dashboard statistics
         const response = await axios.get(`http://localhost:5000/dashboard/member/${user._id}`);
-        console.log('Réponse du backend:', response.data);
+        console.log('Backend response:', response.data);
         setStats(response.data);
 
         setLoading(false);
       } catch (err: any) {
-        console.error('Erreur lors de la récupération des statistiques:', err);
-        setError(err.message || 'Une erreur est survenue lors de la récupération des statistiques');
+        console.error('Error retrieving statistics:', err);
+        setError(err.message || 'An error occurred while retrieving statistics');
         toastManager.addToast({
-          title: "Erreur",
-          description: "Impossible de charger les statistiques du dashboard",
+          title: "Error",
+          description: "Unable to load dashboard statistics",
           type: "error"
         });
         setLoading(false);
@@ -163,40 +163,40 @@ export default function MemberDashboard() {
       <PageBreadcrumb pageTitle="Member Dashboard" />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        {/* Métriques principales */}
+        {/* Main metrics */}
         <MetricCard
-          title="Projets"
+          title="Projects"
           value={stats?.projects?.total || 0}
           icon={<ListIcon className="text-gray-800 size-6 dark:text-white/90" />}
           loading={loading}
         />
         <MetricCard
-          title="Tâches"
+          title="Tasks"
           value={stats?.tasks?.total || 0}
           icon={<TaskIcon className="text-gray-800 size-6 dark:text-white/90" />}
           loading={loading}
         />
         <MetricCard
-          title="Tâches complétées"
+          title="Completed Tasks"
           value={stats?.tasks?.completed || 0}
           icon={<TaskIcon className="text-gray-800 size-6 dark:text-white/90" />}
           change={stats?.tasks?.total ? Math.round((stats.tasks.completed / stats.tasks.total) * 100) : 0}
           loading={loading}
         />
         <MetricCard
-          title="Quiz complétés"
+          title="Completed Quizzes"
           value={stats?.quizzes?.completed || 0}
-          icon={<ClockIcon className="text-gray-800 size-6 dark:text-white/90" />}
+          icon={<AwardIcon className="text-gray-800 size-6 dark:text-white/90" />}
           change={stats?.quizzes?.attempts ? Math.round((stats.quizzes.completed / stats.quizzes.attempts) * 100) : 0}
           loading={loading}
         />
       </div>
 
-      {/* Graphiques statistiques */}
+      {/* Statistical charts */}
       <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-        {/* Statut des tâches */}
+        {/* Task status */}
         <div className="col-span-12 xl:col-span-6">
-          <ComponentCard title="État des tâches">
+          <ComponentCard title="Task Status">
             <TaskStatusChart
               pending={stats?.tasks?.pending || 0}
               inProgress={stats?.tasks?.inProgress || 0}
@@ -205,19 +205,19 @@ export default function MemberDashboard() {
             />
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En attente</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Pending</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.pending || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En cours</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">In Progress</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.inProgress || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminées</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.completed || 0}
                 </div>
@@ -226,11 +226,11 @@ export default function MemberDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Activité des quiz */}
+        {/* Quiz activity */}
         <div className="col-span-12 xl:col-span-6">
-          <ComponentCard title="Activité des quiz">
+          <ComponentCard title="Quiz Activity">
             <QuizActivityChart
-              published={0} // Non disponible pour les membres
+              published={0} // Not available for members
               attempts={stats?.quizzes?.attempts || 0}
               completed={stats?.quizzes?.completed || 0}
               certificates={stats?.quizzes?.certificates || 0}
@@ -238,19 +238,19 @@ export default function MemberDashboard() {
             />
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Tentatives</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Attempts</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes?.attempts || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Complétés</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes?.completed || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Certificats</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Certificates</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.quizzes?.certificates || 0}
                 </div>
@@ -259,57 +259,57 @@ export default function MemberDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Liste des tâches */}
+        {/* Task list */}
         <div className="col-span-12 xl:col-span-8">
-          <ComponentCard title="Mes tâches">
+          <ComponentCard title="My Tasks">
             <div className="flex flex-col">
               <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-4">
                 <div className="p-2.5 xl:p-5">
                   <h5 className="text-sm font-medium uppercase xsm:text-base">
-                    Tâche
+                    Task
                   </h5>
                 </div>
                 <div className="p-2.5 text-center xl:p-5">
                   <h5 className="text-sm font-medium uppercase xsm:text-base">
-                    Date limite
+                    Due Date
                   </h5>
                 </div>
                 <div className="p-2.5 text-center xl:p-5">
                   <h5 className="text-sm font-medium uppercase xsm:text-base">
-                    Priorité
+                    Priority
                   </h5>
                 </div>
                 <div className="hidden p-2.5 text-center sm:block xl:p-5">
                   <h5 className="text-sm font-medium uppercase xsm:text-base">
-                    Statut
+                    Status
                   </h5>
                 </div>
               </div>
 
               <TaskItem
-                title="Créer des maquettes d'interface utilisateur"
-                dueDate="15 juin 2023"
+                title="Create user interface mockups"
+                dueDate="June 15, 2023"
                 priority="high"
                 status="in-progress"
               />
 
               <TaskItem
-                title="Corriger le bug de la page de connexion"
-                dueDate="20 juin 2023"
+                title="Fix login page bug"
+                dueDate="June 20, 2023"
                 priority="medium"
                 status="completed"
               />
 
               <TaskItem
-                title="Optimiser les performances de l'application"
-                dueDate="25 juin 2023"
+                title="Optimize application performance"
+                dueDate="June 25, 2023"
                 priority="high"
                 status="pending"
               />
 
               <TaskItem
-                title="Mettre à jour la documentation"
-                dueDate="30 juin 2023"
+                title="Update documentation"
+                dueDate="June 30, 2023"
                 priority="low"
                 status="pending"
               />
@@ -317,9 +317,9 @@ export default function MemberDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Annonces d'équipe */}
+        {/* Team announcements */}
         <div className="col-span-12 xl:col-span-4">
-          <ComponentCard title="Annonces d'équipe">
+          <ComponentCard title="Team Announcements">
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg dark:bg-gray-800/50">
                 <div className="mb-4 flex items-center gap-3">
@@ -328,13 +328,13 @@ export default function MemberDashboard() {
                   </div>
                   <div>
                     <h5 className="font-medium text-black dark:text-white">
-                      Réunion d'équipe
+                      Team Meeting
                     </h5>
-                    <p className="text-sm">Demain à 10:00</p>
+                    <p className="text-sm">Tomorrow at 10:00</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Réunion hebdomadaire pour discuter de l'avancement des projets et des tâches à venir.
+                  Weekly meeting to discuss project progress and upcoming tasks.
                 </p>
               </div>
 
@@ -345,13 +345,13 @@ export default function MemberDashboard() {
                   </div>
                   <div>
                     <h5 className="font-medium text-black dark:text-white">
-                      Date limite du projet
+                      Project Deadline
                     </h5>
-                    <p className="text-sm">Vendredi, 15 juin</p>
+                    <p className="text-sm">Friday, June 15</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  La date limite pour le projet principal approche. Assurez-vous que toutes les tâches sont terminées.
+                  The deadline for the main project is approaching. Make sure all tasks are completed.
                 </p>
               </div>
             </div>

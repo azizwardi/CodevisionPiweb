@@ -18,13 +18,13 @@ export default function FormElements() {
 
   const handleAddSuccess = () => {
     setActiveTab('list');
-    // Déclencher un rafraîchissement de la liste des projets
+    // Trigger a refresh of the project list
     setRefreshTrigger(prev => prev + 1);
   };
 
   const handleEditSuccess = () => {
     setActiveTab('list');
-    // Déclencher un rafraîchissement de la liste des projets
+    // Trigger a refresh of the project list
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -45,32 +45,32 @@ export default function FormElements() {
   return (
     <div>
       <PageMeta
-        title="Gestion des Projets | CodevisionPiweb"
-        description="Page de gestion des projets pour CodevisionPiweb"
+        title="Project Management | CodevisionPiweb"
+        description="Project management page for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Gestion des Projets" />
+      <PageBreadcrumb pageTitle="Project Management" />
 
-      {/* Navigation entre les onglets */}
+      {/* Tab navigation */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button
           variant={activeTab === 'list' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('list')}
         >
-          Liste des Projets
+          Project List
         </Button>
         {!isAdmin && (
           <Button
             variant={activeTab === 'add' ? 'primary' : 'outline'}
             onClick={() => setActiveTab('add')}
           >
-            Ajouter un Projet
+            Add Project
           </Button>
         )}
       </div>
 
-      {/* Contenu en fonction de l'onglet actif */}
+      {/* Content based on active tab */}
       {activeTab === 'list' && (
-        <ComponentCard title="Liste des Projets">
+        <ComponentCard title="Project List">
           <ProjectTable
             onEdit={handleEditClick}
             refreshTrigger={refreshTrigger}
@@ -80,13 +80,13 @@ export default function FormElements() {
       )}
 
       {!isAdmin && activeTab === 'add' && (
-        <ComponentCard title="Ajouter un Nouveau Projet">
+        <ComponentCard title="Add New Project">
           <AddProjectForm onSuccess={handleAddSuccess} />
         </ComponentCard>
       )}
 
       {!isAdmin && activeTab === 'edit' && selectedProjectId && (
-        <ComponentCard title="Modifier le Projet">
+        <ComponentCard title="Edit Project">
           <EditProjectForm
             projectId={selectedProjectId}
             onSuccess={handleEditSuccess}

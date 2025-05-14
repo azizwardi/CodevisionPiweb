@@ -15,33 +15,33 @@ export default function QuizManagement() {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   const handleAddSuccess = (quizId: string) => {
-    // Si un ID de quiz est fourni, rediriger vers le formulaire d'ajout de question
+    // If a quiz ID is provided, redirect to the add question form
     if (quizId) {
       setSelectedQuizId(quizId);
       setActiveTab('add-question');
     } else {
-      // Sinon, revenir à la liste des quiz
+      // Otherwise, return to the quiz list
       setActiveTab('list');
     }
-    // Déclencher un rafraîchissement de la liste des quiz
+    // Trigger a refresh of the quiz list
     setRefreshTrigger(prev => prev + 1);
   };
 
   const handleEditSuccess = () => {
     setActiveTab('list');
-    // Déclencher un rafraîchissement de la liste des quiz
+    // Trigger a refresh of the quiz list
     setRefreshTrigger(prev => prev + 1);
   };
 
   const handleAddQuestionSuccess = (addAnother: boolean = false) => {
     if (addAnother) {
-      // Rester sur le formulaire d'ajout de question pour en ajouter une autre
-      // Juste rafraîchir les données
+      // Stay on the add question form to add another one
+      // Just refresh the data
       setRefreshTrigger(prev => prev + 1);
     } else {
-      // Retourner à la vue détaillée du quiz après avoir ajouté une question
+      // Return to the detailed quiz view after adding a question
       setActiveTab('view');
-      // Déclencher un rafraîchissement des données
+      // Trigger a data refresh
       setRefreshTrigger(prev => prev + 1);
     }
   };
@@ -72,7 +72,7 @@ export default function QuizManagement() {
   };
 
   const handleCancelAddQuestion = () => {
-    // Si on était en train de visualiser un quiz, retourner à la vue détaillée
+    // If we were viewing a quiz, return to the detailed view
     if (selectedQuizId) {
       setActiveTab('view');
     } else {
@@ -83,30 +83,30 @@ export default function QuizManagement() {
   return (
     <div>
       <PageMeta
-        title="Gestion des Quiz | CodevisionPiweb"
-        description="Page de gestion des quiz pour CodevisionPiweb"
+        title="Quiz Management | CodevisionPiweb"
+        description="Quiz management page for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Gestion des Quiz" />
+      <PageBreadcrumb pageTitle="Quiz Management" />
 
-      {/* Navigation entre les onglets */}
+      {/* Tab navigation */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button
           variant={activeTab === 'list' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('list')}
         >
-          Liste des Quiz
+          Quiz List
         </Button>
         <Button
           variant={activeTab === 'add' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('add')}
         >
-          Créer un Quiz
+          Create Quiz
         </Button>
       </div>
 
-      {/* Contenu en fonction de l'onglet actif */}
+      {/* Content based on active tab */}
       {activeTab === 'list' && (
-        <ComponentCard title="Liste des Quiz">
+        <ComponentCard title="Quiz List">
           <QuizTable
             onEdit={handleEditClick}
             onView={handleViewClick}
@@ -117,13 +117,13 @@ export default function QuizManagement() {
       )}
 
       {activeTab === 'add' && (
-        <ComponentCard title="Créer un Nouveau Quiz">
+        <ComponentCard title="Create New Quiz">
           <AddQuizForm onSuccess={handleAddSuccess} />
         </ComponentCard>
       )}
 
       {activeTab === 'edit' && selectedQuizId && (
-        <ComponentCard title="Modifier le Quiz">
+        <ComponentCard title="Edit Quiz">
           <EditQuizForm
             quizId={selectedQuizId}
             onSuccess={handleEditSuccess}
@@ -133,7 +133,7 @@ export default function QuizManagement() {
       )}
 
       {activeTab === 'view' && selectedQuizId && (
-        <ComponentCard title="Détails du Quiz">
+        <ComponentCard title="Quiz Details">
           <QuizDetails
             quizId={selectedQuizId}
             onEdit={handleEditClick}
@@ -144,7 +144,7 @@ export default function QuizManagement() {
       )}
 
       {activeTab === 'add-question' && selectedQuizId && (
-        <ComponentCard title="Ajouter une Question">
+        <ComponentCard title="Add Question">
           <AddQuestionForm
             quizId={selectedQuizId}
             onSuccess={handleAddQuestionSuccess}

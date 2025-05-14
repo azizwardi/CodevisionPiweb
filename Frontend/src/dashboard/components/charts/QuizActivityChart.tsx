@@ -1,18 +1,18 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
   Legend,
   Filler
 } from 'chart.js';
 
-// Enregistrer les composants nécessaires pour Chart.js
+// Register necessary components for Chart.js
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -32,19 +32,19 @@ interface QuizActivityChartProps {
   loading: boolean;
 }
 
-const QuizActivityChart: React.FC<QuizActivityChartProps> = ({ 
-  published, 
-  attempts, 
-  completed, 
+const QuizActivityChart: React.FC<QuizActivityChartProps> = ({
+  published,
+  attempts,
+  completed,
   certificates,
-  loading 
+  loading
 }) => {
-  // Données pour le graphique
+  // Data for the chart
   const data = {
-    labels: ['Quiz publiés', 'Tentatives', 'Terminés', 'Certificats'],
+    labels: ['Published Quizzes', 'Attempts', 'Completed', 'Certificates'],
     datasets: [
       {
-        label: 'Activité des quiz',
+        label: 'Quiz Activity',
         data: [published, attempts, completed, certificates],
         fill: true,
         backgroundColor: 'rgba(153, 102, 255, 0.2)',
@@ -59,7 +59,7 @@ const QuizActivityChart: React.FC<QuizActivityChartProps> = ({
     ],
   };
 
-  // Options pour le graphique
+  // Options for the chart
   const options = {
     responsive: true,
     maintainAspectRatio: false,

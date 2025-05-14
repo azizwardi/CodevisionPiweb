@@ -21,11 +21,11 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
   const [verifying, setVerifying] = useState(false);
   const [faceDescriptor, setFaceDescriptor] = useState<Float32Array | null>(null);
 
-  // Chargement des modèles face-api.js
+  // Loading face-api.js models
   useEffect(() => {
     const loadModels = async () => {
       try {
-        // Chemin vers les modèles
+        // Path to models
         const MODEL_URL = '/models';
 
         await Promise.all([
@@ -35,12 +35,12 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
         ]);
 
         setIsModelLoaded(true);
-        console.log('Modèles face-api.js chargés avec succès');
+        console.log('Face-api.js models loaded successfully');
       } catch (error) {
-        console.error('Erreur lors du chargement des modèles face-api.js:', error);
+        console.error('Error loading face-api.js models:', error);
         toastManager.addToast({
-          title: 'Erreur',
-          description: 'Impossible de charger les modèles de détection faciale',
+          title: 'Error',
+          description: 'Unable to load facial detection models',
           type: 'error'
         });
       }
@@ -49,7 +49,7 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
     loadModels();
   }, []);
 
-  // Fonction pour détecter les visages dans l'image capturée
+  // Function to detect faces in the captured image
   const detectFaces = async (imageElement: HTMLImageElement) => {
     if (!isModelLoaded || !canvasRef.current) return null;
 
@@ -59,19 +59,19 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
       .withFaceDescriptor();
 
     if (detections) {
-      // Dessiner les résultats sur le canvas
+      // Draw results on canvas
       const canvas = canvasRef.current;
       const displaySize = { width: imageElement.width, height: imageElement.height };
       faceapi.matchDimensions(canvas, displaySize);
 
       const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-      // Effacer le canvas
+      // Clear the canvas
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Dessiner le cadre de détection et les points de repère
+        // Draw detection box and landmarks
         faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
       }
@@ -84,7 +84,7 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
     }
   };
 
-  // Fonction pour capturer une image de la webcam
+  // Function to capture an image from the webcam
   const captureImage = async () => {
     if (!webcamRef.current) return;
 
@@ -95,7 +95,7 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
       if (imageSrc) {
         setCapturedImage(imageSrc);
 
-        // Créer un élément image pour l'analyse
+        // Create an image element for analysis
         const img = new Image();
         img.src = imageSrc;
 
@@ -105,8 +105,8 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
             setFaceDescriptor(descriptor);
           } else {
             toastManager.addToast({
-              title: 'Avertissement',
-              description: 'Aucun visage détecté. Veuillez réessayer.',
+              title: 'Warning',
+              description: 'No face detected. Please try again.',
               type: 'warning'
             });
           }
@@ -114,22 +114,22 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
         };
       }
     } catch (error) {
-      console.error('Erreur lors de la capture d\'image:', error);
+      console.error('Error capturing image:', error);
       setIsCapturing(false);
       toastManager.addToast({
-        title: 'Erreur',
-        description: 'Impossible de capturer l\'image',
+        title: 'Error',
+        description: 'Unable to capture image',
         type: 'error'
       });
     }
   };
 
-  // Fonction pour vérifier l'identité avec Hugging Face
+  // Function to verify identity with Hugging Face
   const verifyIdentity = async () => {
     if (!faceDescriptor || !capturedImage) {
       toastManager.addToast({
-        title: 'Erreur',
-        description: 'Veuillez d\'abord capturer une image avec un visage détecté',
+        title: 'Error',
+        description: 'Please capture an image with a detected face first',
         type: 'error'
       });
       return;
@@ -138,66 +138,66 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
     setVerifying(true);
 
     try {
-      console.log('Début de la vérification faciale...');
+      console.log('Starting facial verification...');
       console.log('UserId:', userId);
       console.log('QuizId:', quizId);
 
-      // Convertir l'image en base64 (enlever le préfixe data:image/jpeg;base64,)
+      // Convert image to base64 (remove the prefix data:image/jpeg;base64,)
       const base64Image = capturedImage.split(',')[1];
 
-      // Vérifier que l'image est bien convertie
+      // Verify that the image is properly converted
       if (!base64Image) {
-        throw new Error('Échec de la conversion de l\'image en base64');
+        throw new Error('Failed to convert image to base64');
       }
 
-      console.log('Image convertie en base64 avec succès');
+      console.log('Image successfully converted to base64');
 
-      // Envoyer l'image au backend pour vérification avec Hugging Face
-      console.log('Envoi de la requête au serveur...');
+      // Send the image to the backend for verification with Hugging Face
+      console.log('Sending request to server...');
       const response = await axios.post('http://localhost:5000/face-verification/verify', {
         userId,
         quizId,
         faceImage: base64Image,
-        faceDescriptor: Array.from(faceDescriptor) // Convertir Float32Array en array normal
+        faceDescriptor: Array.from(faceDescriptor) // Convert Float32Array to normal array
       });
 
-      console.log('Réponse du serveur:', response.data);
+      console.log('Server response:', response.data);
 
       if (response.data.verified) {
-        console.log('Vérification faciale réussie');
+        console.log('Facial verification successful');
         toastManager.addToast({
-          title: 'Succès',
-          description: 'Vérification faciale réussie',
+          title: 'Success',
+          description: 'Facial verification successful',
           type: 'success'
         });
         onVerificationComplete(true);
       } else {
-        console.log('Vérification faciale échouée');
+        console.log('Facial verification failed');
         toastManager.addToast({
-          title: 'Échec',
-          description: 'La vérification faciale a échoué. Veuillez réessayer.',
+          title: 'Failed',
+          description: 'Facial verification failed. Please try again.',
           type: 'error'
         });
         onVerificationComplete(false);
       }
     } catch (error: any) {
-      console.error('Erreur détaillée lors de la vérification faciale:', error);
+      console.error('Detailed error during facial verification:', error);
 
-      // Extraire le message d'erreur du serveur si disponible
-      let errorMessage = 'Erreur lors de la vérification faciale';
+      // Extract error message from server if available
+      let errorMessage = 'Error during facial verification';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
-        console.error('Message d\'erreur du serveur:', errorMessage);
+        console.error('Server error message:', errorMessage);
       }
 
       toastManager.addToast({
-        title: 'Erreur',
+        title: 'Error',
         description: errorMessage,
         type: 'error'
       });
 
-      // En mode développement, on peut simuler une vérification réussie malgré l'erreur
-      // Décommentez la ligne suivante pour tester le flux sans vérification réelle
+      // In development mode, we can simulate a successful verification despite the error
+      // Uncomment the following line to test the flow without actual verification
       // onVerificationComplete(true);
 
       onVerificationComplete(false);

@@ -14,7 +14,7 @@ import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
 import TeamSkillsChart from "../../components/charts/TeamSkillsChart";
 import toastManager from '../../../utils/toastManager';
 
-// Types pour les statistiques
+// Types for statistics
 interface TeamLeaderDashboardStats {
   projects: {
     total: number;
@@ -32,7 +32,7 @@ interface TeamLeaderDashboardStats {
   };
 }
 
-// Type pour les membres de l'équipe
+// Type for team members
 interface TeamMember {
   name: string;
   tasksCompleted: number;
@@ -40,13 +40,13 @@ interface TeamMember {
   performancePercentage: number;
 }
 
-// Type pour les compétences
+// Type for skills
 interface Skill {
   name: string;
   level: number;
 }
 
-// Composant pour afficher une métrique
+// Component to display a metric
 interface MetricCardProps {
   title: string;
   value: number;
@@ -96,14 +96,14 @@ export default function TeamLeaderDashboard() {
 
       try {
         setLoading(true);
-        console.log('Récupération des statistiques du dashboard team leader...');
+        console.log('Retrieving team leader dashboard statistics...');
 
-        // Récupérer les statistiques du dashboard
+        // Get dashboard statistics
         const response = await axios.get(`http://localhost:5000/dashboard/team-leader/${user._id}`);
-        console.log('Réponse du backend:', response.data);
+        console.log('Backend response:', response.data);
         setStats(response.data);
 
-        // Simuler des données pour les membres de l'équipe (à remplacer par une vraie API)
+        // Simulate data for team members (to be replaced with a real API)
         const mockTeamMembers: TeamMember[] = [
           { name: 'John Doe', tasksCompleted: 18, tasksTotal: 25, performancePercentage: 72 },
           { name: 'Jane Smith', tasksCompleted: 12, tasksTotal: 20, performancePercentage: 60 },
@@ -112,7 +112,7 @@ export default function TeamLeaderDashboard() {
         ];
         setTeamMembers(mockTeamMembers);
 
-        // Simuler des données pour les compétences de l'équipe (à remplacer par une vraie API)
+        // Simulate data for team skills (to be replaced with a real API)
         const mockTeamSkills: Skill[] = [
           { name: 'React', level: 85 },
           { name: 'Node.js', level: 75 },
@@ -124,11 +124,11 @@ export default function TeamLeaderDashboard() {
 
         setLoading(false);
       } catch (err: any) {
-        console.error('Erreur lors de la récupération des statistiques:', err);
-        setError(err.message || 'Une erreur est survenue lors de la récupération des statistiques');
+        console.error('Error retrieving statistics:', err);
+        setError(err.message || 'An error occurred while retrieving statistics');
         toastManager.addToast({
-          title: "Erreur",
-          description: "Impossible de charger les statistiques du dashboard",
+          title: "Error",
+          description: "Unable to load dashboard statistics",
           type: "error"
         });
         setLoading(false);
@@ -147,27 +147,27 @@ export default function TeamLeaderDashboard() {
       <PageBreadcrumb pageTitle="Team Leader Dashboard" />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        {/* Métriques principales */}
+        {/* Main metrics */}
         <MetricCard
-          title="Membres d'équipe"
+          title="Team Members"
           value={stats?.team?.total || 0}
           icon={<UserCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}
           loading={loading}
         />
         <MetricCard
-          title="Projets"
+          title="Projects"
           value={stats?.projects?.total || 0}
           icon={<ListIcon className="text-gray-800 size-6 dark:text-white/90" />}
           loading={loading}
         />
         <MetricCard
-          title="Tâches"
+          title="Tasks"
           value={stats?.tasks?.total || 0}
           icon={<TaskIcon className="text-gray-800 size-6 dark:text-white/90" />}
           loading={loading}
         />
         <MetricCard
-          title="Tâches complétées"
+          title="Completed Tasks"
           value={stats?.tasks?.completed || 0}
           icon={<TaskIcon className="text-gray-800 size-6 dark:text-white/90" />}
           change={stats?.tasks?.total ? Math.round((stats.tasks.completed / stats.tasks.total) * 100) : 0}
@@ -175,11 +175,11 @@ export default function TeamLeaderDashboard() {
         />
       </div>
 
-      {/* Graphiques statistiques */}
+      {/* Statistical charts */}
       <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-        {/* Performance des membres de l'équipe */}
+        {/* Team members performance */}
         <div className="col-span-12 xl:col-span-8">
-          <ComponentCard title="Performance des membres de l'équipe">
+          <ComponentCard title="Team Members Performance">
             <TeamMembersPerformanceChart
               teamMembers={teamMembers}
               loading={loading}
@@ -197,9 +197,9 @@ export default function TeamLeaderDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Statut des projets */}
+        {/* Project status */}
         <div className="col-span-12 xl:col-span-4">
-          <ComponentCard title="État des projets">
+          <ComponentCard title="Project Status">
             <ProjectStatusChart
               active={stats?.projects?.active || 0}
               completed={stats?.projects?.completed || 0}
@@ -207,13 +207,13 @@ export default function TeamLeaderDashboard() {
             />
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Actifs</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Active</span>
                 <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.projects?.active || 0}
                 </div>
               </div>
               <div className="p-3 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminés</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.projects?.completed || 0}
                 </div>
@@ -222,9 +222,9 @@ export default function TeamLeaderDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Statut des tâches */}
+        {/* Task status */}
         <div className="col-span-12 xl:col-span-6">
-          <ComponentCard title="État des tâches">
+          <ComponentCard title="Task Status">
             <TaskStatusChart
               pending={stats?.tasks?.pending || 0}
               inProgress={stats?.tasks?.inProgress || 0}
@@ -233,19 +233,19 @@ export default function TeamLeaderDashboard() {
             />
             <div className="grid grid-cols-3 gap-2 mt-4">
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En attente</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Pending</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.pending || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">En cours</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">In Progress</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.inProgress || 0}
                 </div>
               </div>
               <div className="p-2 bg-gray-50 rounded-lg dark:bg-gray-800/50 text-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Terminées</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Completed</span>
                 <div className="text-lg font-semibold text-gray-800 dark:text-white/90">
                   {loading ? <Spinner size="sm" /> : stats?.tasks?.completed || 0}
                 </div>
@@ -254,9 +254,9 @@ export default function TeamLeaderDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Compétences de l'équipe */}
+        {/* Team skills */}
         <div className="col-span-12 xl:col-span-6">
-          <ComponentCard title="Compétences de l'équipe">
+          <ComponentCard title="Team Skills">
             <TeamSkillsChart
               skills={teamSkills}
               loading={loading}
@@ -264,9 +264,9 @@ export default function TeamLeaderDashboard() {
           </ComponentCard>
         </div>
 
-        {/* Annonces d'équipe */}
+        {/* Team announcements */}
         <div className="col-span-12">
-          <ComponentCard title="Annonces d'équipe">
+          <ComponentCard title="Team Announcements">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 bg-gray-50 rounded-lg dark:bg-gray-800/50">
                 <div className="mb-4 flex items-center gap-3">
@@ -275,13 +275,13 @@ export default function TeamLeaderDashboard() {
                   </div>
                   <div>
                     <h5 className="font-medium text-black dark:text-white">
-                      Réunion d'équipe
+                      Team Meeting
                     </h5>
-                    <p className="text-sm">Demain à 10:00</p>
+                    <p className="text-sm">Tomorrow at 10:00</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Réunion hebdomadaire pour discuter de l'avancement des projets et des tâches à venir.
+                  Weekly meeting to discuss project progress and upcoming tasks.
                 </p>
               </div>
 
@@ -292,13 +292,13 @@ export default function TeamLeaderDashboard() {
                   </div>
                   <div>
                     <h5 className="font-medium text-black dark:text-white">
-                      Date limite du projet
+                      Project Deadline
                     </h5>
-                    <p className="text-sm">Vendredi, 15 juin</p>
+                    <p className="text-sm">Friday, June 15</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  La date limite pour le projet principal approche. Assurez-vous que toutes les tâches sont terminées.
+                  The deadline for the main project is approaching. Make sure all tasks are completed.
                 </p>
               </div>
 
@@ -309,13 +309,13 @@ export default function TeamLeaderDashboard() {
                   </div>
                   <div>
                     <h5 className="font-medium text-black dark:text-white">
-                      Formation
+                      Training
                     </h5>
-                    <p className="text-sm">Lundi, 20 juin</p>
+                    <p className="text-sm">Monday, June 20</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Session de formation sur les nouvelles technologies à utiliser dans les prochains projets.
+                  Training session on new technologies to be used in upcoming projects.
                 </p>
               </div>
             </div>

@@ -1,16 +1,16 @@
 import React from 'react';
 import { Radar } from 'react-chartjs-2';
-import { 
-  Chart as ChartJS, 
-  RadialLinearScale, 
-  PointElement, 
-  LineElement, 
-  Filler, 
-  Tooltip, 
-  Legend 
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
 } from 'chart.js';
 
-// Enregistrer les composants nécessaires pour Chart.js
+// Register necessary components for Chart.js
 ChartJS.register(
   RadialLinearScale,
   PointElement,
@@ -30,20 +30,20 @@ interface TeamSkillsChartProps {
   loading: boolean;
 }
 
-const TeamSkillsChart: React.FC<TeamSkillsChartProps> = ({ 
-  skills, 
-  loading 
+const TeamSkillsChart: React.FC<TeamSkillsChartProps> = ({
+  skills,
+  loading
 }) => {
-  // Préparer les données pour le graphique
+  // Prepare data for the chart
   const labels = skills.map(skill => skill.name);
   const skillLevels = skills.map(skill => skill.level);
 
-  // Données pour le graphique
+  // Data for the chart
   const data = {
     labels,
     datasets: [
       {
-        label: 'Niveau de compétence',
+        label: 'Skill Level',
         data: skillLevels,
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderColor: 'rgba(255, 99, 132, 1)',
@@ -56,7 +56,7 @@ const TeamSkillsChart: React.FC<TeamSkillsChartProps> = ({
     ],
   };
 
-  // Options pour le graphique
+  // Options for the chart
   const options = {
     responsive: true,
     maintainAspectRatio: false,
