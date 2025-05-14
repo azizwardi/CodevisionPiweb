@@ -284,5 +284,291 @@ EOL
                 }
             }
         }
+
+        stage('Create Docker Compose File') {
+            steps {
+                script {
+                    // Create the PowerShell script to generate docker-compose.prod.yml
+                    writeFile file: 'Generate-DockerCompose.ps1', text: '''
+# This script generates a docker-compose.prod.yml file with the correct build number
+param (
+    [Parameter(Mandatory=$false)]
+    [int]$BuildNumber = 54
+)
+
+$REGISTRY = "192.168.33.10:8083"
+$BACKEND_IMAGE = "${REGISTRY}/piwebapp-backend:${BuildNumber}"
+$FRONTEND_IMAGE = "${REGISTRY}/piwebapp-frontend:${BuildNumber}"
+$MONGO_USER = "root"
+$MONGO_PASSWORD = "example"
+$JWT_SECRET = "development_jwt_secret_replace_in_production"
+
+# Calculate port offsets based on build number to avoid conflicts
+$BACKEND_PORT = 5000 + ($BuildNumber % 10)
+$FRONTEND_PORT = 8000 + ($BuildNumber % 10)
+$MONGO_PORT = 27017 + ($BuildNumber % 10)
+
+# Create the docker-compose.prod.yml file
+$dockerComposeContent = @"
+version: '3.8'
+services:
+  db:
+    image: mongo:4.2
+    container_name: db-${BuildNumber}
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongo-data-${BuildNumber}:/data/db
+    networks:
+      - app-network-${BuildNumber}
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    container_name: backend-${BuildNumber}
+    restart: on-failure:3
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@db-${BuildNumber}:27017/codevisionpiweb?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=5000
+      - DEBUG=express:*
+    ports:
+      - "${BACKEND_PORT}:5000"
+    networks:
+      - app-network-${BuildNumber}
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # Simplified command to avoid interpolation issues
+    command: >
+      sh -c '
+        echo "Waiting for MongoDB to be ready..." &&
+        sleep 15 &&
+        echo "Starting backend application..." &&
+        node server.js
+      '
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    container_name: frontend-${BuildNumber}
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT}:80"
+    networks:
+      - app-network-${BuildNumber}
+
+networks:
+  app-network-${BuildNumber}:
+    driver: bridge
+
+volumes:
+  mongo-data-${BuildNumber}:
+"@
+
+# Write the content to the file
+$dockerComposeContent | Out-File -FilePath "docker-compose.prod.yml" -Encoding utf8
+
+Write-Host "Generated docker-compose.prod.yml for build #${BuildNumber}"
+Write-Host "Backend port: ${BACKEND_PORT}"
+Write-Host "Frontend port: ${FRONTEND_PORT}"
+Write-Host "MongoDB port: ${MONGO_PORT}"
+'''
+
+                    // Run the PowerShell script to generate docker-compose.prod.yml
+                    powershell(script: "powershell -ExecutionPolicy Bypass -File .\\Generate-DockerCompose.ps1 -BuildNumber ${BUILD_NUMBER}")
+
+                    // Display the content of the file for debugging
+                    sh "cat docker-compose.prod.yml"
+                }
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                script {
+                    // Use Jenkins credentials for Docker login
+                    withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // Login to Docker registry using credentials
+                        sh '''
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin http://192.168.33.10:8083
+                        '''
+
+                        // Push images
+                        sh "docker push ${BACKEND_IMAGE}"
+                        sh "docker push ${FRONTEND_IMAGE}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                script {
+                    // Use Jenkins credentials for Docker login if needed
+                    withCredentials([usernamePassword(credentialsId: 'nexus', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // Deploy using docker-compose
+                        sh """
+                        # Login to Docker registry if needed for pulling images
+                        echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin http://192.168.33.10:8083
+
+                        # First, check if there are any existing containers with the same name
+                        echo "Checking for existing containers with the same names..."
+
+                        # Use docker-compose down if the file exists from a previous run
+                        if [ -f docker-compose.prod.yml ]; then
+                            echo "Using docker-compose down to clean up previous deployment..."
+                            docker-compose -f docker-compose.prod.yml down -v || true
+                        fi
+
+                        # Also try direct container removal as a backup
+                        echo "Stopping and removing existing containers..."
+                        docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
+                        docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} || true
+
+                        # Remove existing network if it exists
+                        docker network rm app-network-${BUILD_NUMBER} || true
+
+                        # Remove existing volume if it exists
+                        docker volume rm mongo-data-${BUILD_NUMBER} || true
+
+                        # Clean up old deployments (optional, keep last 3 builds)
+                        echo "Cleaning up old deployments..."
+
+                        # Get list of existing containers to avoid unnecessary commands
+                        EXISTING_CONTAINERS=\$(docker ps -a --format '{{.Names}}')
+                        EXISTING_NETWORKS=\$(docker network ls --format '{{.Name}}')
+                        EXISTING_VOLUMES=\$(docker volume ls --format '{{.Name}}')
+
+                        # Only clean up builds from 10 builds ago to avoid too much log noise
+                        START_CLEAN=\$((${BUILD_NUMBER}-10))
+                        if [ \$START_CLEAN -lt 1 ]; then
+                            START_CLEAN=1
+                        fi
+
+                        END_CLEAN=\$((${BUILD_NUMBER}-3))
+                        if [ \$END_CLEAN -gt \$START_CLEAN ]; then
+                            echo "Cleaning up deployments \$START_CLEAN through \$END_CLEAN..."
+
+                            for i in \$(seq \$START_CLEAN \$END_CLEAN); do
+                                # Check if containers exist before trying to remove them
+                                for CONTAINER in db-\$i backend-\$i frontend-\$i; do
+                                    if echo "\$EXISTING_CONTAINERS" | grep -q "\$CONTAINER"; then
+                                        echo "Removing container \$CONTAINER..."
+                                        docker stop \$CONTAINER || true
+                                        docker rm \$CONTAINER || true
+                                    fi
+                                done
+
+                                # Check if network exists before trying to remove it
+                                if echo "\$EXISTING_NETWORKS" | grep -q "app-network-\$i"; then
+                                    echo "Removing network app-network-\$i..."
+                                    docker network rm app-network-\$i || true
+                                fi
+
+                                # Check if volume exists before trying to remove it
+                                if echo "\$EXISTING_VOLUMES" | grep -q "mongo-data-\$i"; then
+                                    echo "Removing volume mongo-data-\$i..."
+                                    docker volume rm mongo-data-\$i || true
+                                fi
+                            done
+                        else
+                            echo "No old deployments to clean up."
+                        fi
+
+                        # Run docker-compose with environment variables
+                        echo "Starting new containers..."
+                        docker-compose -f docker-compose.prod.yml up -d
+
+                        # Wait a moment for containers to start
+                        sleep 10
+
+                        # Check container status
+                        echo "Checking container status..."
+                        docker ps -a | grep \${BUILD_NUMBER}
+
+                        # Check if backend container is running
+                        if docker ps | grep -q "backend-\${BUILD_NUMBER}"; then
+                            echo "Backend container is running successfully!"
+                        else
+                            echo "WARNING: Backend container is not running! Checking container status..."
+                            BACKEND_STATUS=\$(docker inspect --format='{{.State.Status}}' backend-\${BUILD_NUMBER} 2>/dev/null || echo "not found")
+                            echo "Backend container status: \$BACKEND_STATUS"
+
+                            if [ "\$BACKEND_STATUS" = "exited" ]; then
+                                echo "Backend container exited. Exit code: \$(docker inspect --format='{{.State.ExitCode}}' backend-\${BUILD_NUMBER})"
+                            fi
+                        fi
+
+                        # Check logs of the backend container to diagnose any issues
+                        echo "Backend container logs:"
+                        docker logs backend-\${BUILD_NUMBER} 2>&1 || true
+
+                        # Try to restart the backend if it's not running
+                        if ! docker ps | grep -q "backend-\${BUILD_NUMBER}"; then
+                            echo "Attempting to restart the backend container..."
+                            docker start backend-\${BUILD_NUMBER} || true
+                            sleep 5
+                            echo "After restart attempt, backend status: \$(docker inspect --format='{{.State.Status}}' backend-\${BUILD_NUMBER} 2>/dev/null || echo "not found")"
+                        fi
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            script {
+                // Calculate the ports used for this deployment
+                def buildNumberInt = BUILD_NUMBER.toInteger()
+                def backendPort = 5000 + (buildNumberInt % 10)
+                def frontendPort = 8000 + (buildNumberInt % 10)
+                def mongoPort = 27017 + (buildNumberInt % 10)
+
+                echo """
+                ========================================
+                Pipeline completed successfully!
+                ========================================
+
+                Deployment Information:
+                - Build Number: ${BUILD_NUMBER}
+                - Container Names: db-${BUILD_NUMBER}, backend-${BUILD_NUMBER}, frontend-${BUILD_NUMBER}
+
+                Access URLs:
+                - Frontend: http://192.168.33.10:${frontendPort}
+                - Backend API: http://192.168.33.10:${backendPort}
+                - MongoDB: mongodb://root:example@192.168.33.10:${mongoPort}
+
+                Images:
+                - Backend: ${BACKEND_IMAGE}
+                - Frontend: ${FRONTEND_IMAGE}
+
+                To stop this deployment:
+                docker stop db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
+                docker rm db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER}
+                docker network rm app-network-${BUILD_NUMBER}
+                docker volume rm mongo-data-${BUILD_NUMBER}
+                ========================================
+                """
+            }
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for details.'
+        }
     }
 }
