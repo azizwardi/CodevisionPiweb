@@ -484,28 +484,6 @@ EOL
                 }
             }
         }
-
-        stage('Run Backend Prometheus Monitoring') {
-            steps {
-                dir('Backend') {
-                    script {
-                        sh 'docker start prometheus'
-                        echo "Started Prometheus for backend monitoring"
-                    }
-                }
-            }
-        }
-
-        stage('Run Backend Grafana Monitoring') {
-            steps {
-                dir('Backend') {
-                    script {
-                        sh 'docker start grafana'
-                        echo "Started Grafana for backend monitoring"
-                    }
-                }
-            }
-        }
     }
 
     post {
