@@ -236,8 +236,22 @@ h1 {
                                 writeFile file: 'Dockerfile.prod', text: '''
 FROM node:18-alpine
 WORKDIR /app
+# Install curl and wget for healthcheck and connection testing
+RUN apk --no-cache add curl wget
+
+# Copy application files
 COPY dev_build .
-RUN npm install --omit=dev
+
+# Install dependencies including Prometheus monitoring
+RUN npm install --omit=dev && \
+    npm install --no-save prom-client@14.2.0 tdigest@0.1.2 bintrees@1.0.2
+
+# Create a simple monitoring script
+RUN echo '#!/bin/sh\n\
+# Check if server is responding\n\
+curl -f http://localhost:5000 || exit 1' > /app/healthcheck.sh && \
+    chmod +x /app/healthcheck.sh
+
 EXPOSE 5000
 CMD ["node", "server.js"]
 '''
@@ -334,17 +348,42 @@ services:
     networks:
       - app-network-${uniqueSuffix}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      test: ["CMD", "/app/healthcheck.sh"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 20s
     command: >
       sh -c "
         echo 'Waiting for MongoDB to be ready...' &&
-        sleep 10 &&
-        echo 'Starting backend application...' &&
-        node server.js
+        sleep 15 &&
+        echo 'Checking MongoDB connection...' &&
+
+        # Try to connect to MongoDB
+        RETRY_COUNT=0
+        MAX_RETRIES=5
+
+        until [ $RETRY_COUNT -ge $MAX_RETRIES ]
+        do
+          if wget -q --spider --timeout=5 db-${uniqueSuffix}:27017; then
+            echo 'MongoDB is available, proceeding with startup'
+            break
+          fi
+
+          RETRY_COUNT=$((RETRY_COUNT+1))
+          echo 'MongoDB not yet available, retrying in 5 seconds (attempt '$RETRY_COUNT' of '$MAX_RETRIES')'
+          sleep 5
+        done
+
+        if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+          echo 'Failed to connect to MongoDB after multiple attempts'
+          echo 'Will try to start anyway...'
+        fi
+
+        echo 'Starting backend application with Prometheus monitoring...' &&
+
+        # Start with extra error handling
+        node server.js || (echo 'Backend crashed! Check logs above for details' && exit 1)
       "
 
   frontend:
@@ -487,9 +526,30 @@ EOL
                         echo "Checking container status..."
                         docker ps -a | grep ${BUILD_NUMBER}
 
+                        # Check if backend container is running
+                        if docker ps | grep -q "backend-${BUILD_NUMBER}"; then
+                            echo "Backend container is running successfully!"
+                        else
+                            echo "WARNING: Backend container is not running! Checking container status..."
+                            BACKEND_STATUS=$(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")
+                            echo "Backend container status: $BACKEND_STATUS"
+
+                            if [ "$BACKEND_STATUS" = "exited" ]; then
+                                echo "Backend container exited. Exit code: $(docker inspect --format='{{.State.ExitCode}}' backend-${BUILD_NUMBER})"
+                            fi
+                        fi
+
                         # Check logs of the backend container to diagnose any issues
                         echo "Backend container logs:"
-                        docker logs backend-${BUILD_NUMBER} || true
+                        docker logs backend-${BUILD_NUMBER} 2>&1 || true
+
+                        # Try to restart the backend if it's not running
+                        if ! docker ps | grep -q "backend-${BUILD_NUMBER}"; then
+                            echo "Attempting to restart the backend container..."
+                            docker start backend-${BUILD_NUMBER} || true
+                            sleep 5
+                            echo "After restart attempt, backend status: $(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")"
+                        fi
                         """
                     }
                 }
