@@ -59,6 +59,21 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') { 
+            steps {
+                script {  
+                    def scannerHome = tool 'scanner'
+                    withSonarQubeEnv('scanner') {  // Ajout du nom de la config SonarQube
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=piweb \
+                        -Dsonar.projectName=Piweb
+                        """
+                    }
+                } 
+            }  
+        }
+
         stage('Build Backend') {
             steps {
                 dir('Backend') {

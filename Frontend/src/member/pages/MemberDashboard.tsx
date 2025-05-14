@@ -326,19 +326,19 @@ const MemberDashboard: React.FC = () => {
               </div>
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">Tentatives</span>
+                  <span className="text-sm text-gray-500">Attempts</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {quizStats.attempts}
                   </div>
                 </div>
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">Complétés</span>
+                  <span className="text-sm text-gray-500">Completed</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {quizStats.completed}
                   </div>
                 </div>
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">Certificats</span>
+                  <span className="text-sm text-gray-500">Certificates</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {quizStats.certificates}
                   </div>
@@ -347,11 +347,11 @@ const MemberDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Espace supplémentaire pour les graphiques */}
+          {/* Additional space for charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Graphique de progression des tâches par projet */}
+            {/* Project progress chart */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Progression par projet</h2>
+              <h2 className="text-lg font-semibold mb-4">Project Progress</h2>
               <div className="space-y-4">
                 {projects.slice(0, 3).map((project) => (
                   <div key={project._id} className="bg-gray-50 p-4 rounded-lg">
@@ -369,39 +369,39 @@ const MemberDashboard: React.FC = () => {
                 ))}
                 {projects.length === 0 && (
                   <div className="text-center text-gray-500 py-8">
-                    Aucun projet assigné
+                    No assigned projects
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Graphique des tâches par priorité */}
+            {/* Tasks by priority chart */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Tâches par priorité</h2>
+              <h2 className="text-lg font-semibold mb-4">Tasks by Priority</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-red-50 p-4 rounded-lg text-center">
                     <div className="text-red-600 text-xl font-bold">
                       {tasks.filter(task => task.priority === 'high').length}
                     </div>
-                    <div className="text-sm text-gray-600">Haute</div>
+                    <div className="text-sm text-gray-600">High</div>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg text-center">
                     <div className="text-yellow-600 text-xl font-bold">
                       {tasks.filter(task => task.priority === 'medium').length}
                     </div>
-                    <div className="text-sm text-gray-600">Moyenne</div>
+                    <div className="text-sm text-gray-600">Medium</div>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg text-center">
                     <div className="text-green-600 text-xl font-bold">
                       {tasks.filter(task => task.priority === 'low').length}
                     </div>
-                    <div className="text-sm text-gray-600">Basse</div>
+                    <div className="text-sm text-gray-600">Low</div>
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-2">Tâches à venir</h3>
+                  <h3 className="text-sm font-medium mb-2">Upcoming Tasks</h3>
                   <div className="space-y-2">
                     {tasks.filter(task => new Date(task.dueDate) > new Date()).slice(0, 3).map((task) => (
                       <div key={task._id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
@@ -413,7 +413,7 @@ const MemberDashboard: React.FC = () => {
                     ))}
                     {tasks.filter(task => new Date(task.dueDate) > new Date()).length === 0 && (
                       <div className="text-center text-gray-500 py-2">
-                        Aucune tâche à venir
+                        No upcoming tasks
                       </div>
                     )}
                   </div>

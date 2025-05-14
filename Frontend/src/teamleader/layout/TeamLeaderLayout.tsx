@@ -96,14 +96,7 @@ const TeamLeaderLayout: React.FC = () => {
                   Tasks
                 </a>
               </li>
-              <li>
-                <a
-                  href="/team-leader/reports"
-                  className="block py-2 px-4 rounded hover:bg-gray-700"
-                >
-                  Reports
-                </a>
-              </li>
+
             </ul>
           </nav>
         </aside>
@@ -187,15 +180,7 @@ const TeamLeaderLayout: React.FC = () => {
                     Tasks
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/team-leader/reports"
-                    className="block py-2 px-4 text-white text-lg"
-                    onClick={toggleMenu}
-                  >
-                    Reports
-                  </a>
-                </li>
+
                 <li>
                   <a
                     href="/profile"
