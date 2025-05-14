@@ -371,6 +371,7 @@ EOL
                         echo "Starting MongoDB container..."
                         docker run -d --name db-${BUILD_NUMBER} \\
                           --network app-network-${BUILD_NUMBER} \\
+                          --restart unless-stopped \\
                           -p ${mongoPort}:27017 \\
                           -e MONGO_INITDB_ROOT_USERNAME=${MONGO_USER} \\
                           -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD} \\
@@ -385,6 +386,7 @@ EOL
                         echo "Starting Backend container..."
                         docker run -d --name backend-${BUILD_NUMBER} \\
                           --network app-network-${BUILD_NUMBER} \\
+                          --restart unless-stopped \\
                           -p ${backendPort}:5000 \\
                           -e NODE_ENV=production \\
                           -e MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@db-${BUILD_NUMBER}:27017/codevisionpiweb?authSource=admin \\
@@ -393,10 +395,14 @@ EOL
                           -e DEBUG=express:* \\
                           ${BACKEND_IMAGE}
 
+                        # Add a hostname alias for Prometheus to use
+                        docker network connect --alias backend app-network-${BUILD_NUMBER} backend-${BUILD_NUMBER} || true
+
                         # Start Frontend container
                         echo "Starting Frontend container..."
                         docker run -d --name frontend-${BUILD_NUMBER} \\
                           --network app-network-${BUILD_NUMBER} \\
+                          --restart unless-stopped \\
                           -p ${frontendPort}:80 \\
                           ${FRONTEND_IMAGE}
 
@@ -410,9 +416,26 @@ EOL
                         # Check if backend container is running
                         if docker ps | grep -q "backend-${BUILD_NUMBER}"; then
                             echo "Backend container is running successfully!"
+                            echo "Backend logs:"
+                            docker logs backend-${BUILD_NUMBER} 2>&1 | tail -n 20 || true
                         else
                             echo "WARNING: Backend container is not running! Checking container status..."
-                            docker logs backend-${BUILD_NUMBER} 2>&1 || true
+                            BACKEND_STATUS=\$(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")
+                            echo "Backend container status: \$BACKEND_STATUS"
+
+                            if [ "\$BACKEND_STATUS" = "exited" ]; then
+                                echo "Backend container exited. Exit code: \$(docker inspect --format='{{.State.ExitCode}}' backend-${BUILD_NUMBER})"
+                                echo "Full backend logs:"
+                                docker logs backend-${BUILD_NUMBER} 2>&1 || true
+
+                                echo "Attempting to restart the backend container..."
+                                docker start backend-${BUILD_NUMBER} || true
+                                sleep 5
+                                echo "After restart attempt, backend status: \$(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")"
+                            else
+                                echo "Backend container logs:"
+                                docker logs backend-${BUILD_NUMBER} 2>&1 || true
+                            fi
                         fi
                         """
                     }
@@ -423,8 +446,9 @@ EOL
         stage('Deploy Prometheus') {
             steps {
                 script {
-                    // Create Prometheus configuration file
-                    writeFile file: 'prometheus.yml', text: '''
+                    // Create Prometheus configuration file with dynamic backend target
+                    sh """
+                    cat > prometheus.yml << EOL
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -436,9 +460,10 @@ scrape_configs:
 
   - job_name: 'backend'
     static_configs:
-      - targets: ['backend:5000']
+      - targets: ['backend-${BUILD_NUMBER}:5000', 'backend:5000']
     metrics_path: '/metrics'
-'''
+EOL
+                    """
 
                     // Deploy Prometheus
                     sh """
@@ -450,6 +475,7 @@ scrape_configs:
                     echo "Starting Prometheus container..."
                     docker run -d --name prometheus \\
                       --network app-network-${BUILD_NUMBER} \\
+                      --restart unless-stopped \\
                       -p 9090:9090 \\
                       -v \$(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \\
                       prom/prometheus
@@ -480,6 +506,7 @@ scrape_configs:
                     echo "Starting Grafana container..."
                     docker run -d --name grafana \\
                       --network app-network-${BUILD_NUMBER} \\
+                      --restart unless-stopped \\
                       -p 3000:3000 \\
                       -e "GF_SECURITY_ADMIN_USER=admin" \\
                       -e "GF_SECURITY_ADMIN_PASSWORD=admin" \\
@@ -501,6 +528,54 @@ scrape_configs:
                     echo "2. Select Prometheus"
                     echo "3. Set URL to http://prometheus:9090"
                     echo "4. Click Save & Test"
+                    """
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    sh """
+                    echo "============================================="
+                    echo "Verifying all containers are running properly"
+                    echo "============================================="
+
+                    # List all running containers
+                    echo "Running containers:"
+                    docker ps
+
+                    # Check application containers
+                    echo "\\nChecking application containers:"
+                    for CONTAINER in db-${BUILD_NUMBER} backend-${BUILD_NUMBER} frontend-${BUILD_NUMBER} prometheus grafana; do
+                        if docker ps | grep -q "\$CONTAINER"; then
+                            echo "✅ \$CONTAINER is running"
+                        else
+                            echo "❌ \$CONTAINER is NOT running"
+                            CONTAINER_STATUS=\$(docker inspect --format='{{.State.Status}}' \$CONTAINER 2>/dev/null || echo "not found")
+                            echo "   Status: \$CONTAINER_STATUS"
+                            if [ "\$CONTAINER_STATUS" = "exited" ]; then
+                                echo "   Exit code: \$(docker inspect --format='{{.State.ExitCode}}' \$CONTAINER)"
+                                echo "   Last logs:"
+                                docker logs \$CONTAINER 2>&1 | tail -n 10 || true
+                            fi
+                        fi
+                    done
+
+                    # Check network connectivity
+                    echo "\\nChecking network connectivity:"
+                    docker network inspect app-network-${BUILD_NUMBER} | grep -A 10 "Containers"
+
+                    # Check backend metrics endpoint
+                    echo "\\nChecking backend metrics endpoint:"
+                    BACKEND_IP=\$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' backend-${BUILD_NUMBER})
+                    if [ -n "\$BACKEND_IP" ]; then
+                        docker exec prometheus wget -q -O - http://\$BACKEND_IP:5000/metrics || echo "Could not access metrics endpoint"
+                    else
+                        echo "Could not determine backend IP address"
+                    fi
+
+                    echo "\\nDeployment verification complete"
                     """
                 }
             }
