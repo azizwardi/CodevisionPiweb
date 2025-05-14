@@ -363,19 +363,19 @@ services:
         RETRY_COUNT=0
         MAX_RETRIES=5
 
-        until [ $RETRY_COUNT -ge $MAX_RETRIES ]
+        until [ \$RETRY_COUNT -ge \$MAX_RETRIES ]
         do
-          if wget -q --spider --timeout=5 db-${uniqueSuffix}:27017; then
+          if wget -q --spider --timeout=5 db-\${uniqueSuffix}:27017; then
             echo 'MongoDB is available, proceeding with startup'
             break
           fi
 
-          RETRY_COUNT=$((RETRY_COUNT+1))
-          echo 'MongoDB not yet available, retrying in 5 seconds (attempt '$RETRY_COUNT' of '$MAX_RETRIES')'
+          RETRY_COUNT=\$((\$RETRY_COUNT+1))
+          echo 'MongoDB not yet available, retrying in 5 seconds (attempt '\$RETRY_COUNT' of '\$MAX_RETRIES')'
           sleep 5
         done
 
-        if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        if [ \$RETRY_COUNT -ge \$MAX_RETRIES ]; then
           echo 'Failed to connect to MongoDB after multiple attempts'
           echo 'Will try to start anyway...'
         fi
@@ -524,31 +524,31 @@ EOL
 
                         # Check container status
                         echo "Checking container status..."
-                        docker ps -a | grep ${BUILD_NUMBER}
+                        docker ps -a | grep \${BUILD_NUMBER}
 
                         # Check if backend container is running
-                        if docker ps | grep -q "backend-${BUILD_NUMBER}"; then
+                        if docker ps | grep -q "backend-\${BUILD_NUMBER}"; then
                             echo "Backend container is running successfully!"
                         else
                             echo "WARNING: Backend container is not running! Checking container status..."
-                            BACKEND_STATUS=$(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")
-                            echo "Backend container status: $BACKEND_STATUS"
+                            BACKEND_STATUS=\$(docker inspect --format='{{.State.Status}}' backend-\${BUILD_NUMBER} 2>/dev/null || echo "not found")
+                            echo "Backend container status: \$BACKEND_STATUS"
 
-                            if [ "$BACKEND_STATUS" = "exited" ]; then
-                                echo "Backend container exited. Exit code: $(docker inspect --format='{{.State.ExitCode}}' backend-${BUILD_NUMBER})"
+                            if [ "\$BACKEND_STATUS" = "exited" ]; then
+                                echo "Backend container exited. Exit code: \$(docker inspect --format='{{.State.ExitCode}}' backend-\${BUILD_NUMBER})"
                             fi
                         fi
 
                         # Check logs of the backend container to diagnose any issues
                         echo "Backend container logs:"
-                        docker logs backend-${BUILD_NUMBER} 2>&1 || true
+                        docker logs backend-\${BUILD_NUMBER} 2>&1 || true
 
                         # Try to restart the backend if it's not running
-                        if ! docker ps | grep -q "backend-${BUILD_NUMBER}"; then
+                        if ! docker ps | grep -q "backend-\${BUILD_NUMBER}"; then
                             echo "Attempting to restart the backend container..."
-                            docker start backend-${BUILD_NUMBER} || true
+                            docker start backend-\${BUILD_NUMBER} || true
                             sleep 5
-                            echo "After restart attempt, backend status: $(docker inspect --format='{{.State.Status}}' backend-${BUILD_NUMBER} 2>/dev/null || echo "not found")"
+                            echo "After restart attempt, backend status: \$(docker inspect --format='{{.State.Status}}' backend-\${BUILD_NUMBER} 2>/dev/null || echo "not found")"
                         fi
                         """
                     }
