@@ -1,0 +1,88 @@
+version: '3.8'
+services:
+  db:
+    image: mongo:4.2
+    container_name: db-53
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo-data-53:/data/db
+    networks:
+      - app-network-53
+
+  backend:
+    image: 192.168.33.10:8083/piwebapp-backend:53
+    container_name: backend-53
+    restart: on-failure:3
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://root:example@db-53:27017/codevisionpiweb?authSource=admin
+      - JWT_SECRET=development_jwt_secret_replace_in_production
+      - PORT=5000
+      - DEBUG=express:*
+    ports:
+      - "5003:5000"
+    networks:
+      - app-network-53
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    command: >
+      sh -c "
+        echo 'Waiting for MongoDB to be ready...' &&
+        sleep 15 &&
+        echo 'Checking MongoDB connection...' &&
+        
+        # Try to connect to MongoDB
+        RETRY_COUNT=0
+        MAX_RETRIES=5
+        
+        until [ $$RETRY_COUNT -ge $$MAX_RETRIES ]
+        do
+          if wget -q --spider --timeout=5 db-53:27017; then
+            echo 'MongoDB is available, proceeding with startup'
+            break
+          fi
+          
+          RETRY_COUNT=$$(($$RETRY_COUNT+1))
+          echo \"MongoDB not yet available, retrying in 5 seconds (attempt $$RETRY_COUNT of $$MAX_RETRIES)\"
+          sleep 5
+        done
+        
+        if [ $$RETRY_COUNT -ge $$MAX_RETRIES ]; then
+          echo 'Failed to connect to MongoDB after multiple attempts'
+          echo 'Will try to start anyway...'
+        fi
+        
+        echo 'Starting backend application with Prometheus monitoring...' &&
+        
+        # Start with extra error handling
+        node server.js || (echo 'Backend crashed! Check logs above for details' && exit 1)
+      "
+
+  frontend:
+    image: 192.168.33.10:8083/piwebapp-frontend:53
+    container_name: frontend-53
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8003:80"
+    networks:
+      - app-network-53
+
+networks:
+  app-network-53:
+    driver: bridge
+
+volumes:
+  mongo-data-53:
