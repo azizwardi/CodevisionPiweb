@@ -400,12 +400,45 @@ services:
     networks:
       - app-network-${uniqueSuffix}
 
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus-${uniqueSuffix}
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network-${uniqueSuffix}
+    depends_on:
+      - backend
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana
+    container_name: grafana-${uniqueSuffix}
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data-${uniqueSuffix}:/var/lib/grafana
+    networks:
+      - app-network-${uniqueSuffix}
+    depends_on:
+      - prometheus
+
 networks:
   app-network-${uniqueSuffix}:
     driver: bridge
 
 volumes:
   mongo-data-${uniqueSuffix}:
+  grafana-data-${uniqueSuffix}:
 EOL
 
                     # Display the content of the file for debugging
