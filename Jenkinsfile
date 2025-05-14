@@ -233,7 +233,9 @@ h1 {
                     steps {
                         dir('Backend') {
                             script {
-                                writeFile file: 'Dockerfile.prod', text: '''
+                                // Create a proper Dockerfile.prod with correct syntax for the healthcheck script
+                                sh """
+cat > Dockerfile.prod << 'EOL'
 FROM node:18-alpine
 WORKDIR /app
 # Install curl and wget for healthcheck and connection testing
@@ -243,18 +245,19 @@ RUN apk --no-cache add curl wget
 COPY dev_build .
 
 # Install dependencies including Prometheus monitoring
-RUN npm install --omit=dev && \
+RUN npm install --omit=dev && \\
     npm install --no-save prom-client@14.2.0 tdigest@0.1.2 bintrees@1.0.2
 
 # Create a simple monitoring script
-RUN echo '#!/bin/sh\n\
-# Check if server is responding\n\
-curl -f http://localhost:5000 || exit 1' > /app/healthcheck.sh && \
+RUN echo '#!/bin/sh' > /app/healthcheck.sh && \\
+    echo '# Check if server is responding' >> /app/healthcheck.sh && \\
+    echo 'curl -f http://localhost:5000 || exit 1' >> /app/healthcheck.sh && \\
     chmod +x /app/healthcheck.sh
 
 EXPOSE 5000
 CMD ["node", "server.js"]
-'''
+EOL
+"""
                                 sh "docker build -t ${BACKEND_IMAGE} -f Dockerfile.prod ."
                             }
                         }

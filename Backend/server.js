@@ -133,7 +133,7 @@ app.get(
   async (req, res) => {
     if (!req.user) {
       console.log("User not authenticated");
-      return res.redirect("http://localhost:5173/signin?error=unauthorized");
+      return res.redirect("http://localhost:3000/signin?error=unauthorized");
     }
 
     try {
@@ -192,11 +192,11 @@ app.get(
       );
 
       res.redirect(
-        `http://localhost:5173/auth/success?token=${encodeURIComponent(token)}`
+        `http://localhost:3000/auth/success?token=${encodeURIComponent(token)}`
       );
     } catch (error) {
       console.error("Error handling Google authentication:", error);
-      res.redirect("http://localhost:5173/signin?error=server-error");
+      res.redirect("http://localhost:3000/signin?error=server-error");
     }
   }
 );

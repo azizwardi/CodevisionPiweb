@@ -3,8 +3,21 @@ import axios from 'axios';
 import { toastManager } from '../../components/ui/toast/ToastContainer';
 import Button from '../../components/ui/button/Button';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 // L'interface Skill a été supprimée car nous n'utilisons plus les compétences requises dans les tâches
+
+// Interface pour le token décodé
+interface DecodedToken {
+  id?: string;
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+  exp?: number;
+  iat?: number;
+}
 
 interface Project {
   _id: string;
@@ -12,6 +25,21 @@ interface Project {
   description: string;
   category: string;
 }
+
+// Fonction pour extraire l'ID utilisateur du token JWT
+const getUserIdFromToken = (): string | null => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+
+    const decoded = jwtDecode<DecodedToken>(token);
+    // Handle both token structures (direct id or nested in user object)
+    return decoded.user?.id || decoded.id || null;
+  } catch (error) {
+    console.error('Error extracting user ID from token:', error);
+    return null;
+  }
+};
 
 interface AutoAssignTaskFormProps {
   onSuccess?: () => void;
@@ -45,7 +73,7 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
 
         // Vérifier le rôle de l'utilisateur
         const userRole = localStorage.getItem('userRole');
-        const userId = localStorage.getItem('userId');
+        const userId = getUserIdFromToken();
 
         // Si c'est un TeamLeader, filtrer les projets dont il est créateur
         if (userRole === 'TeamLeader' && userId) {
@@ -87,13 +115,25 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
       return;
     }
 
+    // Vérifier que l'utilisateur est connecté et extraire l'ID du token
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      toastManager.addToast('You must be logged in to create tasks', 'error', 5000);
+      setError('User ID not found. Please log in again.');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
     try {
+      // We already checked for userId above, so we can use it directly here
+      console.log('Submitting task with userId:', userId);
+
       const response = await axios.post('http://localhost:5000/tasks', {
         ...formData,
-        autoAssign: true // Activer l'assignation automatique
+        autoAssign: true, // Activer l'assignation automatique
+        userId: userId // Include the user ID as the creator
       });
 
       toastManager.addToast('Task created and auto-assigned successfully', 'success', 5000);
@@ -141,6 +181,14 @@ const AutoAssignTaskForm: React.FC<AutoAssignTaskFormProps> = ({ onSuccess }) =>
         errorDetails = "Vous devez d'abord ajouter des membres à ce projet avant de pouvoir utiliser l'assignation automatique.";
       } else if (errorMessage.includes("Aucun membre disponible")) {
         errorDetails = "Aucun membre disponible n'a été trouvé dans ce projet. Assurez-vous que les membres ont les compétences requises.";
+      } else if (errorMessage.includes("Creator ID is required")) {
+        errorDetails = "L'ID du créateur est requis. Veuillez vous reconnecter et réessayer.";
+      } else if (errorMessage.includes("User ID not found")) {
+        errorDetails = "Votre session a peut-être expiré. Veuillez vous déconnecter, puis vous reconnecter et réessayer.";
+      } else if (errorMessage.includes("jwt expired")) {
+        errorDetails = "Votre session a expiré. Veuillez vous déconnecter, puis vous reconnecter et réessayer.";
+      } else if (errorMessage.includes("jwt")) {
+        errorDetails = "Problème d'authentification. Veuillez vous déconnecter, puis vous reconnecter et réessayer.";
       }
 
       // Définir le message d'erreur complet

@@ -1,0 +1,29 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application
+COPY . .
+
+# Build the application (if needed)
+RUN npm run build
+
+# Create a healthcheck script
+RUN echo '#!/bin/sh' > /app/healthcheck.sh && \
+    echo '# Check if server is responding' >> /app/healthcheck.sh && \
+    echo 'curl -f http://localhost:5000 || exit 1' >> /app/healthcheck.sh && \
+    chmod +x /app/healthcheck.sh
+
+EXPOSE 5000
+
+# Define healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 CMD [ "/app/healthcheck.sh" ]
+
+# Start the application
+CMD ["npm", "start"]

@@ -49,23 +49,18 @@ export default function UserRoleSelector() {
         const normalizedRole = userRole.toLowerCase();
         console.log('Normalized role:', normalizedRole);
 
-        // User already has a role, redirect to appropriate dashboard
+        // User already has a role, store it with consistent casing
         if (normalizedRole === 'admin') {
           localStorage.setItem("userRole", "admin"); // Ensure consistent casing
-          console.log('Redirecting admin to /dashboard');
-          navigate('/dashboard');
         } else if (normalizedRole === 'teamleader') {
           localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
-          console.log('Redirecting team leader to /team-leader-dashboard');
-          navigate('/team-leader-dashboard');
         } else if (normalizedRole === 'member') {
           localStorage.setItem("userRole", "Member"); // Ensure consistent casing
-          console.log('Redirecting member to /member-dashboard');
-          navigate('/member-dashboard');
-        } else {
-          console.log('No matching role found, redirecting to role selection');
-          // Stay on role selection page
         }
+
+        // Always redirect to home page regardless of role
+        console.log('Redirecting to home page');
+        navigate('/');
       } else {
         console.log('User does not have a role, staying on role selection page');
         // Set a default selected role if needed
@@ -123,25 +118,19 @@ export default function UserRoleSelector() {
           console.log('Normalized role after update:', normalizedRole);
 
           if (normalizedRole === 'admin') {
-            // Admin goes to the admin dashboard
+            // Admin role
             localStorage.setItem("userRole", "admin"); // Ensure consistent casing
-            console.log('Redirecting admin to /dashboard');
-            navigate('/dashboard');
           } else if (normalizedRole === 'teamleader') {
-            // Team Leader goes to the team leader dashboard
+            // Team Leader role
             localStorage.setItem("userRole", "TeamLeader"); // Ensure consistent casing
-            console.log('Redirecting team leader to /team-leader-dashboard');
-            navigate('/team-leader-dashboard');
           } else if (normalizedRole === 'member') {
-            // Member goes to the member dashboard
+            // Member role
             localStorage.setItem("userRole", "Member"); // Ensure consistent casing
-            console.log('Redirecting member to /member-dashboard');
-            navigate('/member-dashboard');
-          } else {
-            // Default fallback
-            console.log('No matching role found, redirecting to role selection');
-            navigate('/role-select');
           }
+
+          // Always redirect to home page regardless of role
+          console.log('Redirecting to home page');
+          navigate('/');
         } else {
           // For unverified users, show verification popup and then redirect to signin
           setShowVerificationPopup(true);
