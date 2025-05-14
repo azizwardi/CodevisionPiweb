@@ -277,11 +277,11 @@ const MemberDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Graphiques statistiques */}
+          {/* Statistical charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Graphique de statut des tâches */}
+            {/* Task status chart */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">État des tâches</h2>
+              <h2 className="text-lg font-semibold mb-4">Task Status</h2>
               <div className="h-64">
                 <TaskStatusChart
                   pending={taskStats.pending}
@@ -292,19 +292,19 @@ const MemberDashboard: React.FC = () => {
               </div>
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">En attente</span>
+                  <span className="text-sm text-gray-500">Pending</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {taskStats.pending}
                   </div>
                 </div>
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">En cours</span>
+                  <span className="text-sm text-gray-500">In Progress</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {taskStats.inProgress}
                   </div>
                 </div>
                 <div className="p-2 bg-gray-50 rounded-lg text-center">
-                  <span className="text-sm text-gray-500">Terminées</span>
+                  <span className="text-sm text-gray-500">Completed</span>
                   <div className="text-lg font-semibold text-gray-800">
                     {taskStats.completed}
                   </div>
@@ -312,12 +312,12 @@ const MemberDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Graphique d'activité des quiz */}
+            {/* Quiz activity chart */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Activité des quiz</h2>
+              <h2 className="text-lg font-semibold mb-4">Quiz Activity</h2>
               <div className="h-64">
                 <QuizActivityChart
-                  published={0} // Non disponible pour les membres
+                  published={0} // Not available for members
                   attempts={quizStats.attempts}
                   completed={quizStats.completed}
                   certificates={quizStats.certificates}

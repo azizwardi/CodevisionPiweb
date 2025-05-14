@@ -176,11 +176,7 @@ const SharedSidebar: React.FC<SharedSidebarProps> = ({
           icon: <ListIcon />,
           subItems: [{ name: "Task List", path: "/member/tasks" }],
         },
-        {
-          name: "Time Tracking",
-          icon: <ListIcon />,
-          path: "/member/time-tracking",
-        },
+
         {
           name: "Team Chat",
           icon: <ChatIcon />,

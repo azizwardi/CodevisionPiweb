@@ -88,14 +88,7 @@ const MemberLayout: React.FC = () => {
                   My Projects
                 </a>
               </li>
-              <li>
-                <a
-                  href="/member/time-tracking"
-                  className="block py-2 px-4 rounded hover:bg-gray-600"
-                >
-                  Time Tracking
-                </a>
-              </li>
+
               <li>
                 <a
                   href="/member/team-chat"
@@ -178,15 +171,7 @@ const MemberLayout: React.FC = () => {
                     My Projects
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="/member/time-tracking"
-                    className="block py-2 px-4 text-white text-lg"
-                    onClick={toggleMenu}
-                  >
-                    Time Tracking
-                  </a>
-                </li>
+
                 <li>
                   <a
                     href="/member/team-chat"
