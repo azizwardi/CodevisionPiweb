@@ -33,10 +33,18 @@ pipeline {
                 stage('Backend Dependencies') {
                     steps {
                         dir('Backend') {
-                            // Use --legacy-peer-deps to avoid dependency conflicts
-                            sh 'npm ci --legacy-peer-deps'
-                            // Install build dependencies explicitly
-                            sh 'npm install --no-save --yes webpack webpack-cli babel-loader'
+                            script {
+                                // First, add the missing Prometheus monitoring dependencies
+                                sh 'npm install --save prom-client@14.2.0 tdigest@0.1.2 bintrees@1.0.2'
+
+                                // Then use regular install with legacy-peer-deps to avoid conflicts
+                                sh 'npm install --legacy-peer-deps'
+
+                                // Install build dependencies explicitly
+                                sh 'npm install --no-save --yes webpack webpack-cli babel-loader'
+
+                                echo "Successfully installed backend dependencies including Prometheus monitoring libraries"
+                            }
                         }
                     }
                 }
@@ -121,7 +129,7 @@ EOF
                         fi
 
                         # Copy directories if they exist
-                        for dir in routes models controllers middleware config utils; do
+                        for dir in routes models controllers middleware config utils monitoring; do
                           if [ -d "$dir" ]; then
                             cp -r $dir dev_build/ || echo "$dir not copied"
                           else
@@ -150,7 +158,10 @@ EOF
     "cookie-parser": "^1.4.7",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "prom-client": "14.2.0",
+    "tdigest": "0.1.2",
+    "bintrees": "1.0.2"
   }
 }'''
 
