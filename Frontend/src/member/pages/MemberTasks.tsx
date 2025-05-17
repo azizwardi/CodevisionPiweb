@@ -249,7 +249,7 @@ const MemberTasks: React.FC = () => {
                             </div>
                           </>
                         ) : (
-                          <span className="text-gray-500">Non assigné</span>
+                          <span className="text-gray-500">Unassigned</span>
                         )}
                       </div>
                     </td>

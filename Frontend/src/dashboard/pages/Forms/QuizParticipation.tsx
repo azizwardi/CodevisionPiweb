@@ -66,10 +66,10 @@ export default function QuizParticipation() {
   return (
     <div>
       <PageMeta
-        title="Participation aux Quiz | CodevisionPiweb"
-        description="Page de participation aux quiz pour CodevisionPiweb"
+        title="Participation in Quizzes | CodevisionPiweb"
+        description="Quiz participation page for CodevisionPiweb"
       />
-      <PageBreadcrumb pageTitle="Participation aux Quiz" />
+      <PageBreadcrumb pageTitle="Participation in Quiz" />
 
       {/* Navigation entre les onglets */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -77,13 +77,13 @@ export default function QuizParticipation() {
           variant={activeTab === 'list' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('list')}
         >
-          Quiz disponibles
+          Quizzes available
         </Button>
       </div>
 
       {/* Contenu en fonction de l'onglet actif */}
       {activeTab === 'list' && (
-        <ComponentCard title="Quiz disponibles">
+        <ComponentCard title="Available quizzes">
           <AvailableQuizzes onTakeQuiz={handleTakeQuiz} />
         </ComponentCard>
       )}

@@ -325,7 +325,7 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Chargement du quiz...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading quiz...</p>
       </div>
     );
   }
@@ -344,7 +344,7 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
   if (!quiz || questions.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Ce quiz ne contient pas de questions.</p>
+        <p className="text-gray-500 dark:text-gray-400">This quiz does not contain any questions.</p>
         <Button variant="outline" className="mt-4" onClick={onCancel}>
           Retour
         </Button>
@@ -358,7 +358,7 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
         <h2 className="text-2xl font-bold mb-4">{quiz.title}</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Avant de commencer ce quiz, nous devons vérifier votre identité.
+          Before starting this quiz, we need to verify your identity.
         </p>
 
         <FaceVerification
@@ -369,7 +369,7 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
 
         <div className="mt-6 flex justify-between">
           <Button variant="outline" onClick={onCancel}>
-            Annuler
+            Cancel
           </Button>
         </div>
       </div>
@@ -472,7 +472,7 @@ export default function TakeQuiz({ quizId, onComplete, onCancel }: TakeQuizProps
             onClick={onCancel}
             disabled={submitting}
           >
-            Abandonner
+            Give up
           </Button>
           <Button
             variant="primary"

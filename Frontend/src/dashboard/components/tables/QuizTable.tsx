@@ -34,7 +34,7 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fonction pour récupérer la liste des quiz
+  // Function to fetch the list of quizzes
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
@@ -42,60 +42,60 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
       setQuizzes(response.data);
       setError(null);
     } catch (error) {
-      console.error("Erreur lors de la récupération des quiz:", error);
-      setError("Impossible de charger la liste des quiz");
+      console.error("Error while fetching quizzes:", error);
+      setError("Unable to load the quiz list");
     } finally {
       setLoading(false);
     }
   };
 
-  // Charger les quiz au chargement du composant et lorsque refreshTrigger change
+  // Load quizzes when component mounts and when refreshTrigger changes
   useEffect(() => {
     fetchQuizzes();
   }, [refreshTrigger]);
 
-  // Fonction pour supprimer un quiz
+  // Function to delete a quiz
   const handleDelete = async (quizId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce quiz ?")) {
+    if (!window.confirm("Are you sure you want to delete this quiz?")) {
       return;
     }
 
     try {
       await axios.delete(`http://localhost:5000/quizzes/${quizId}`);
       toastManager.addToast({
-        title: "Succès",
-        description: "Le quiz a été supprimé avec succès",
+        title: "Success",
+        description: "The quiz has been successfully deleted",
         type: "success",
       });
-      fetchQuizzes(); // Rafraîchir la liste après suppression
+      fetchQuizzes(); // Refresh the list after deletion
     } catch (error) {
-      console.error("Erreur lors de la suppression du quiz:", error);
+      console.error("Error while deleting the quiz:", error);
       toastManager.addToast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du quiz",
+        title: "Error",
+        description: "An error occurred while deleting the quiz",
         type: "error",
       });
     }
   };
 
-  // Fonction pour obtenir le libellé de la catégorie
+  // Function to get the category label
   const getCategoryLabel = (categoryValue: string): string => {
     const categories: Record<string, string> = {
-      "education": "Éducation",
-      "technology": "Technologie",
+      "education": "Education",
+      "technology": "Technology",
       "science": "Science",
-      "history": "Histoire",
-      "geography": "Géographie",
-      "entertainment": "Divertissement",
+      "history": "History",
+      "geography": "Geography",
+      "entertainment": "Entertainment",
       "sports": "Sports",
-      "other": "Autre"
+      "other": "Other"
     };
-    
+
     return categories[categoryValue] || categoryValue;
   };
 
   if (loading && quizzes.length === 0) {
-    return <div className="text-center py-8">Chargement des quiz...</div>;
+    return <div className="text-center py-8">Loading quizzes...</div>;
   }
 
   if (error) {
@@ -104,7 +104,7 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
         {error}
         <div className="mt-4">
           <Button variant="outline" onClick={fetchQuizzes}>
-            Réessayer
+            Retry
           </Button>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
   if (quizzes.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="mb-4">Aucun quiz n'a été créé pour le moment.</p>
+        <p className="mb-4">No quizzes have been created yet.</p>
       </div>
     );
   }
@@ -124,11 +124,11 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="px-4 py-5 font-medium">Titre</th>
-            <th className="px-4 py-5 font-medium">Catégorie</th>
+            <th className="px-4 py-5 font-medium">Title</th>
+            <th className="px-4 py-5 font-medium">Category</th>
             <th className="px-4 py-5 font-medium">Questions</th>
-            <th className="px-4 py-5 font-medium">Statut</th>
-            <th className="px-4 py-5 font-medium">Date de création</th>
+            <th className="px-4 py-5 font-medium">Status</th>
+            <th className="px-4 py-5 font-medium">Creation Date</th>
             <th className="px-4 py-5 font-medium text-right">Actions</th>
           </tr>
         </thead>
@@ -150,9 +150,9 @@ export default function QuizTable({ onEdit, onView, onAddQuestion, refreshTrigge
               <td className="px-4 py-4">{quiz.questions.length}</td>
               <td className="px-4 py-4">
                 {quiz.isPublished ? (
-                  <Badge color="success">Publié</Badge>
+                  <Badge color="success">Published</Badge>
                 ) : (
-                  <Badge color="warning">Brouillon</Badge>
+                  <Badge color="warning">Draft</Badge>
                 )}
               </td>
               <td className="px-4 py-4">{formatDate(quiz.createdAt)}</td>

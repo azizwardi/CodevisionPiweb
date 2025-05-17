@@ -4,45 +4,45 @@ const Task = require("../models/task");
 const groqService = require("../services/groqService");
 
 /**
- * Crée une nouvelle conversation
+ * Creates a new conversation
  */
 exports.createConversation = async (req, res) => {
   try {
     const { userId, projectId, title } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
     const conversation = new Conversation({
       user: userId,
       project: projectId || null,
-      title: title || "Nouvelle conversation"
+      title: title || "New conversation"
     });
 
     const savedConversation = await conversation.save();
-    res.status(201).json({ 
-      message: "Conversation créée avec succès", 
-      conversation: savedConversation 
+    res.status(201).json({
+      message: "Conversation created successfully",
+      conversation: savedConversation
     });
   } catch (error) {
-    console.error("Erreur lors de la création de la conversation:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la création de la conversation", 
-      error: error.message 
+    console.error("Error creating conversation:", error);
+    res.status(500).json({
+      message: "Error creating conversation",
+      error: error.message
     });
   }
 };
 
 /**
- * Récupère toutes les conversations d'un utilisateur
+ * Gets all conversations for a user
  */
 exports.getUserConversations = async (req, res) => {
   try {
     const { userId } = req.params;
 
     if (!userId) {
-      return res.status(400).json({ message: "L'ID de l'utilisateur est requis" });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
     const conversations = await Conversation.find({ user: userId })
@@ -51,23 +51,23 @@ exports.getUserConversations = async (req, res) => {
 
     res.status(200).json(conversations);
   } catch (error) {
-    console.error("Erreur lors de la récupération des conversations:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération des conversations", 
-      error: error.message 
+    console.error("Error retrieving conversations:", error);
+    res.status(500).json({
+      message: "Error retrieving conversations",
+      error: error.message
     });
   }
 };
 
 /**
- * Récupère une conversation par son ID
+ * Gets a conversation by its ID
  */
 exports.getConversationById = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
     if (!conversationId) {
-      return res.status(400).json({ message: "L'ID de la conversation est requis" });
+      return res.status(400).json({ message: "Conversation ID is required" });
     }
 
     const conversation = await Conversation.findById(conversationId)
@@ -75,7 +75,7 @@ exports.getConversationById = async (req, res) => {
       .populate("project", "name");
 
     if (!conversation) {
-      return res.status(404).json({ message: "Conversation non trouvée" });
+      return res.status(404).json({ message: "Conversation not found" });
     }
 
     const messages = await Message.find({ conversation: conversationId })
@@ -84,34 +84,34 @@ exports.getConversationById = async (req, res) => {
 
     res.status(200).json({ conversation, messages });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la conversation:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération de la conversation", 
-      error: error.message 
+    console.error("Error retrieving conversation:", error);
+    res.status(500).json({
+      message: "Error retrieving conversation",
+      error: error.message
     });
   }
 };
 
 /**
- * Envoie un message et génère une réponse
+ * Sends a message and generates a response
  */
 exports.sendMessage = async (req, res) => {
   try {
     const { conversationId, content, taskId } = req.body;
 
     if (!conversationId || !content) {
-      return res.status(400).json({ 
-        message: "L'ID de la conversation et le contenu du message sont requis" 
+      return res.status(400).json({
+        message: "Conversation ID and message content are required"
       });
     }
 
-    // Vérifier si la conversation existe
+    // Check if the conversation exists
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      return res.status(404).json({ message: "Conversation non trouvée" });
+      return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Créer et sauvegarder le message de l'utilisateur
+    // Create and save the user message
     const userMessage = new Message({
       conversation: conversationId,
       content,
@@ -120,41 +120,69 @@ exports.sendMessage = async (req, res) => {
     });
     await userMessage.save();
 
-    // Mettre à jour la date de la dernière mise à jour de la conversation
+    // Update the conversation's last update date
     conversation.updatedAt = new Date();
+
+    // Check if this is the first message in the conversation and update the title
+    const messageCount = await Message.countDocuments({ conversation: conversationId });
+    if (messageCount <= 1 && conversation.title === "New conversation") {
+      // Generate a title based on the first message content
+      const titlePrompt = [
+        {
+          role: "system",
+          content: "You are a helpful assistant that generates short, descriptive titles (max 5 words) based on user messages. The title should reflect the topic or intent of the message."
+        },
+        {
+          role: "user",
+          content: `Generate a short, descriptive title (max 5 words) for a conversation that starts with this message: "${content}"`
+        }
+      ];
+
+      try {
+        const titleResponse = await groqService.generateResponse(titlePrompt);
+        const generatedTitle = titleResponse.choices[0].message.content.replace(/"/g, '').trim();
+        conversation.title = generatedTitle;
+        console.log("Generated conversation title:", generatedTitle);
+      } catch (titleError) {
+        console.error("Error generating title:", titleError);
+        // If title generation fails, use a substring of the message
+        conversation.title = content.length > 30 ? `${content.substring(0, 30)}...` : content;
+      }
+    }
+
     await conversation.save();
 
-    // Récupérer l'historique des messages pour le contexte
+    // Retrieve message history for context
     const messageHistory = await Message.find({ conversation: conversationId })
       .sort({ createdAt: 1 })
-      .limit(10); // Limiter à 10 messages pour éviter de dépasser les limites de tokens
+      .limit(10); // Limit to 10 messages to avoid exceeding token limits
 
-    // Formater les messages pour l'API Groq
+    // Format messages for the Groq API
     const formattedMessages = messageHistory.map(msg => ({
       role: msg.role,
       content: msg.content
     }));
 
-    // Ajouter un message système pour donner du contexte à l'IA
+    // Add a system message to provide context to the AI
     formattedMessages.unshift({
       role: "system",
-      content: "Tu es un assistant IA spécialisé dans l'aide aux développeurs. Tu aides à résoudre des problèmes liés à des tâches de développement. Fournis des réponses précises, utiles et pertinentes."
+      content: "You are an AI assistant specialized in project management, task organization, and team performance. You help users manage their projects, optimize workflows, track tasks, and improve team productivity. Provide accurate, helpful, and relevant responses in English only."
     });
 
-    // Si un taskId est fourni, ajouter des informations sur la tâche
+    // If a taskId is provided, add information about the task
     let task = null;
     if (taskId) {
       task = await Task.findById(taskId);
       if (task) {
-        formattedMessages[0].content += `\nVoici les détails de la tâche sur laquelle l'utilisateur travaille :\n\nTitre: ${task.title}\nDescription: ${task.description || "Aucune description fournie"}\nStatut: ${task.status}\nDate d'échéance: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Non spécifiée"}`;
+        formattedMessages[0].content += `\nHere are the details of the task the user is working on:\n\nTitle: ${task.title}\nDescription: ${task.description || "No description provided"}\nStatus: ${task.status}\nDue Date: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Not specified"}`;
       }
     }
 
-    // Générer une réponse avec l'API Groq
+    // Generate a response with the Groq API
     const groqResponse = await groqService.generateResponse(formattedMessages);
     const assistantResponseContent = groqResponse.choices[0].message.content;
 
-    // Créer et sauvegarder la réponse de l'assistant
+    // Create and save the assistant's response
     const assistantMessage = new Message({
       conversation: conversationId,
       content: assistantResponseContent,
@@ -163,83 +191,84 @@ exports.sendMessage = async (req, res) => {
     });
     await assistantMessage.save();
 
-    res.status(200).json({ 
-      userMessage, 
-      assistantMessage 
+    res.status(200).json({
+      userMessage,
+      assistantMessage,
+      conversationTitle: conversation.title // Return the updated title
     });
   } catch (error) {
-    console.error("Erreur lors de l'envoi du message:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de l'envoi du message", 
-      error: error.message 
+    console.error("Error sending message:", error);
+    res.status(500).json({
+      message: "Error sending message",
+      error: error.message
     });
   }
 };
 
 /**
- * Génère une aide pour une tâche spécifique
+ * Generates help for a specific task
  */
 exports.getTaskHelp = async (req, res) => {
   try {
     const { taskId, query } = req.body;
 
     if (!taskId || !query) {
-      return res.status(400).json({ 
-        message: "L'ID de la tâche et la question sont requis" 
+      return res.status(400).json({
+        message: "Task ID and query are required"
       });
     }
 
-    // Récupérer les détails de la tâche
+    // Retrieve task details
     const task = await Task.findById(taskId)
       .populate("assignedTo", "username")
       .populate("projectId", "name");
 
     if (!task) {
-      return res.status(404).json({ message: "Tâche non trouvée" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
-    // Générer une réponse d'aide pour la tâche
+    // Generate a help response for the task
     const response = await groqService.generateTaskHelp(task, query);
 
     res.status(200).json({ response });
   } catch (error) {
-    console.error("Erreur lors de la génération de l'aide pour la tâche:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la génération de l'aide pour la tâche", 
-      error: error.message 
+    console.error("Error generating task help:", error);
+    res.status(500).json({
+      message: "Error generating task help",
+      error: error.message
     });
   }
 };
 
 /**
- * Supprime une conversation
+ * Deletes a conversation
  */
 exports.deleteConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
     if (!conversationId) {
-      return res.status(400).json({ message: "L'ID de la conversation est requis" });
+      return res.status(400).json({ message: "Conversation ID is required" });
     }
 
-    // Vérifier si la conversation existe
+    // Check if the conversation exists
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      return res.status(404).json({ message: "Conversation non trouvée" });
+      return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Supprimer tous les messages associés à la conversation
+    // Delete all messages associated with the conversation
     await Message.deleteMany({ conversation: conversationId });
 
-    // Supprimer la conversation
+    // Delete the conversation
     await Conversation.findByIdAndDelete(conversationId);
 
-    res.status(200).json({ message: "Conversation supprimée avec succès" });
+    res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (error) {
-    console.error("Erreur lors de la suppression de la conversation:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la suppression de la conversation", 
-      error: error.message 
+    console.error("Error deleting conversation:", error);
+    res.status(500).json({
+      message: "Error deleting conversation",
+      error: error.message
     });
   }
 };

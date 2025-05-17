@@ -202,13 +202,13 @@ const ProjectDetails: React.FC = () => {
             variant="outline"
             onClick={() => navigate(`/member/projects/${projectId}/kanban`)}
           >
-            Vue Kanban
+            Kanban view
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate("/member/projects")}
           >
-            Retour à la liste des projets
+            Back to the list of projects
           </Button>
         </div>
       </div>
@@ -225,16 +225,16 @@ const ProjectDetails: React.FC = () => {
         <>
           {project && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">Détails du projet</h2>
+              <h2 className="text-xl font-semibold mb-4">Project details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Informations générales</h3>
+                  <h3 className="text-lg font-semibold mb-2">General information</h3>
                   <div className="space-y-2">
-                    <p><span className="font-medium">Nom:</span> {project.name}</p>
-                    <p><span className="font-medium">Catégorie:</span> {project.category}</p>
-                    <p><span className="font-medium">Statut:</span> {getStatusBadge(project.status)}</p>
-                    <p><span className="font-medium">Date de début:</span> {formatDate(project.startDate)}</p>
-                    <p><span className="font-medium">Date de fin:</span> {formatDate(project.endDate)}</p>
+                    <p><span className="font-medium">Name:</span> {project.name}</p>
+                    <p><span className="font-medium">Category:</span> {project.category}</p>
+                    <p><span className="font-medium">Status:</span> {getStatusBadge(project.status)}</p>
+                    <p><span className="font-medium">Start date:</span> {formatDate(project.startDate)}</p>
+                    <p><span className="font-medium">End date:</span> {formatDate(project.endDate)}</p>
                   </div>
                 </div>
                 <div>
@@ -244,7 +244,7 @@ const ProjectDetails: React.FC = () => {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Chef d'équipe</h3>
+                <h3 className="text-lg font-semibold mb-2">Team Leader</h3>
                 {project.teamLeader ? (
                   <div className="flex items-center p-3 border rounded-lg max-w-md">
                     <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
@@ -267,16 +267,16 @@ const ProjectDetails: React.FC = () => {
                           ? `${project.teamLeader.firstName} ${project.teamLeader.lastName}`
                           : project.teamLeader.username}
                       </p>
-                      <p className="text-sm text-gray-500">Chef d'équipe</p>
+                      <p className="text-sm text-gray-500">Team Leader</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500">Aucun chef d'équipe assigné</p>
+                  <p className="text-gray-500">No team leader assigned</p>
                 )}
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-2">Membres de l'équipe</h3>
+                <h3 className="text-lg font-semibold mb-2">Team Members</h3>
                 {project.teamMembers && project.teamMembers.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {project.teamMembers.map((member) => (
@@ -307,17 +307,17 @@ const ProjectDetails: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Aucun membre assigné à ce projet</p>
+                  <p className="text-gray-500">No members assigned to this project</p>
                 )}
               </div>
             </div>
           )}
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Tâches associées</h2>
+            <h2 className="text-xl font-semibold mb-4">Associated tasks</h2>
             {tasks.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">Aucune tâche associée à ce projet</p>
+                <p className="text-gray-500">No tasks associated with this project</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -376,7 +376,7 @@ const ProjectDetails: React.FC = () => {
                                 </div>
                               </>
                             ) : (
-                              <span className="text-gray-500 dark:text-gray-400">Non assigné</span>
+                              <span className="text-gray-500 dark:text-gray-400">Unassigned</span>
                             )}
                           </div>
                         </td>

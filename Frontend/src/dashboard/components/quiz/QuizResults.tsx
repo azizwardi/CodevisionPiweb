@@ -235,7 +235,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Chargement des résultats...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading results...</p>
       </div>
     );
   }
@@ -254,7 +254,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
   if (!attempt) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Aucun résultat trouvé.</p>
+        <p className="text-gray-500 dark:text-gray-400">No results found.</p>
         <Button variant="outline" className="mt-4" onClick={onClose}>
           Fermer
         </Button>
@@ -293,7 +293,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-2xl font-bold">Résultats du quiz</h2>
+            <h2 className="text-2xl font-bold">Quiz Results</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">{attempt.quiz.title}</p>
           </div>
           <div>
@@ -305,10 +305,10 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
         {isPerfectScore && (
           <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
-              Félicitations !
+              Congratulations !
             </h3>
             <p className="text-green-700 dark:text-green-300 mb-4">
-              Vous avez obtenu un score parfait à ce quiz ! Vous pouvez générer un certificat pour célébrer votre réussite.
+              You got a perfect score on this quiz! You can generate a certificate to celebrate your achievement.
             </p>
             {localCertificateInfo ? (
               <Button
@@ -316,7 +316,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
                 className="bg-green-600 hover:bg-green-700"
                 onClick={() => setShowCertificate(true)}
               >
-                Voir votre certificat
+                View your certificate
               </Button>
             ) : (
               <Button
@@ -324,7 +324,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
                 className="bg-green-600 hover:bg-green-700"
                 onClick={generateCertificate}
               >
-                Générer un certificat
+                Generate a certificate
               </Button>
             )}
           </div>
@@ -334,17 +334,17 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
         {!isPerfectScore && hasRecommendations && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
             <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-              Continuez à progresser !
+              Continue to progress !
             </h3>
             <p className="text-blue-700 dark:text-blue-300 mb-4">
-              Nous avons des recommandations de cours personnalisées pour vous aider à améliorer vos compétences dans ce domaine.
+              We have personalized course recommendations to help you improve your skills in this area.
             </p>
             <Button
               variant="primary"
               className="bg-blue-600 hover:bg-blue-700"
               onClick={() => setShowRecommendations(true)}
             >
-              Voir les cours recommandés
+              See recommended courses
             </Button>
           </div>
         )}
@@ -356,17 +356,17 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
               <p className="text-2xl font-bold">{attempt.score}/{attempt.maxScore}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Pourcentage</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Percentage</p>
               <p className="text-2xl font-bold">{percentage}%</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Terminé le</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Finished on</p>
               <p className="text-lg">{formatDate(attempt.completedAt)}</p>
             </div>
           </div>
         </div>
 
-        <h3 className="text-xl font-semibold mb-4">Détail des réponses</h3>
+        <h3 className="text-xl font-semibold mb-4">Details of responses</h3>
 
         <div className="space-y-4">
           {attempt.answers.map((answer, index) => (
@@ -386,7 +386,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Votre réponse:</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Your answer:</p>
                   <p className={answer.isCorrect ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                     {getSelectedAnswerText(answer)}
                   </p>
@@ -394,7 +394,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
 
                 {!answer.isCorrect && (
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Réponse correcte:</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Correct answer:</p>
                     <p className="text-green-600 dark:text-green-400">
                       {getCorrectAnswerText(answer)}
                     </p>
@@ -407,7 +407,7 @@ export default function QuizResults({ attemptId, onClose, certificateInfo }: Qui
 
         <div className="flex justify-end mt-6">
           <Button variant="primary" onClick={onClose}>
-            Fermer
+            Close
           </Button>
         </div>
       </div>

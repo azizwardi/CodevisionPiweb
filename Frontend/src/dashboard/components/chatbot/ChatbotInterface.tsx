@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { toastManager } from '../ui/toast/ToastContainer';
 import Button from '../ui/button/Button';
 import { Textarea } from '../ui/form/textarea';
+import TypingAnimation from '../../../components/TypingAnimation';
 
 // Types
 interface User {
@@ -52,7 +53,9 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [typingMessage, setTypingMessage] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Récupérer l'ID de l'utilisateur depuis le token
   useEffect(() => {
@@ -72,8 +75,8 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
           setUserId(id);
         }
       } catch (error) {
-        console.error("Erreur lors du décodage du token:", error);
-        setError("Erreur d'authentification");
+        console.error("Error decoding token:", error);
+        setError("Authentication error");
       }
     }
   }, []);
@@ -89,16 +92,67 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
   useEffect(() => {
     if (activeConversation) {
       fetchConversationMessages();
+      // Scroll to bottom when a conversation is selected
+      setTimeout(scrollToBottom, 100);
     }
   }, [activeConversation]);
 
-  // Faire défiler vers le bas lorsque de nouveaux messages sont ajoutés
+  // Scroll down when new messages are added
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingMessage]);
+
+  // Listen for typing progress to scroll during typing animation
+  useEffect(() => {
+    const handleTypingProgress = () => scrollToBottom();
+    window.addEventListener('typingProgress', handleTypingProgress);
+
+    return () => {
+      window.removeEventListener('typingProgress', handleTypingProgress);
+    };
+  }, []);
+
+  // Use MutationObserver to detect changes in the message container
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+
+    // Create a MutationObserver to watch for changes in the message container
+    const observer = new MutationObserver((mutations) => {
+      // If there are mutations, scroll to bottom
+      if (mutations.length > 0) {
+        scrollToBottom();
+      }
+    });
+
+    // Start observing the message container for changes
+    observer.observe(messagesContainerRef.current, {
+      childList: true,      // Watch for changes to the direct children
+      subtree: true,        // Watch for changes in all descendants
+      characterData: true,  // Watch for changes in text content
+      attributes: true      // Watch for changes in attributes
+    });
+
+    return () => {
+      // Clean up the observer when the component unmounts
+      observer.disconnect();
+    };
+  }, []);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      // Use requestAnimationFrame to ensure the scroll happens after DOM updates
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  };
+
+  // Handle typing message completion
+  const handleTypingComplete = () => {
+    if (typingMessage) {
+      setMessages(prev => [...prev, typingMessage]);
+      setTypingMessage(null);
+    }
   };
 
   const fetchUserConversations = async () => {
@@ -106,15 +160,15 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
       setLoading(true);
       const response = await axios.get(`http://localhost:5000/chatbot/conversations/user/${userId}`);
       setConversations(response.data);
-      
+
       // Si aucune conversation active n'est sélectionnée et qu'il y a des conversations, sélectionner la première
       if (!activeConversation && response.data.length > 0) {
         setActiveConversation(response.data[0]._id);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des conversations:", error);
-      setError("Erreur lors de la récupération des conversations");
-      toastManager.addToast("Erreur lors de la récupération des conversations", "error", 5000);
+      console.error("Error retrieving conversations:", error);
+      setError("Error retrieving conversations");
+      toastManager.addToast("Error retrieving conversations", "error", 5000);
     } finally {
       setLoading(false);
     }
@@ -126,9 +180,9 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
       const response = await axios.get(`http://localhost:5000/chatbot/conversations/${activeConversation}`);
       setMessages(response.data.messages);
     } catch (error) {
-      console.error("Erreur lors de la récupération des messages:", error);
-      setError("Erreur lors de la récupération des messages");
-      toastManager.addToast("Erreur lors de la récupération des messages", "error", 5000);
+      console.error("Error retrieving messages:", error);
+      setError("Error retrieving messages");
+      toastManager.addToast("Error retrieving messages", "error", 5000);
     } finally {
       setLoading(false);
     }
@@ -140,18 +194,18 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
       const response = await axios.post('http://localhost:5000/chatbot/conversations', {
         userId,
         projectId,
-        title: projectId ? "Conversation sur le projet" : "Nouvelle conversation"
+        title: projectId ? "Project conversation" : "New conversation"
       });
-      
-      // Ajouter la nouvelle conversation à la liste et la définir comme active
+
+      // Add the new conversation to the list and set it as active
       setConversations([response.data.conversation, ...conversations]);
       setActiveConversation(response.data.conversation._id);
-      
-      toastManager.addToast("Nouvelle conversation créée", "success", 3000);
+
+      toastManager.addToast("New conversation created", "success", 3000);
     } catch (error) {
-      console.error("Erreur lors de la création de la conversation:", error);
-      setError("Erreur lors de la création de la conversation");
-      toastManager.addToast("Erreur lors de la création de la conversation", "error", 5000);
+      console.error("Error creating conversation:", error);
+      setError("Error creating conversation");
+      toastManager.addToast("Error creating conversation", "error", 5000);
     } finally {
       setLoading(false);
     }
@@ -160,15 +214,15 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
     if (!activeConversation) {
-      // Si aucune conversation active, en créer une nouvelle
+      // If no active conversation, create a new one
       await createNewConversation();
-      if (!activeConversation) return; // Si la création a échoué, sortir
+      if (!activeConversation) return; // If creation failed, exit
     }
 
     try {
       setLoading(true);
-      
-      // Ajouter temporairement le message de l'utilisateur à l'interface
+
+      // Temporarily add the user message to the interface
       const tempUserMessage = {
         _id: `temp-${Date.now()}`,
         content: newMessage,
@@ -176,32 +230,45 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
         conversation: activeConversation,
         createdAt: new Date().toISOString()
       };
-      
+
       setMessages([...messages, tempUserMessage]);
       setNewMessage('');
-      
-      // Envoyer le message au serveur
+
+      // Send the message to the server
       const response = await axios.post('http://localhost:5000/chatbot/messages', {
         conversationId: activeConversation,
         content: tempUserMessage.content,
         taskId
       });
-      
-      // Mettre à jour les messages avec les réponses du serveur
+
+      // Update messages with the user message first
       setMessages(prevMessages => [
         ...prevMessages.filter(msg => msg._id !== tempUserMessage._id),
-        response.data.userMessage,
-        response.data.assistantMessage
+        response.data.userMessage
       ]);
+
+      // Set the assistant message as the typing message
+      setTypingMessage(response.data.assistantMessage);
+
+      // If the conversation title was updated, update it in the state
+      if (response.data.conversationTitle) {
+        setConversations(prevConversations =>
+          prevConversations.map(conv =>
+            conv._id === activeConversation
+              ? { ...conv, title: response.data.conversationTitle }
+              : conv
+          )
+        );
+      }
     } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
-      setError("Erreur lors de l'envoi du message");
-      toastManager.addToast("Erreur lors de l'envoi du message", "error", 5000);
-      
-      // Restaurer le message dans la zone de texte en cas d'erreur
+      console.error("Error sending message:", error);
+      setError("Error sending message");
+      toastManager.addToast("Error sending message", "error", 5000);
+
+      // Restore the message in the text area in case of error
       setNewMessage(messages.find(msg => msg._id === `temp-${Date.now()}`)?.content || newMessage);
-      
-      // Supprimer le message temporaire
+
+      // Remove the temporary message
       setMessages(prevMessages => prevMessages.filter(msg => msg._id !== `temp-${Date.now()}`));
     } finally {
       setLoading(false);
@@ -209,29 +276,29 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
   };
 
   const deleteConversation = async (conversationId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette conversation ?")) {
+    if (!window.confirm("Are you sure you want to delete this conversation?")) {
       return;
     }
 
     try {
       setLoading(true);
       await axios.delete(`http://localhost:5000/chatbot/conversations/${conversationId}`);
-      
-      // Mettre à jour la liste des conversations
+
+      // Update the conversation list
       setConversations(conversations.filter(conv => conv._id !== conversationId));
-      
-      // Si la conversation supprimée était active, sélectionner une autre conversation
+
+      // If the deleted conversation was active, select another conversation
       if (activeConversation === conversationId) {
         const remainingConversations = conversations.filter(conv => conv._id !== conversationId);
         setActiveConversation(remainingConversations.length > 0 ? remainingConversations[0]._id : null);
         setMessages([]);
       }
-      
-      toastManager.addToast("Conversation supprimée avec succès", "success", 3000);
+
+      toastManager.addToast("Conversation deleted successfully", "success", 3000);
     } catch (error) {
-      console.error("Erreur lors de la suppression de la conversation:", error);
-      setError("Erreur lors de la suppression de la conversation");
-      toastManager.addToast("Erreur lors de la suppression de la conversation", "error", 5000);
+      console.error("Error deleting conversation:", error);
+      setError("Error deleting conversation");
+      toastManager.addToast("Error deleting conversation", "error", 5000);
     } finally {
       setLoading(false);
     }
@@ -246,7 +313,7 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('fr-FR', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -257,7 +324,7 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
 
   return (
     <div className="flex h-[calc(100vh-200px)] bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      {/* Sidebar avec la liste des conversations */}
+      {/* Sidebar with conversation list */}
       <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h3 className="text-lg font-semibold">Conversations</h3>
@@ -267,14 +334,14 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
             onClick={createNewConversation}
             disabled={loading}
           >
-            Nouvelle
+            New
           </Button>
         </div>
-        
+
         <div className="overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              Aucune conversation. Commencez par en créer une nouvelle.
+              No conversations. Start by creating a new one.
             </div>
           ) : (
             conversations.map(conversation => (
@@ -290,6 +357,7 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
                   <p className="text-xs text-gray-500">{formatDate(conversation.updatedAt)}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteConversation(conversation._id);
@@ -305,33 +373,33 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
           )}
         </div>
       </div>
-      
-      {/* Zone principale de chat */}
+
+      {/* Main chat area */}
       <div className="flex-1 flex flex-col">
-        {/* En-tête */}
+        {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold">
             {activeConversation
               ? conversations.find(c => c._id === activeConversation)?.title || "Conversation"
-              : "Sélectionnez ou créez une conversation"}
+              : "Select or create a conversation"}
           </h3>
         </div>
-        
+
         {/* Messages */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 p-4 overflow-y-auto" ref={messagesContainerRef}>
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
-          
+
           {!activeConversation ? (
             <div className="h-full flex items-center justify-center text-gray-500">
-              Sélectionnez une conversation ou créez-en une nouvelle pour commencer à discuter.
+              Select a conversation or create a new one to start chatting.
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-500">
-              Aucun message. Commencez la conversation en envoyant un message.
+              No messages. Start the conversation by sending a message.
             </div>
           ) : (
             <div className="space-y-4">
@@ -354,18 +422,40 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
                   </div>
                 </div>
               ))}
+
+              {/* Typing animation for assistant message */}
+              {typingMessage && (
+                <div className="flex justify-start">
+                  <div className="max-w-3/4 p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <TypingAnimation
+                      text={typingMessage.content}
+                      speed={3} // Moderate typing speed (3ms per character)
+                      onComplete={handleTypingComplete}
+                      className="whitespace-pre-wrap"
+                    />
+                    <div className="text-xs mt-1 opacity-70">
+                      {typingMessage.createdAt && formatDate(typingMessage.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
-        
-        {/* Zone de saisie */}
+
+        {/* Input area */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex space-x-2">
             <Textarea
-              placeholder="Tapez votre message..."
+              placeholder="Type your message..."
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                // Scroll to bottom when user is typing
+                scrollToBottom();
+              }}
               onKeyDown={handleKeyPress}
               className="flex-1 p-2 border rounded-lg resize-none"
               rows={2}
@@ -377,7 +467,7 @@ const ChatbotInterface: React.FC<ChatbotInterfaceProps> = ({ projectId, taskId }
               disabled={loading || !newMessage.trim() || !activeConversation}
               className="self-end"
             >
-              {loading ? "Envoi..." : "Envoyer"}
+              {loading ? "Sending..." : "Send"}
             </Button>
           </div>
         </div>

@@ -257,10 +257,10 @@ const Certificate: React.FC<CertificateProps> = ({
       {gradeUpgraded && (
         <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
           <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
-            Félicitations !
+            Congratulations !
           </h3>
           <p className="text-green-700 dark:text-green-300">
-            Vous avez évolué du grade <span className="font-semibold">{oldGrade}</span> au grade <span className="font-semibold">{newGrade}</span> !
+            You have moved up in rank <span className="font-semibold">{oldGrade}</span> to the rank <span className="font-semibold">{newGrade}</span> !
           </p>
         </div>
       )}
@@ -271,11 +271,11 @@ const Certificate: React.FC<CertificateProps> = ({
         className="w-full max-w-3xl bg-white border-8 border-double border-gray-300 p-8 rounded-lg shadow-lg"
       >
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Certificat d'Excellence</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Certificate of Excellence</h2>
           <div className="w-32 h-1 bg-blue-600 mx-auto mb-6"></div>
 
           <p className="text-lg text-gray-600 mb-2">
-            Ce certificat est décerné à
+            This certificate is awarded to
           </p>
 
           <h3 className="text-2xl font-bold text-blue-600 mb-8">
@@ -283,7 +283,7 @@ const Certificate: React.FC<CertificateProps> = ({
           </h3>
 
           <p className="text-lg text-gray-600 mb-2">
-            pour avoir obtenu un score parfait de
+            for achieving a perfect score of
           </p>
 
           <div className="text-3xl font-bold text-green-600 mb-8">
@@ -291,7 +291,7 @@ const Certificate: React.FC<CertificateProps> = ({
           </div>
 
           <p className="text-lg text-gray-600 mb-2">
-            dans le quiz
+            in the quiz
           </p>
 
           <h4 className="text-xl font-semibold text-gray-800 mb-8">
@@ -300,7 +300,7 @@ const Certificate: React.FC<CertificateProps> = ({
 
           <div className="flex justify-between items-center mt-12">
             <div>
-              <p className="text-sm text-gray-500">La catégorie du quiz choisi</p>
+              <p className="text-sm text-gray-500">The category of the chosen quiz</p>
               <p className="font-medium">{getQuizCategory()}</p>
             </div>
 
@@ -315,7 +315,7 @@ const Certificate: React.FC<CertificateProps> = ({
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Certificat ID</p>
+              <p className="text-sm text-gray-500">Certificate ID</p>
               <p className="font-medium">{certificate.certificateId}</p>
             </div>
           </div>
@@ -325,10 +325,10 @@ const Certificate: React.FC<CertificateProps> = ({
       {/* Boutons d'action */}
       <div className="flex gap-4 mt-6">
         <Button variant="primary" onClick={downloadCertificate}>
-          Télécharger le certificat
+          Download certificate
         </Button>
         <Button variant="outline" onClick={onClose}>
-          Fermer
+          Close
         </Button>
       </div>
     </div>

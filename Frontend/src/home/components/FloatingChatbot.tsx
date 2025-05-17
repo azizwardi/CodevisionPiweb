@@ -19,6 +19,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
+import TypingAnimation from '../../components/TypingAnimation';
 
 // Types
 interface Message {
@@ -109,57 +110,108 @@ const FloatingChatbot: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [typingMessage, setTypingMessage] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Effet pour afficher automatiquement le chatbot après un délai
+  // Effect to automatically display the chatbot after a delay
   useEffect(() => {
     const timer = setTimeout(() => {
       setOpen(true);
-      // Ajouter un message de bienvenue
-      setMessages([
-        {
-          id: 'welcome',
-          content: "Bonjour ! Je suis l'assistant virtuel de CodevisionPiweb. Comment puis-je vous aider aujourd'hui ?",
-          role: 'assistant',
-          timestamp: new Date()
-        }
-      ]);
-    }, 3000); // Afficher après 3 secondes
+      // Add a welcome message as typing
+      setTypingMessage({
+        id: 'welcome',
+        content: "Hello! I'm the CodevisionPiweb virtual assistant. How can I help you with your projects and tasks today?",
+        role: 'assistant',
+        timestamp: new Date()
+      });
+    }, 3000); // Show after 3 seconds
 
     return () => clearTimeout(timer);
   }, []);
 
-  // Effet pour faire défiler vers le bas lorsque de nouveaux messages sont ajoutés
+  // Effect to scroll down when new messages are added
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, typingMessage]);
 
-  // Fonction pour créer une nouvelle conversation
+  // Listen for typing progress to scroll during typing animation
+  useEffect(() => {
+    const handleTypingProgress = () => scrollToBottom();
+    window.addEventListener('typingProgress', handleTypingProgress);
+
+    return () => {
+      window.removeEventListener('typingProgress', handleTypingProgress);
+    };
+  }, []);
+
+  // Use MutationObserver to detect changes in the message container
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+
+    // Create a MutationObserver to watch for changes in the message container
+    const observer = new MutationObserver((mutations) => {
+      // If there are mutations, scroll to bottom
+      if (mutations.length > 0) {
+        scrollToBottom();
+      }
+    });
+
+    // Start observing the message container for changes
+    observer.observe(messagesContainerRef.current, {
+      childList: true,      // Watch for changes to the direct children
+      subtree: true,        // Watch for changes in all descendants
+      characterData: true,  // Watch for changes in text content
+      attributes: true      // Watch for changes in attributes
+    });
+
+    return () => {
+      // Clean up the observer when the component unmounts
+      observer.disconnect();
+    };
+  }, []);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      // Use requestAnimationFrame to ensure the scroll happens after DOM updates
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  };
+
+  // Handle typing message completion
+  const handleTypingComplete = () => {
+    if (typingMessage) {
+      setMessages(prev => [...prev, typingMessage]);
+      setTypingMessage(null);
+    }
+  };
+
+  // Function to create a new conversation
   const createNewConversation = async () => {
     try {
       setLoading(true);
 
-      // Générer un ID temporaire unique pour les utilisateurs non connectés
+      // Generate a unique temporary ID for non-logged-in users
       const tempUserId = user?.id || `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
-      console.log("Création d'une nouvelle conversation avec userId:", tempUserId);
+      console.log("Creating a new conversation with userId:", tempUserId);
 
       const response = await axios.post('http://localhost:5000/chatbot/conversations', {
         userId: tempUserId,
-        title: "Conversation depuis la page d'accueil"
+        title: "Home page conversation"
       });
 
-      console.log("Conversation créée avec succès:", response.data);
+      console.log("Conversation created successfully:", response.data);
       setConversationId(response.data.conversation._id);
       return response.data.conversation._id;
     } catch (error) {
-      console.error("Erreur lors de la création de la conversation:", error);
+      console.error("Error creating conversation:", error);
 
-      // En cas d'erreur, créer une conversation locale
+      // In case of error, create a local conversation
       const localConversationId = `local_${Date.now()}`;
-      console.log("Création d'une conversation locale:", localConversationId);
+      console.log("Creating a local conversation:", localConversationId);
       setConversationId(localConversationId);
       return localConversationId;
     } finally {
@@ -167,15 +219,15 @@ const FloatingChatbot: React.FC = () => {
     }
   };
 
-  // Fonction pour envoyer un message
+  // Function to send a message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    // Créer une nouvelle conversation si nécessaire
+    // Create a new conversation if needed
     const activeConversationId = conversationId || await createNewConversation();
     if (!activeConversationId) return;
 
-    // Ajouter temporairement le message de l'utilisateur
+    // Temporarily add the user message
     const tempUserMessage = {
       id: `temp-${Date.now()}`,
       content: newMessage,
@@ -187,11 +239,11 @@ const FloatingChatbot: React.FC = () => {
     setNewMessage('');
     setLoading(true);
 
-    // Vérifier si c'est une conversation locale (hors ligne)
+    // Check if it's a local conversation (offline)
     const isLocalConversation = activeConversationId.startsWith('local_');
 
     if (isLocalConversation) {
-      // Mode hors ligne - simuler une réponse
+      // Offline mode - simulate a response
       setTimeout(() => {
         const userMessage = {
           id: `user-${Date.now()}`,
@@ -202,16 +254,19 @@ const FloatingChatbot: React.FC = () => {
 
         const assistantMessage = {
           id: `assistant-${Date.now()}`,
-          content: "Je suis désolé, mais je ne peux pas traiter votre demande actuellement car le serveur est indisponible. Veuillez réessayer plus tard ou rafraîchir la page.",
+          content: "I'm sorry, but I cannot process your request at the moment because the server is unavailable. Please try again later or refresh the page.",
           role: 'assistant' as const,
           timestamp: new Date()
         };
 
+        // Add user message to the chat
         setMessages(prev => [
           ...prev.filter(msg => msg.id !== tempUserMessage.id),
-          userMessage,
-          assistantMessage
+          userMessage
         ]);
+
+        // Set the assistant message as typing
+        setTypingMessage(assistantMessage);
         setLoading(false);
       }, 1000);
 
@@ -219,13 +274,13 @@ const FloatingChatbot: React.FC = () => {
     }
 
     try {
-      // Envoyer le message au serveur
+      // Send the message to the server
       const response = await axios.post('http://localhost:5000/chatbot/messages', {
         conversationId: activeConversationId,
         content: tempUserMessage.content
       });
 
-      // Mettre à jour les messages avec les réponses du serveur
+      // Update messages with user message first
       const userMessage = {
         id: response.data.userMessage._id,
         content: response.data.userMessage.content,
@@ -240,36 +295,46 @@ const FloatingChatbot: React.FC = () => {
         timestamp: new Date(response.data.assistantMessage.createdAt)
       };
 
+      // Add user message to the chat
       setMessages(prev => [
         ...prev.filter(msg => msg.id !== tempUserMessage.id),
-        userMessage,
-        assistantMessage
+        userMessage
       ]);
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
 
-      // En cas d'erreur, ajouter un message d'erreur
+      // Set the assistant message as typing
+      setTypingMessage(assistantMessage);
+    } catch (error) {
+      console.error("Error sending message:", error);
+
+      // In case of error, add an error message
+      const userMsg = {
+        id: `user-${Date.now()}`,
+        content: tempUserMessage.content,
+        role: 'user' as const,
+        timestamp: new Date()
+      };
+
+      const errorMsg = {
+        id: `error-${Date.now()}`,
+        content: "Sorry, an error occurred. Please try again later or refresh the page.",
+        role: 'assistant' as const,
+        timestamp: new Date()
+      };
+
+      // Add user message to the chat
       setMessages(prev => [
         ...prev.filter(msg => msg.id !== tempUserMessage.id),
-        {
-          id: `user-${Date.now()}`,
-          content: tempUserMessage.content,
-          role: 'user',
-          timestamp: new Date()
-        },
-        {
-          id: `error-${Date.now()}`,
-          content: "Désolé, une erreur s'est produite. Veuillez réessayer plus tard ou rafraîchir la page.",
-          role: 'assistant',
-          timestamp: new Date()
-        }
+        userMsg
       ]);
+
+      // Set the error message as typing
+      setTypingMessage(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Gérer l'appui sur Entrée pour envoyer un message
+  // Handle Enter key press to send a message
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -277,29 +342,36 @@ const FloatingChatbot: React.FC = () => {
     }
   };
 
-  // Formater la date
+  // Format the date
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <>
-      {/* Bouton pour ouvrir/fermer le chatbot */}
+      {/* Button to open/close the chatbot */}
       <ChatButton
         color="primary"
-        onClick={() => setOpen(!open)}
-        aria-label={open ? "Fermer le chat" : "Ouvrir le chat"}
+        onClick={() => {
+          const newOpenState = !open;
+          setOpen(newOpenState);
+          if (newOpenState) {
+            // When opening the chat, scroll to bottom after a short delay
+            setTimeout(scrollToBottom, 100);
+          }
+        }}
+        aria-label={open ? "Close chat" : "Open chat"}
       >
         {open ? <CloseIcon /> : <ChatIcon />}
       </ChatButton>
 
-      {/* Fenêtre de chat */}
+      {/* Chat window */}
       <Zoom in={open}>
         <ChatWindow>
           <ChatHeader>
             <Box display="flex" alignItems="center">
               <SmartToyIcon sx={{ mr: 1 }} />
-              <Typography variant="h6">Assistant CodevisionPiweb</Typography>
+              <Typography variant="h6">CodevisionPiweb Assistant</Typography>
             </Box>
             <IconButton
               size="small"
@@ -311,6 +383,7 @@ const FloatingChatbot: React.FC = () => {
           </ChatHeader>
 
           <ChatMessages>
+            <Box ref={messagesContainerRef} sx={{ height: '100%', overflow: 'hidden' }}>
             {messages.map((message) => (
               <Box
                 key={message.id}
@@ -362,7 +435,46 @@ const FloatingChatbot: React.FC = () => {
               </Box>
             ))}
 
-            {loading && (
+            {/* Typing animation for assistant message */}
+            {typingMessage && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  mb: 2
+                }}
+              >
+                <Avatar
+                  sx={{
+                    bgcolor: 'primary.main',
+                    width: 32,
+                    height: 32,
+                    mr: 1
+                  }}
+                >
+                  <SmartToyIcon fontSize="small" />
+                </Avatar>
+                <MessageBubble isUser={false}>
+                  <TypingAnimation
+                    text={typingMessage.content}
+                    speed={3} // Moderate typing speed (3ms per character)
+                    onComplete={handleTypingComplete}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      alignSelf: 'flex-end',
+                      opacity: 0.7,
+                      mt: 0.5
+                    }}
+                  >
+                    {formatTime(typingMessage.timestamp)}
+                  </Typography>
+                </MessageBubble>
+              </Box>
+            )}
+
+            {loading && !typingMessage && (
               <Box display="flex" justifyContent="flex-start" mb={2}>
                 <Avatar
                   sx={{
@@ -381,21 +493,26 @@ const FloatingChatbot: React.FC = () => {
             )}
 
             <div ref={messagesEndRef} />
+            </Box>
           </ChatMessages>
 
           <ChatInputArea>
             <TextField
               fullWidth
-              placeholder="Tapez votre message..."
+              placeholder="Type your message..."
               variant="outlined"
               size="small"
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                // Scroll to bottom when user is typing
+                scrollToBottom();
+              }}
               onKeyDown={handleKeyPress}
               disabled={loading}
               sx={{ mr: 1 }}
             />
-            <Tooltip title="Envoyer">
+            <Tooltip title="Send">
               <IconButton
                 color="primary"
                 onClick={sendMessage}

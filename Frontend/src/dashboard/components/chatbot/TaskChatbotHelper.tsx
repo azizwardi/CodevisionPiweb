@@ -51,7 +51,7 @@ const TaskChatbotHelper: React.FC<TaskChatbotHelperProps> = ({ taskId, taskTitle
         className="p-4 bg-blue-50 dark:bg-blue-900 cursor-pointer flex justify-between items-center"
         onClick={() => setExpanded(!expanded)}
       >
-        <h3 className="font-semibold">Assistant IA pour cette tâche</h3>
+        <h3 className="font-semibold">AI Assistant for this task</h3>
         <span className="text-blue-500">
           {expanded ? '▲' : '▼'}
         </span>
@@ -60,7 +60,7 @@ const TaskChatbotHelper: React.FC<TaskChatbotHelperProps> = ({ taskId, taskTitle
       {expanded && (
         <div className="p-4">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Posez une question à l'assistant IA pour obtenir de l'aide sur la tâche "{taskTitle}".
+            Ask the AI ​​assistant a question to get help with the task "{taskTitle}".
           </p>
           
           <div className="space-y-4">
@@ -92,7 +92,7 @@ const TaskChatbotHelper: React.FC<TaskChatbotHelperProps> = ({ taskId, taskTitle
             
             {response && (
               <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Réponse de l'assistant :</h4>
+                <h4 className="font-semibold mb-2">Assistant's response :</h4>
                 <div className="prose dark:prose-invert max-w-none">
                   <div className="whitespace-pre-wrap">{response}</div>
                 </div>

@@ -163,11 +163,11 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold mb-6">Quiz disponibles</h2>
+        <h2 className="text-2xl font-bold mb-6">Available Quiz</h2>
 
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">Chargement des quiz...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading quizzes...</p>
           </div>
         ) : error ? (
           <div className="text-center py-8">
@@ -175,7 +175,7 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
           </div>
         ) : quizzes.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">Aucun quiz n'est disponible pour le moment.</p>
+            <p className="text-gray-500 dark:text-gray-400">No quizzes are available at the moment.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -188,12 +188,12 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
                   <Badge color="primary">{quiz.category}</Badge>
                   <Badge color="secondary">{getQuestionCount(quiz)} question{getQuestionCount(quiz) > 1 ? 's' : ''}</Badge>
                   {quiz.completed && (
-                    <Badge color="primary">Complété</Badge>
+                    <Badge color="primary">Completed</Badge>
                   )}
                 </div>
 
                 <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  <p>Créé par: {quiz.creator && quiz.creator.username ? quiz.creator.username : "Utilisateur inconnu"}</p>
+                  <p>Created by: {quiz.creator && quiz.creator.username ? quiz.creator.username : "Unknown user"}</p>
                   <p>Date: {formatDate(quiz.createdAt)}</p>
                 </div>
 
@@ -201,14 +201,14 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
                   {quiz.completed ? (
                     <div className="text-center">
                       <p className="text-sm font-semibold mb-2">
-                        Votre score: {quiz.score?.score}/{quiz.score?.maxScore} ({quiz.score?.percentage}%)
+                        Your score: {quiz.score?.score}/{quiz.score?.maxScore} ({quiz.score?.percentage}%)
                       </p>
                       <Button
                         variant="outline"
                         className="w-full"
                         onClick={() => onTakeQuiz(quiz._id, quiz.score?.attemptId)}
                       >
-                        Voir les détails
+                        See details
                       </Button>
                     </div>
                   ) : (
@@ -217,7 +217,7 @@ export default function AvailableQuizzes({ onTakeQuiz }: AvailableQuizzesProps) 
                       className="w-full"
                       onClick={() => onTakeQuiz(quiz._id)}
                     >
-                      Répondre au quiz
+                      Take the quiz
                     </Button>
                   )}
                 </div>

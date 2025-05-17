@@ -91,7 +91,7 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">Chargement des recommandations...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading recommendations...</p>
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 dark:text-gray-400">
-          Aucune recommandation de cours disponible pour le moment.
+          No course recommendations available at this time.
         </p>
         <Button variant="outline" className="mt-4" onClick={onClose}>
           Fermer
@@ -125,9 +125,9 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-2xl font-bold">Recommandations de cours</h2>
+            <h2 className="text-2xl font-bold">Course Recommendations</h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Basées sur votre performance au quiz: {recommendation.quiz.title}
+              Based on your quiz performance: {recommendation.quiz.title}
             </p>
           </div>
           <div>
@@ -137,18 +137,18 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
 
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-            Améliorez vos compétences
+            Improve your skills
           </h3>
           <p className="text-blue-700 dark:text-blue-300 mb-2">
-            Vous avez obtenu un score de {recommendation.percentage}% ({recommendation.score}/{recommendation.maxScore}).
-            Voici des cours recommandés pour améliorer vos connaissances dans ce domaine.
+            You got a score of {recommendation.percentage}% ({recommendation.score}/{recommendation.maxScore}).
+            Here are some recommended courses to improve your knowledge in this area.
           </p>
           <p className="text-blue-600 dark:text-blue-400 text-sm">
             {recommendation.reason}
           </p>
         </div>
 
-        <h3 className="text-xl font-semibold mb-4">Cours recommandés</h3>
+        <h3 className="text-xl font-semibold mb-4">Recommended courses</h3>
 
         <div className="space-y-4">
           {recommendation.recommendedCourses.map((course, index) => (
@@ -183,7 +183,7 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
                   className="text-sm"
                   onClick={() => window.open(course.url, '_blank')}
                 >
-                  Voir le cours
+                  View the course
                 </Button>
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function CourseRecommendations({ attemptId, onClose }: CourseReco
 
         <div className="flex justify-end mt-6">
           <Button variant="primary" onClick={onClose}>
-            Fermer
+            Close
           </Button>
         </div>
       </div>

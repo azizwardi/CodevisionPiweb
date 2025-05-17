@@ -57,22 +57,12 @@ const getNavItems = (): NavItem[] => {
     {
       name: "Quiz Management",
       icon: <QuizIcon />,
-      subItems: isAdmin
-        ? [{ name: "Gérer les Quiz", path: "/quiz-management" }]  // Admin ne voit que la gestion des quiz
-        : [
-            { name: "Gérer les Quiz", path: "/quiz-management" },
-            { name: "Participer aux Quiz", path: "/quiz-participation" },
-          ],
+      path: "/quiz-management"
     },
     {
       name: "Task Management",
       icon: <ListIcon />,
-      subItems: isAdmin
-        ? [{ name: "Task List", path: "/tasks" }]  // Admin ne voit que la liste des tâches
-        : [
-            { name: "Task List", path: "/tasks" },
-            { name: "Create Task", path: "/tasks/create" },
-          ],
+      path: "/tasks"
     },
     {
       name: "User Management",
@@ -112,12 +102,7 @@ const navItems: NavItem[] = [
   {
     name: "Quiz Management",
     icon: <QuizIcon />,
-    subItems: localStorage.getItem("userRole") === "admin"
-      ? [{ name: "Gérer les Quiz", path: "/quiz-management" }]
-      : [
-          { name: "Gérer les Quiz", path: "/quiz-management" },
-          { name: "Participer aux Quiz", path: "/quiz-participation" },
-        ],
+    path: "/quiz-management"
   },
   {
     name: "Task Management",

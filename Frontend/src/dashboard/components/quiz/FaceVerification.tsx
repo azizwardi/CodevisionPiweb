@@ -208,9 +208,9 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
 
   return (
     <div className="flex flex-col items-center">
-      <h3 className="text-xl font-semibold mb-4">Vérification faciale</h3>
+      <h3 className="text-xl font-semibold mb-4">Facial verification</h3>
       <p className="mb-4 text-gray-600 dark:text-gray-400">
-        Pour des raisons de sécurité, veuillez vérifier votre identité avant de commencer le quiz.
+        For security reasons, please verify your identity before starting the quiz.
       </p>
 
       <div className="relative w-full max-w-md mb-4">
@@ -260,7 +260,7 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
                 setFaceDescriptor(null);
               }}
             >
-              Reprendre
+              To resume
             </Button>
             <Button
               variant="primary"
@@ -275,7 +275,7 @@ const FaceVerification: React.FC<FaceVerificationProps> = ({ onVerificationCompl
 
       {!isModelLoaded && (
         <p className="text-yellow-500">
-          Chargement des modèles de détection faciale...
+          Loading face detection models...
         </p>
       )}
     </div>

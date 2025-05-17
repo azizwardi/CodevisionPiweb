@@ -10,22 +10,22 @@ const {
 
 const router = express.Router();
 
-// Créer une nouvelle conversation
+// Create a new conversation
 router.post("/conversations", createConversation);
 
-// Récupérer toutes les conversations d'un utilisateur
+// Get all conversations for a user
 router.get("/conversations/user/:userId", getUserConversations);
 
-// Récupérer une conversation par son ID
+// Get a conversation by its ID
 router.get("/conversations/:conversationId", getConversationById);
 
-// Envoyer un message et obtenir une réponse
+// Send a message and get a response
 router.post("/messages", sendMessage);
 
-// Obtenir de l'aide pour une tâche spécifique
+// Get help for a specific task
 router.post("/task-help", getTaskHelp);
 
-// Supprimer une conversation
+// Delete a conversation
 router.delete("/conversations/:conversationId", deleteConversation);
 
 module.exports = router;

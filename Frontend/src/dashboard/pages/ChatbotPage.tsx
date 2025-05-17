@@ -18,7 +18,7 @@ const ChatbotPage: React.FC = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-2">Assistant IA</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Posez vos questions à notre assistant IA pour obtenir de l'aide sur vos tâches et projets.
+            Ask our AI assistant questions to get help with your tasks and projects.
           </p>
         </div>
         

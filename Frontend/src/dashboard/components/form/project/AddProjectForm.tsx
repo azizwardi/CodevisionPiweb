@@ -26,12 +26,12 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     name: "",
     description: "",
     category: "",
-    startDate: new Date().toISOString().split('T')[0], // Date du jour par défaut
-    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Date du jour + 7 jours par défaut
+    startDate: new Date().toISOString().split('T')[0], // Today's date by default
+    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Today + 7 days by default
     userId: ""
   });
 
-  // Récupérer l'ID de l'utilisateur connecté
+  // Get the connected user's ID
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (token) {
@@ -50,7 +50,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           setFormData(prev => ({ ...prev, userId }));
         }
       } catch (error) {
-        console.error("Erreur lors du décodage du token:", error);
+        console.error("Error decoding token:", error);
       }
     }
   }, []);
@@ -61,46 +61,46 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const categoryOptions = [
-    { value: "web", label: "Développement Web" },
-    { value: "mobile", label: "Développement Mobile" },
+    { value: "web", label: "Web Development" },
+    { value: "mobile", label: "Mobile Development" },
     { value: "design", label: "Design" },
     { value: "marketing", label: "Marketing" },
-    { value: "other", label: "Autre" },
+    { value: "other", label: "Other" },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Validation en temps réel
+    // Real-time validation
     const errors = { ...validationErrors };
 
     if (name === "name") {
-      // Effacer l'erreur existante
+      // Clear existing error
       delete errors.name;
 
-      // Validation du nom en temps réel
+      // Real-time name validation
       if (value.length > 0 && value.length < 3) {
-        errors.name = "Le nom doit contenir au moins 3 caractères";
+        errors.name = "Name must contain at least 3 characters";
       } else if (value.length > 50) {
-        errors.name = "Le nom ne doit pas dépasser 50 caractères";
+        errors.name = "Name must not exceed 50 characters";
       } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()]+$/.test(value)) {
-        errors.name = "Le nom contient des caractères non autorisés";
+        errors.name = "Name contains unauthorized characters";
       }
     } else if (name === "startDate" || name === "deadline") {
-      // Effacer les erreurs existantes
+      // Clear existing errors
       delete errors.startDate;
       delete errors.deadline;
 
-      // Validation des dates en temps réel
+      // Real-time date validation
       const startDate = name === "startDate" ? new Date(value) : new Date(formData.startDate);
       const deadline = name === "deadline" ? new Date(value) : new Date(formData.deadline);
 
       if (deadline < startDate) {
-        errors.deadline = "La date limite doit être postérieure à la date de début";
+        errors.deadline = "The deadline must be after the start date";
       }
     } else if (validationErrors[name as keyof ValidationErrors]) {
-      // Pour les autres champs, effacer simplement l'erreur
+      // For other fields, simply clear the error
       delete errors[name as keyof ValidationErrors];
     }
 
@@ -110,14 +110,14 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const handleDescriptionChange = (value: string) => {
     setFormData((prev) => ({ ...prev, description: value }));
 
-    // Validation en temps réel
+    // Real-time validation
     const errors = { ...validationErrors };
     delete errors.description;
 
     if (value.length > 0 && value.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must contain at least 10 characters";
     } else if (value.length > 1000) {
-      errors.description = "La description ne doit pas dépasser 1000 caractères";
+      errors.description = "Description must not exceed 1000 characters";
     }
 
     setValidationErrors(errors);
@@ -126,7 +126,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
 
-    // Effacer l'erreur de validation pour la catégorie
+    // Clear validation error for category
     if (validationErrors.category) {
       setValidationErrors(prev => ({
         ...prev,
@@ -135,73 +135,73 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     }
   };
 
-  // Fonction de validation des champs
+  // Field validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
 
-    // Validation du nom
+    // Name validation
     if (!formData.name.trim()) {
-      errors.name = "Le nom du projet est requis";
+      errors.name = "Project name is required";
       isValid = false;
     } else if (formData.name.length < 3) {
-      errors.name = "Le nom doit contenir au moins 3 caractères";
+      errors.name = "Name must contain at least 3 characters";
       isValid = false;
     } else if (formData.name.length > 50) {
-      errors.name = "Le nom ne doit pas dépasser 50 caractères";
+      errors.name = "Name must not exceed 50 characters";
       isValid = false;
     } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,()]+$/.test(formData.name)) {
-      // Permet les lettres, chiffres, espaces, accents, tirets, underscores, points, virgules et parenthèses
-      errors.name = "Le nom contient des caractères non autorisés";
+      // Allows letters, numbers, spaces, accents, hyphens, underscores, periods, commas, and parentheses
+      errors.name = "Name contains unauthorized characters";
       isValid = false;
     }
 
-    // Validation de la description
+    // Description validation
     if (!formData.description.trim()) {
-      errors.description = "La description du projet est requise";
+      errors.description = "Project description is required";
       isValid = false;
     } else if (formData.description.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must contain at least 10 characters";
       isValid = false;
     } else if (formData.description.length > 1000) {
-      errors.description = "La description ne doit pas dépasser 1000 caractères";
+      errors.description = "Description must not exceed 1000 characters";
       isValid = false;
     }
 
-    // Validation de la catégorie
+    // Category validation
     if (!formData.category) {
-      errors.category = "Veuillez sélectionner une catégorie";
+      errors.category = "Please select a category";
       isValid = false;
     }
 
-    // Validation de la date de début
+    // Start date validation
     if (!formData.startDate) {
-      errors.startDate = "La date de début est requise";
+      errors.startDate = "Start date is required";
       isValid = false;
     } else {
-      // Vérifier que la date n'est pas dans le passé (avant aujourd'hui)
+      // Check that the date is not in the past (before today)
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Réinitialiser l'heure à minuit
+      today.setHours(0, 0, 0, 0); // Reset time to midnight
       const startDate = new Date(formData.startDate);
 
       if (startDate < today) {
-        errors.startDate = "La date de début ne peut pas être dans le passé";
+        errors.startDate = "The start date cannot be in the past";
         isValid = false;
       }
     }
 
-    // Validation de la date limite
+    // Deadline validation
     if (!formData.deadline) {
-      errors.deadline = "La date limite est requise";
+      errors.deadline = "Deadline is required";
       isValid = false;
     } else if (formData.startDate && new Date(formData.deadline) < new Date(formData.startDate)) {
-      errors.deadline = "La date limite doit être postérieure à la date de début";
+      errors.deadline = "The deadline must be after the start date";
       isValid = false;
     }
 
-    // Vérification de l'ID utilisateur
+    // User ID verification
     if (!formData.userId) {
-      errors.formError = "Erreur d'identification de l'utilisateur. Veuillez vous reconnecter.";
+      errors.formError = "User identification error. Please log in again.";
       isValid = false;
     }
 
@@ -214,36 +214,36 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     setError("");
     setSuccess("");
 
-    console.log("Début de la soumission du formulaire");
-    console.log("Données du formulaire:", formData);
+    console.log("Start of form submission");
+    console.log("Form data:", formData);
 
-    // Validation des champs
+    // Field validation
     if (!validateForm()) {
-      console.log("Validation échouée");
-      return; // Arrêter si la validation échoue
+      console.log("Validation failed");
+      return; // Stop if validation fails
     }
 
-    console.log("Validation réussie, envoi de la requête");
+    console.log("Validation successful, sending the request");
     setLoading(true);
 
     try {
-      // Pour le débogage, nous n'utilisons pas le token d'authentification
+      // For debugging, we're not using the authentication token
       // const token = localStorage.getItem("authToken");
       // if (!token) {
-      //   throw new Error("Vous devez être connecté pour créer un projet");
+      //   throw new Error("You must be logged in to create a project");
       // }
 
-      console.log("Envoi de la requête POST à http://localhost:5000/projects");
+      console.log("Sending POST request to http://localhost:5000/projects");
 
-      // Créer une copie des données du formulaire pour la requête
+      // Create a copy of the form data for the request
       const requestData = {
         ...formData,
-        // S'assurer que les dates sont au format ISO pour le backend
+        // Ensure dates are in ISO format for the backend
         startDate: new Date(formData.startDate).toISOString(),
         deadline: new Date(formData.deadline).toISOString()
       };
 
-      console.log("Données formatées pour la requête:", requestData);
+      console.log("Formatted data for the request:", requestData);
 
       try {
         const response = await axios.post(
@@ -257,20 +257,20 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           }
         );
 
-        console.log("Réponse reçue:", response.data);
+        console.log("Response received:", response.data);
       } catch (axiosError) {
-        console.error("Erreur Axios:", axiosError);
-        throw axiosError; // Relancer l'erreur pour qu'elle soit traitée par le bloc catch principal
+        console.error("Axios error:", axiosError);
+        throw axiosError; // Rethrow the error to be handled by the main catch block
       }
 
-      // Afficher un toast de succès
+      // Display a success toast
       toastManager.addToast({
-        title: "Succès",
-        description: "Projet créé avec succès",
+        title: "Success",
+        description: "Project created successfully",
         type: "success"
       });
 
-      // Réinitialiser le formulaire
+      // Reset the form
       setFormData({
         name: "",
         description: "",
@@ -280,26 +280,26 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         userId: formData.userId
       });
 
-      // Notifier le parent du succès
+      // Notify the parent of success
       onSuccess();
     } catch (err: any) {
-      console.error("Erreur lors de la création du projet:", err);
-      console.log("Détails de l'erreur:", {
+      console.error("Error creating project:", err);
+      console.log("Error details:", {
         message: err.message,
         status: err.response?.status,
         statusText: err.response?.statusText,
         data: err.response?.data,
         config: err.config
       });
-      const errorMessage = err.response?.data?.message || "Erreur lors de la création du projet";
+      const errorMessage = err.response?.data?.message || "Error creating project";
       setError(errorMessage);
       toastManager.addToast({
-        title: "Erreur",
+        title: "Error",
         description: errorMessage,
         type: "error"
       });
     } finally {
-      console.log("Fin de la soumission du formulaire");
+      console.log("End of form submission");
       setLoading(false);
     }
   };
@@ -324,27 +324,27 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       )}
 
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-        <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Création d'un nouveau projet</h4>
+        <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Create a new project</h4>
         <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-          Remplissez tous les champs obligatoires (marqués d'un *) pour créer un nouveau projet.
+          Fill in all required fields (marked with *) to create a new project.
         </p>
       </div>
 
       <div>
-        <Label htmlFor="name">Nom du projet <span className="text-red-500">*</span></Label>
+        <Label htmlFor="name">Project name <span className="text-red-500">*</span></Label>
         <Input
           type="text"
           id="name"
           name="name"
           value={formData.name}
           onChange={handleInputChange}
-          placeholder="Entrez le nom du projet"
+          placeholder="Enter project name"
           error={!!validationErrors.name}
           hint={validationErrors.name}
           required
         />
         {!validationErrors.name && (
-          <p className="mt-1 text-xs text-gray-500">{formData.name.length}/50 caractères</p>
+          <p className="mt-1 text-xs text-gray-500">{formData.name.length}/50 characters</p>
         )}
       </div>
 
@@ -353,23 +353,23 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         <TextArea
           value={formData.description}
           onChange={handleDescriptionChange}
-          placeholder="Décrivez le projet, ses objectifs, et les résultats attendus"
+          placeholder="Describe the project, its objectives, and expected results"
           rows={4}
           error={!!validationErrors.description}
           hint={validationErrors.description}
           required
         />
         {!validationErrors.description && (
-          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 caractères</p>
+          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 characters</p>
         )}
       </div>
 
       <div>
-        <Label>Catégorie <span className="text-red-500">*</span></Label>
+        <Label>Category <span className="text-red-500">*</span></Label>
         <div className="relative">
           <Select
             options={categoryOptions}
-            placeholder="Sélectionnez une catégorie"
+            placeholder="Select a category"
             onChange={handleCategoryChange}
             value={formData.category}
             className={`dark:bg-dark-900 ${validationErrors.category ? 'border-error-500' : ''}`}
@@ -385,7 +385,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="startDate">Date de début <span className="text-red-500">*</span></Label>
+          <Label htmlFor="startDate">Start date <span className="text-red-500">*</span></Label>
           <Input
             type="date"
             id="startDate"
@@ -395,12 +395,12 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             error={!!validationErrors.startDate}
             hint={validationErrors.startDate}
             required
-            min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
+            min={new Date().toISOString().split('T')[0]} // Prevents selecting past dates
           />
-          <p className="mt-1 text-xs text-gray-500">La date de début doit être aujourd'hui ou une date future</p>
+          <p className="mt-1 text-xs text-gray-500">Start date must be today or a future date</p>
         </div>
         <div>
-          <Label htmlFor="deadline">Date limite <span className="text-red-500">*</span></Label>
+          <Label htmlFor="deadline">Deadline <span className="text-red-500">*</span></Label>
           <Input
             type="date"
             id="deadline"
@@ -410,9 +410,9 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             error={!!validationErrors.deadline}
             hint={validationErrors.deadline}
             required
-            min={formData.startDate} // Empêche de sélectionner des dates antérieures à la date de début
+            min={formData.startDate} // Prevents selecting dates before the start date
           />
-          <p className="mt-1 text-xs text-gray-500">La date limite doit être postérieure à la date de début</p>
+          <p className="mt-1 text-xs text-gray-500">Deadline must be after the start date</p>
         </div>
       </div>
 
@@ -423,7 +423,7 @@ export default function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           disabled={loading}
           className="w-full sm:w-auto"
         >
-          {loading ? "Création en cours..." : "Créer le projet"}
+          {loading ? "Creating..." : "Create project"}
         </Button>
       </div>
     </form>

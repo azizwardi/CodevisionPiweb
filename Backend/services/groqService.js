@@ -36,14 +36,14 @@ class GroqService {
     const messages = [
       {
         role: "system",
-        content: `Tu es un assistant IA spécialisé dans l'aide aux développeurs pour leurs tâches. Voici la tâche :
-        
-        - Titre: ${task.title}
-        - Description: ${task.description || "Aucune description"}
-        - Statut: ${task.status}
-        - Date limite: ${task.dueDate || "Non spécifiée"}
+        content: `You are an AI assistant specialized in project management, task organization, and team performance. You help users complete their tasks efficiently. Here is the task:
 
-        Aide-moi à accomplir cette tâche efficacement.`,
+        - Title: ${task.title}
+        - Description: ${task.description || "No description"}
+        - Status: ${task.status}
+        - Due Date: ${task.dueDate || "Not specified"}
+
+        Help me accomplish this task efficiently, providing guidance on project management best practices and workflow optimization.`,
       },
       {
         role: "user",

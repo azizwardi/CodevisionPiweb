@@ -163,19 +163,19 @@ const MemberProjects: React.FC = () => {
           variant={activeTab === 'list' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('list')}
         >
-          Liste des Projets
+          Projects List
         </Button>
         <Button
           variant={activeTab === 'details' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('details')}
         >
-          Détails des Projets
+          Projects Details
         </Button>
       </div>
 
       {/* Contenu en fonction de l'onglet actif */}
       {activeTab === 'list' && (
-        <ComponentCard title="Liste des Projets">
+        <ComponentCard title="Projects List">
           <ProjectTable
             onEdit={() => {}} // Empty function as members can't edit projects
             refreshTrigger={refreshTrigger}
@@ -185,7 +185,7 @@ const MemberProjects: React.FC = () => {
       )}
 
       {activeTab === 'details' && (
-        <ComponentCard title="Détails des Projets">
+        <ComponentCard title="Projects details">
           <div className="mb-6 flex flex-wrap gap-4">
             <div className="w-full md:w-auto">
               <label className="block mb-1 text-sm font-medium">Filter by Status</label>
@@ -260,7 +260,7 @@ const MemberProjects: React.FC = () => {
                       variant="primary"
                       onClick={() => navigate(`/member/projects/${project._id}`)}
                     >
-                      Voir les tâches
+                      View tasks
                     </Button>
                   </div>
 

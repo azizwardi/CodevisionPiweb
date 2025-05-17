@@ -30,58 +30,58 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [loading, setLoading] = useState(false);
 
-  // Catégories de quiz
+  // Quiz categories
   const categories = [
-    { value: "education", label: "Éducation" },
-    { value: "technology", label: "Technologie" },
+    { value: "education", label: "Education" },
+    { value: "technology", label: "Technology" },
     { value: "science", label: "Science" },
-    { value: "history", label: "Histoire" },
-    { value: "geography", label: "Géographie" },
-    { value: "entertainment", label: "Divertissement" },
+    { value: "history", label: "History" },
+    { value: "geography", label: "Geography" },
+    { value: "entertainment", label: "Entertainment" },
     { value: "sports", label: "Sports" },
-    { value: "other", label: "Autre" }
+    { value: "other", label: "Other" }
   ];
 
   useEffect(() => {
-    // Récupérer l'ID de l'utilisateur à partir du token JWT
+    // Get user ID from JWT token
     const token = localStorage.getItem("authToken");
-    console.log("Token récupéré:", token ? "Oui" : "Non");
+    console.log("Token retrieved:", token ? "Yes" : "No");
 
     if (token) {
       try {
         const decodedToken = jwtDecode<{ id: string }>(token);
-        console.log("Token décodé:", decodedToken);
+        console.log("Token decoded:", decodedToken);
 
         if (decodedToken.id) {
           setFormData(prev => ({
             ...prev,
             creator: decodedToken.id
           }));
-          console.log("Creator ID défini:", decodedToken.id);
+          console.log("Creator ID set:", decodedToken.id);
         } else {
-          // Utiliser un ID par défaut si l'ID n'est pas disponible dans le token
+          // Use default ID if ID is not available in token
           setFormData(prev => ({
             ...prev,
-            creator: "6462d8c1e4b0a6d8e4b0a6d8" // ID par défaut pour les tests
+            creator: "6462d8c1e4b0a6d8e4b0a6d8" // Default ID for testing
           }));
-          console.log("Creator ID par défaut défini");
+          console.log("Default Creator ID set");
         }
       } catch (error) {
-        console.error("Erreur lors du décodage du token:", error);
-        // Utiliser un ID par défaut en cas d'erreur
+        console.error("Error decoding token:", error);
+        // Use default ID in case of error
         setFormData(prev => ({
           ...prev,
-          creator: "6462d8c1e4b0a6d8e4b0a6d8" // ID par défaut pour les tests
+          creator: "6462d8c1e4b0a6d8e4b0a6d8" // Default ID for testing
         }));
-        console.log("Creator ID par défaut défini après erreur");
+        console.log("Default Creator ID set after error");
       }
     } else {
-      // Utiliser un ID par défaut si aucun token n'est disponible
+      // Use default ID if no token is available
       setFormData(prev => ({
         ...prev,
-        creator: "6462d8c1e4b0a6d8e4b0a6d8" // ID par défaut pour les tests
+        creator: "6462d8c1e4b0a6d8e4b0a6d8" // Default ID for testing
       }));
-      console.log("Creator ID par défaut défini (pas de token)");
+      console.log("Default Creator ID set (no token)");
     }
   }, []);
 
@@ -92,33 +92,33 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
       [name]: value
     });
 
-    // Validation en temps réel
+    // Real-time validation
     const errors = { ...validationErrors };
 
     if (name === "title") {
-      // Effacer l'erreur existante
+      // Clear existing error
       delete errors.title;
 
-      // Validation du titre en temps réel
+      // Real-time title validation
       if (value.length > 0 && value.length < 3) {
-        errors.title = "Le titre doit contenir au moins 3 caractères";
+        errors.title = "Title must contain at least 3 characters";
       } else if (value.length > 100) {
-        errors.title = "Le titre ne doit pas dépasser 100 caractères";
+        errors.title = "Title must not exceed 100 characters";
       } else if (value.length > 0 && !/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,?!()]+$/.test(value)) {
-        errors.title = "Le titre contient des caractères non autorisés";
+        errors.title = "Title contains unauthorized characters";
       }
     } else if (name === "description") {
-      // Effacer l'erreur existante
+      // Clear existing error
       delete errors.description;
 
-      // Validation de la description en temps réel
+      // Real-time description validation
       if (value.length > 0 && value.length < 10) {
-        errors.description = "La description doit contenir au moins 10 caractères";
+        errors.description = "Description must contain at least 10 characters";
       } else if (value.length > 500) {
-        errors.description = "La description ne doit pas dépasser 500 caractères";
+        errors.description = "Description must not exceed 500 characters";
       }
     } else if (validationErrors[name as keyof ValidationErrors]) {
-      // Pour les autres champs, effacer simplement l'erreur
+      // For other fields, simply clear the error
       delete errors[name as keyof ValidationErrors];
     }
 
@@ -131,7 +131,7 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
       category: value
     });
 
-    // Effacer l'erreur de validation pour la catégorie
+    // Clear validation error for category
     if (validationErrors.category) {
       setValidationErrors({
         ...validationErrors,
@@ -140,48 +140,48 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
     }
   };
 
-  // Fonction de validation des champs
+  // Field validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
 
-    // Validation du titre
+    // Title validation
     if (!formData.title.trim()) {
-      errors.title = "Le titre du quiz est requis";
+      errors.title = "Quiz title is required";
       isValid = false;
     } else if (formData.title.length < 3) {
-      errors.title = "Le titre doit contenir au moins 3 caractères";
+      errors.title = "Title must contain at least 3 characters";
       isValid = false;
     } else if (formData.title.length > 100) {
-      errors.title = "Le titre ne doit pas dépasser 100 caractères";
+      errors.title = "Title must not exceed 100 characters";
       isValid = false;
     } else if (!/^[a-zA-Z0-9\s\u00C0-\u017F\-_.,?!()]+$/.test(formData.title)) {
-      // Permet les lettres, chiffres, espaces, accents, tirets, underscores et ponctuation de base
-      errors.title = "Le titre contient des caractères non autorisés";
+      // Allows letters, numbers, spaces, accents, hyphens, underscores and basic punctuation
+      errors.title = "Title contains unauthorized characters";
       isValid = false;
     }
 
-    // Validation de la description
+    // Description validation
     if (!formData.description.trim()) {
-      errors.description = "La description du quiz est requise";
+      errors.description = "Quiz description is required";
       isValid = false;
     } else if (formData.description.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must contain at least 10 characters";
       isValid = false;
     } else if (formData.description.length > 500) {
-      errors.description = "La description ne doit pas dépasser 500 caractères";
+      errors.description = "Description must not exceed 500 characters";
       isValid = false;
     }
 
-    // Validation de la catégorie
+    // Category validation
     if (!formData.category) {
-      errors.category = "Veuillez sélectionner une catégorie";
+      errors.category = "Please select a category";
       isValid = false;
     }
 
-    // Vérification globale
+    // Global verification
     if (!formData.creator) {
-      errors.formError = "Erreur d'identification de l'utilisateur. Veuillez vous reconnecter.";
+      errors.formError = "User identification error. Please log in again.";
       isValid = false;
     }
 
@@ -199,13 +199,13 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
     setLoading(true);
 
     try {
-      console.log("Envoi de la requête POST à http://localhost:5000/quizzes");
-      console.log("Données envoyées:", JSON.stringify(formData, null, 2));
+      console.log("Sending POST request to http://localhost:5000/quizzes");
+      console.log("Data sent:", JSON.stringify(formData, null, 2));
 
-      // Vérifier si creator est défini
+      // Check if creator is defined
       if (!formData.creator) {
-        console.error("Creator ID manquant, utilisation d'un ID par défaut");
-        formData.creator = "6462d8c1e4b0a6d8e4b0a6d8"; // ID par défaut
+        console.error("Missing Creator ID, using default ID");
+        formData.creator = "6462d8c1e4b0a6d8e4b0a6d8"; // Default ID
       }
 
       const response = await axios.post(
@@ -218,14 +218,14 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
         }
       );
 
-      console.log("Réponse reçue:", response.data);
+      console.log("Response received:", response.data);
       toastManager.addToast({
-        title: "Succès",
-        description: "Le quiz a été créé avec succès",
+        title: "Success",
+        description: "The quiz has been successfully created",
         type: "success",
       });
 
-      // Réinitialiser le formulaire
+      // Reset the form
       setFormData({
         title: "",
         description: "",
@@ -233,42 +233,42 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
         creator: formData.creator
       });
 
-      // Appeler la fonction de succès avec l'ID du quiz créé pour rediriger vers l'ajout de questions
+      // Call success function with created quiz ID to redirect to question addition
       const createdQuizId = response.data.quiz._id;
-      console.log("ID du quiz créé:", createdQuizId);
+      console.log("Created quiz ID:", createdQuizId);
       onSuccess(createdQuizId);
     } catch (error: any) {
-      console.error("Erreur lors de la création du quiz:", error);
+      console.error("Error creating quiz:", error);
 
-      // Afficher des détails supplémentaires sur l'erreur
+      // Display additional error details
       if (error.response) {
-        // La requête a été faite et le serveur a répondu avec un code d'état
-        // qui n'est pas dans la plage 2xx
-        console.error("Données de réponse d'erreur:", error.response.data);
-        console.error("Statut d'erreur:", error.response.status);
-        console.error("En-têtes d'erreur:", error.response.headers);
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Error response data:", error.response.data);
+        console.error("Error status:", error.response.status);
+        console.error("Error headers:", error.response.headers);
 
         toastManager.addToast({
-          title: "Erreur " + error.response.status,
-          description: error.response.data.message || "Une erreur est survenue lors de la création du quiz",
+          title: "Error " + error.response.status,
+          description: error.response.data.message || "An error occurred while creating the quiz",
           type: "error",
         });
       } else if (error.request) {
-        // La requête a été faite mais aucune réponse n'a été reçue
-        console.error("Requête sans réponse:", error.request);
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
 
         toastManager.addToast({
-          title: "Erreur de connexion",
-          description: "Impossible de se connecter au serveur. Vérifiez que le backend est en cours d'exécution.",
+          title: "Connection Error",
+          description: "Unable to connect to the server. Please check that the backend is running.",
           type: "error",
         });
       } else {
-        // Une erreur s'est produite lors de la configuration de la requête
-        console.error("Erreur de configuration:", error.message);
+        // Something happened in setting up the request that triggered an Error
+        console.error("Configuration error:", error.message);
 
         toastManager.addToast({
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la création du quiz: " + error.message,
+          title: "Error",
+          description: "An error occurred while creating the quiz: " + error.message,
           type: "error",
         });
       }
@@ -286,14 +286,14 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
       )}
 
       <div>
-        <Label htmlFor="title">Titre du Quiz <span className="text-red-500">*</span></Label>
+        <Label htmlFor="title">Quiz Title <span className="text-red-500">*</span></Label>
         <Input
           type="text"
           id="title"
           name="title"
           value={formData.title}
           onChange={handleInputChange}
-          placeholder="Entrez le titre du quiz"
+          placeholder="Enter quiz title"
           error={!!validationErrors.title}
           hint={validationErrors.title}
           required
@@ -307,23 +307,23 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
           name="description"
           value={formData.description}
           onChange={(value) => handleInputChange({ target: { name: "description", value } } as any)}
-          placeholder="Décrivez le contenu et l'objectif de ce quiz"
+          placeholder="Describe the content and purpose of this quiz"
           error={!!validationErrors.description}
           hint={validationErrors.description}
           rows={4}
           required
         />
         {!validationErrors.description && (
-          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/500 caractères</p>
+          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/500 characters</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="category">Catégorie <span className="text-red-500">*</span></Label>
+        <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
         <Select
           id="category"
           options={categories}
-          placeholder="Sélectionnez une catégorie"
+          placeholder="Select a category"
           onChange={handleSelectChange}
           value={formData.category}
           className={validationErrors.category ? "border-red-500" : ""}
@@ -337,7 +337,7 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
         <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Information</h4>
         <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-          Après avoir créé le quiz, vous pourrez ajouter des questions et des réponses dans l'étape suivante.
+          After creating the quiz, you will be able to add questions and answers in the next step.
         </p>
       </div>
 
@@ -348,7 +348,7 @@ export default function AddQuizForm({ onSuccess }: AddQuizFormProps) {
           disabled={loading}
           className="w-full sm:w-auto"
         >
-          {loading ? "Création en cours..." : "Créer le quiz"}
+          {loading ? "Creating..." : "Create Quiz"}
         </Button>
       </div>
     </form>

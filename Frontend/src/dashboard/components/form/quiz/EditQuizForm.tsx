@@ -43,36 +43,36 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Catégories de quiz
+  // Quiz categories
   const categories = [
-    { value: "education", label: "Éducation" },
-    { value: "technology", label: "Technologie" },
+    { value: "education", label: "Education" },
+    { value: "technology", label: "Technology" },
     { value: "science", label: "Science" },
-    { value: "history", label: "Histoire" },
-    { value: "geography", label: "Géographie" },
-    { value: "entertainment", label: "Divertissement" },
+    { value: "history", label: "History" },
+    { value: "geography", label: "Geography" },
+    { value: "entertainment", label: "Entertainment" },
     { value: "sports", label: "Sports" },
-    { value: "other", label: "Autre" }
+    { value: "other", label: "Other" }
   ];
 
-  // Charger les données du quiz
+  // Load quiz data
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/quizzes/${quizId}`);
         const quiz = response.data;
-        
+
         setFormData({
           title: quiz.title,
           description: quiz.description,
           category: quiz.category,
           isPublished: quiz.isPublished
         });
-        
+
         setFetchLoading(false);
       } catch (error) {
-        console.error("Erreur lors de la récupération du quiz:", error);
-        setError("Impossible de charger les données du quiz");
+        console.error("Error retrieving quiz:", error);
+        setError("Unable to load quiz data");
         setFetchLoading(false);
       }
     };
@@ -87,7 +87,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
       [name]: value
     });
 
-    // Effacer l'erreur de validation pour ce champ
+    // Clear validation error for this field
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors({
         ...validationErrors,
@@ -102,7 +102,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
       category: value
     });
 
-    // Effacer l'erreur de validation pour la catégorie
+    // Clear validation error for category
     if (validationErrors.category) {
       setValidationErrors({
         ...validationErrors,
@@ -118,35 +118,35 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
     });
   };
 
-  // Fonction de validation des champs
+  // Field validation function
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     let isValid = true;
 
-    // Validation du titre
+    // Title validation
     if (!formData.title.trim()) {
-      errors.title = "Le titre du quiz est requis";
+      errors.title = "Quiz title is required";
       isValid = false;
     } else if (formData.title.length < 3) {
-      errors.title = "Le titre doit contenir au moins 3 caractères";
+      errors.title = "Title must contain at least 3 characters";
       isValid = false;
     } else if (formData.title.length > 100) {
-      errors.title = "Le titre ne doit pas dépasser 100 caractères";
+      errors.title = "Title must not exceed 100 characters";
       isValid = false;
     }
 
-    // Validation de la description
+    // Description validation
     if (!formData.description.trim()) {
-      errors.description = "La description du quiz est requise";
+      errors.description = "Quiz description is required";
       isValid = false;
     } else if (formData.description.length < 10) {
-      errors.description = "La description doit contenir au moins 10 caractères";
+      errors.description = "Description must contain at least 10 characters";
       isValid = false;
     }
 
-    // Validation de la catégorie
+    // Category validation
     if (!formData.category) {
-      errors.category = "Veuillez sélectionner une catégorie";
+      errors.category = "Please select a category";
       isValid = false;
     }
 
@@ -156,7 +156,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -174,20 +174,20 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
         }
       );
 
-      console.log("Réponse reçue:", response.data);
+      console.log("Response received:", response.data);
       toastManager.addToast({
-        title: "Succès",
-        description: "Le quiz a été mis à jour avec succès",
+        title: "Success",
+        description: "The quiz has been successfully updated",
         type: "success",
       });
 
-      // Appeler la fonction de succès pour rediriger vers la liste des quiz
+      // Call success function to redirect to quiz list
       onSuccess();
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du quiz:", error);
+      console.error("Error updating quiz:", error);
       toastManager.addToast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du quiz",
+        title: "Error",
+        description: "An error occurred while updating the quiz",
         type: "error",
       });
     } finally {
@@ -196,7 +196,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
   };
 
   if (fetchLoading) {
-    return <div className="text-center py-4">Chargement des données...</div>;
+    return <div className="text-center py-4">Loading data...</div>;
   }
 
   if (error) {
@@ -205,7 +205,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
         {error}
         <div className="mt-4">
           <Button variant="outline" onClick={onCancel}>
-            Retour
+            Back
           </Button>
         </div>
       </div>
@@ -215,14 +215,14 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="title">Titre du Quiz</Label>
+        <Label htmlFor="title">Quiz Title</Label>
         <Input
           type="text"
           id="title"
           name="title"
           value={formData.title}
           onChange={handleInputChange}
-          placeholder="Entrez le titre du quiz"
+          placeholder="Enter quiz title"
           error={!!validationErrors.title}
           hint={validationErrors.title}
         />
@@ -235,7 +235,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
           name="description"
           value={formData.description}
           onChange={(value) => handleInputChange({ target: { name: "description", value } } as any)}
-          placeholder="Décrivez le contenu et l'objectif de ce quiz"
+          placeholder="Describe the content and purpose of this quiz"
           error={!!validationErrors.description}
           hint={validationErrors.description}
           rows={4}
@@ -243,11 +243,11 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
       </div>
 
       <div>
-        <Label htmlFor="category">Catégorie</Label>
+        <Label htmlFor="category">Category</Label>
         <Select
           id="category"
           options={categories}
-          placeholder="Sélectionnez une catégorie"
+          placeholder="Select a category"
           onChange={handleSelectChange}
           value={formData.category}
           className={validationErrors.category ? "border-red-500" : ""}
@@ -261,7 +261,7 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
         <Checkbox
           checked={formData.isPublished}
           onChange={handleCheckboxChange}
-          label="Publier ce quiz (visible pour tous les utilisateurs)"
+          label="Publish this quiz (visible to all users)"
         />
       </div>
 
@@ -272,14 +272,14 @@ export default function EditQuizForm({ quizId, onSuccess, onCancel }: EditQuizFo
           onClick={onCancel}
           className="w-full sm:w-auto"
         >
-          Annuler
+          Cancel
         </Button>
         <Button
           variant="primary"
           disabled={loading}
           className="w-full sm:w-auto"
         >
-          {loading ? "Mise à jour en cours..." : "Mettre à jour le quiz"}
+          {loading ? "Updating..." : "Update Quiz"}
         </Button>
       </div>
     </form>
